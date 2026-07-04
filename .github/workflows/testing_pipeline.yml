@@ -1,0 +1,114 @@
+name: Testing Pipeline
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "CMakeLists.txt"
+      - "cmake/**"
+      - "MANUAL.md"
+      - "vcpkg.json"
+      - ".github/workflows/testing_pipeline.yml"
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "CMakeLists.txt"
+      - "cmake/**"
+      - "MANUAL.md"
+      - "vcpkg.json"
+      - ".github/workflows/testing_pipeline.yml"
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Release ]
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          cache: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-ccache
+            mingw-w64-x86_64-cli11
+            mingw-w64-x86_64-spdlog
+            mingw-w64-x86_64-boost
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-libxml2
+            mingw-w64-x86_64-libxslt
+            mingw-w64-x86_64-python-lxml
+            mingw-w64-x86_64-pybind11
+
+      - name: Install rang header
+        run: |
+          curl -L https://raw.githubusercontent.com/agauniyal/rang/master/include/rang.hpp \
+            -o /mingw64/include/rang.hpp
+
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ccache-${{ runner.os }}-msys2-mingw64-${{ matrix.build_type }}
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DENABLE_COVERAGE=ON
+
+      # TODO: Add other targets once available
+      - name: Build
+        run: |
+          cmake --build build \
+            --target NPET_comm_FW_framework_tests \
+            --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure --parallel 4
+
+      - name: Install gcovr
+        run: |
+          python -m pip install --break-system-packages gcovr
+
+      - name: Generate coverage
+        run: |
+          mkdir -p coverage_html
+          
+          gcovr \
+            --root . \
+            --object-directory build \
+            --filter "src/.*" \
+            --html-details coverage_html/index.html \
+            --print-summary
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: coverage-report
+          path: coverage_html
+          retention-days: 30

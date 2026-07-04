@@ -1,0 +1,51 @@
+# Ignore build directories
+/build/
+out/
+bin/
+obj/
+/cmake-build-*/
+.cmake/
+
+# Ignore CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore compiled object files
+*.o
+*.obj
+
+# Ignore executables
+*.exe
+*.out
+
+# Ignore temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+*.swo
+
+# Ignore IDE-specific files (CLion, etc.)
+.idea/
+*.iml
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore user-specific files
+*.user
+*.session
+
+# Ignore generated documentation
+*.html
+*.docx
+
+# Ignore other unnecessary files
+*.~*
+
+# Ignore vcpkg cache
+vcpkg_installed/
+

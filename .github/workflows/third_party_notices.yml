@@ -1,0 +1,94 @@
+name: Update third-party notices
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - "vcpkg.json"
+      - "cmake/generate_third_party_notices.cmake"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-third-party-notices:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          cache: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-pybind11
+            git
+
+      - name: Install rang header
+        run: |
+          curl -L https://raw.githubusercontent.com/agauniyal/rang/master/include/rang.hpp \
+            -o /mingw64/include/rang.hpp
+
+      - name: Setup Vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '522253caf47268c1724f486a035e927a42a90092'
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DVCPKG_TARGET_TRIPLET=x64-mingw-static \
+            -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+
+      - name: Generate third-party notices
+        run: |
+          cmake \
+          -DVCPKG_INSTALLED_DIR="build/vcpkg_installed" \
+          -DOUTPUT_FILE="THIRD_PARTY_NOTICES.txt" \
+          -P cmake/generate_third_party_notices.cmake
+
+      - name: Commit updated third-party notices
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- THIRD_PARTY_NOTICES.txt; then
+            echo "THIRD_PARTY_NOTICES.txt is already up to date."
+            exit 0
+          fi
+
+          branch="update-third-party-notices-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add THIRD_PARTY_NOTICES.txt
+          git commit -m "Update third-party notices"
+          git push origin "$branch"
+          curl -sS -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" \
+            -d @- <<EOF
+          {
+            "title": "Update third-party notices",
+            "head": "${branch}",
+            "base": "master",
+            "body": "Automated update of THIRD_PARTY_NOTICES.txt triggered by changes to vcpkg.json or cmake/generate_third_party_notices.cmake."
+          }
+          EOF

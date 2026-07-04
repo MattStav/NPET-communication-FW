@@ -1,0 +1,11 @@
+{
+  "name": "npet-communication-fw",
+  "version-string": "updated_from_git",
+  "builtin-baseline": "522253caf47268c1724f486a035e927a42a90092",
+  "dependencies": [
+    "cli11",
+    "boost-asio",
+    "rang",
+    "spdlog"
+  ]
+}

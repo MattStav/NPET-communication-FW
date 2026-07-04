@@ -18,7 +18,7 @@
 
 
 using namespace rang;
-constexpr std::string_view GITHUB_URL = "https://github.com/MattStav/NPET_communication_FW/blob/master";
+constexpr std::string_view GITHUB_URL = "https://github.com/MattStav/NPET-communication-FW/blob/master";
 const std::string NPET_COMMAND = "NPET_DP -dp " + OUTPUT_DIR_NAME;
 const std::string NPET_COMMAND_BACKUP = "py -m NPET_DP -dp " + OUTPUT_DIR_NAME;
 const std::vector DP_COMMANDS = {NPET_COMMAND, NPET_COMMAND_BACKUP};

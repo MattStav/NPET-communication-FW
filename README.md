@@ -1,6 +1,6 @@
 # NPET communication FW
 
-[![CI](https://github.com/MattStav/NPET_communication_FW/actions/workflows/testing_pipeline.yml/badge.svg)](https://github.com/MattStav/NPET_communication_FW/actions/workflows/testing_pipeline.yml)![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=c%2B%2B&logoColor=white)
+[![CI](https://github.com/MattStav/NPET-communication-FW/actions/workflows/testing_pipeline.yml/badge.svg)](https://github.com/MattStav/NPET-communication-FW/actions/workflows/testing_pipeline.yml)![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=c%2B%2B&logoColor=white)
 ![CMake](https://img.shields.io/badge/build-CMake-064F8C?logo=cmake&logoColor=white)
 ![vcpkg](https://img.shields.io/badge/dependencies-vcpkg-0078D4)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20MSYS2-blue)
@@ -67,7 +67,7 @@ make --version
 ### 2. Clone the Repository
 Clone the project repository to your local machine:
 ``` shell
-git clone https://github.com/MattStav/NPET_communication_FW.git
+git clone https://github.com/MattStav/NPET-communication-FW.git
 ```
 or use an IDE (such as CLion) to handle the cloning process.
 

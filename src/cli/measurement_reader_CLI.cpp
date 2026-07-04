@@ -14,7 +14,7 @@ constexpr std::string_view ADVANCED_MONITOR = "Advanced monitoring";
 constexpr std::string_view BASIC_MONITOR = "Basic monitoring";
 constexpr std::string_view ALL_SAVED = "All measurements saved";
 constexpr std::string_view TOO_MANY_LEFT_IN_BUFFER =
-    "Measurement has already ended, data left in moitoring buffer have been dropped.";
+    "Measurement has already ended, data left in monitoring buffer have been dropped.";
 
 ///
 /// Print an introduction message to the console at the start of the measurement sequence

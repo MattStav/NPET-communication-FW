@@ -1,9 +1,5 @@
-//
-// Created by matej on 10/05/2025.
-//
-
-#ifndef FLOAT128_HELPER_FUNC_H
-#define FLOAT128_HELPER_FUNC_H
+#ifndef HELPER_FUNC_H
+#define HELPER_FUNC_H
 
 #include <filesystem>
 #include <string>
@@ -110,4 +106,4 @@ std::vector<std::string> get_com_ports(ISetupDiApi &api = g_win32_api);
 
 bool is_user_admin(WinApiAdapter &api = g_real_win_api);
 
-#endif //FLOAT128_HELPER_FUNC_H
+#endif //HELPER_FUNC_H

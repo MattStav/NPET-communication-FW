@@ -31,11 +31,11 @@ add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/generated/manual_data.h
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/generated
         COMMAND ${CMAKE_COMMAND} -E echo "Embedding MANUAL.md into header..."
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/src/cli/embed_manual.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/embed_text_file.py
         --source ${CMAKE_CURRENT_SOURCE_DIR}/MANUAL.md
         --destination ${CMAKE_CURRENT_BINARY_DIR}/generated/manual_data.h
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MANUAL.md
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/cli/embed_manual.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/embed_text_file.py
         COMMENT "Generating manual_data.h from MANUAL.md"
         VERBATIM
 )

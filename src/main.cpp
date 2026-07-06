@@ -197,12 +197,11 @@ int main_cli() {
 
 
 int main(const int argc, char **argv) {
-    // The embedded license/manual text is UTF-8; switch the console over so it renders correctly
-    // instead of through the default OEM/ANSI code page.
-    SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);
     // Initialize logging thread pool first
     spdlog::init_thread_pool(8192, 1); // queue size, 1 background thread
+    // The embedded license/manual text is UTF-8; switch the console over so it renders correctly
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
     CLI::App app{"NPET communication FW CLI"}; // CLI11 app object
     app.description("This program allows communication with the NPET device via command line interface.");
     const auto run = app.add_subcommand("run", "Run the app [default]");

@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "manual_data.h"
+#include "license_data.h"
 #include "git_tag.h"
 #include "framework/NPET_comm.h"
 #include "framework/helper_func.h"
@@ -45,6 +46,18 @@ int print_manual() {
     } else SPDLOG_DEBUG("Manual printing cancelled by user");
     return 0;
 } // end of print_manual function
+
+
+///
+/// Print the license information into the console.
+int print_license_information() {
+    cli::echo("NPET communication FW License Information:\n\n");
+    cli::echo(license_text);
+    cli::echo(notice_text);
+    cli::echo("\nThird-party software licenses:\n\n");
+    cli::echo(third_party_notices_text);
+    return 0;
+} // end of print_license_information function
 
 
 ///
@@ -184,8 +197,12 @@ int main_cli() {
 
 
 int main(const int argc, char **argv) {
+    // The embedded license/manual text is UTF-8; switch the console over so it renders correctly
+    // instead of through the default OEM/ANSI code page.
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
     // Initialize logging thread pool first
-    spdlog::init_thread_pool(8192, 1);  // queue size, 1 background thread
+    spdlog::init_thread_pool(8192, 1); // queue size, 1 background thread
     CLI::App app{"NPET communication FW CLI"}; // CLI11 app object
     app.description("This program allows communication with the NPET device via command line interface.");
     const auto run = app.add_subcommand("run", "Run the app [default]");
@@ -194,12 +211,14 @@ int main(const int argc, char **argv) {
     const auto virtual_machine = app.add_subcommand("virtual_machine", "Run virtual machine NPET");
     const auto data_processor = app.add_subcommand(
         "dp", "Run the NPET data processor, which needs to be installed separately");
+    const auto license = app.add_subcommand("license", "Show license information");
     CLI11_PARSE(app, argc, argv);
     int exit_code = 1;
     if (*manual) exit_code = print_manual();
     else if (*reset) exit_code = reset_NPET();
     else if (*virtual_machine) exit_code = launch_vm();
     else if (*data_processor) exit_code = launch_data_processor();
+    else if (*license) exit_code = print_license_information();
     else if (*run || app.get_subcommands().empty()) {
         exit_code = main_cli();
         cli::confirm_exit();

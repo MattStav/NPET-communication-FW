@@ -26,10 +26,10 @@ if not destination_path.parent.is_dir():
 if not destination_path.suffix == ".h":
     raise ValueError(f"Destination must be a header file: {destination_path}")
 # Copy source content to destination
-content: str = source_path.read_text()
+content: str = source_path.read_text(encoding="utf-8")
 escaped = content.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n\"\n\"")
 if not args.append_destination:
-    destination_path.write_text(f'#pragma once\ninline const char* {source_path.stem.lower()}_text = "{escaped}";')
+    destination_path.write_text(f'#pragma once\ninline const char* {source_path.stem.lower()}_text = "{escaped}";', encoding="utf-8")
 else:
-    with destination_path.open("a") as f:
+    with destination_path.open("a", encoding="utf-8") as f:
         f.write(f'\ninline const char* {source_path.stem.lower()}_text = "{escaped}";')

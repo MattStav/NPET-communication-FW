@@ -43,6 +43,33 @@ add_custom_target(manual_header
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/generated/manual_data.h
 )
 
+# Generate the header from Licenses
+add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/generated/license_data.h
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/generated
+        COMMAND ${CMAKE_COMMAND} -E echo "Embedding LICENSES into header..."
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/embed_text_file.py
+        --source ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
+        --destination ${CMAKE_CURRENT_BINARY_DIR}/generated/license_data.h
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/embed_text_file.py
+        --source ${CMAKE_CURRENT_SOURCE_DIR}/NOTICE
+        --destination ${CMAKE_CURRENT_BINARY_DIR}/generated/license_data.h
+        -ad
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/embed_text_file.py
+        --source ${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.txt
+        --destination ${CMAKE_CURRENT_BINARY_DIR}/generated/license_data.h
+        -ad
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
+        ${CMAKE_CURRENT_SOURCE_DIR}/NOTICE
+        ${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.txt
+        ${CMAKE_CURRENT_SOURCE_DIR}/embed_text_file.py
+        COMMENT "Generating license_data.h from LICENSES"
+        VERBATIM
+)
+add_custom_target(license_header
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/generated/license_data.h
+)
+
 # Create a script that generates the header with Git tag information
 add_custom_target(git_tag_header
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/generated
@@ -94,7 +121,7 @@ target_link_libraries(NPET_comm_FW_lib PRIVATE
         pybind11::pybind11
         Python3::Python
 )
-add_dependencies(NPET_comm_FW_lib manual_header git_tag_header)
+add_dependencies(NPET_comm_FW_lib manual_header git_tag_header license_header)
 target_compile_definitions(NPET_comm_FW_lib PRIVATE PYBIND11_ENABLED)
 
 
@@ -112,7 +139,7 @@ target_include_directories(NPET_comm_FW_CLI PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/cli
         ${CMAKE_CURRENT_SOURCE_DIR}/src/virtual_machine
 )
-add_dependencies(NPET_comm_FW_CLI manual_header git_tag_header)
+add_dependencies(NPET_comm_FW_CLI manual_header git_tag_header license_header)
 target_compile_definitions(NPET_comm_FW_CLI PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
 # Add exe icon on Windows
 if (WIN32)

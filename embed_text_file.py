@@ -9,6 +9,10 @@ parser.add_argument("-d", "--destination",
                     default=str(Path.cwd()),
                     type=str,
                     )
+parser.add_argument("-ad", "--append-destination",
+                    help="When enabled the destination file is appended to instead of overwritten",
+                    action="store_true"
+                    )
 args = parser.parse_args()
 # Validate paths
 source_path = Path(args.source).resolve()
@@ -24,4 +28,8 @@ if not destination_path.suffix == ".h":
 # Copy source content to destination
 content: str = source_path.read_text()
 escaped = content.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n\"\n\"")
-destination_path.write_text(f'#pragma once\ninline const char* {source_path.stem.lower()}_text = "{escaped}";')
+if not args.append_destination:
+    destination_path.write_text(f'#pragma once\ninline const char* {source_path.stem.lower()}_text = "{escaped}";')
+else:
+    with destination_path.open("a") as f:
+        f.write(f'\ninline const char* {source_path.stem.lower()}_text = "{escaped}";')

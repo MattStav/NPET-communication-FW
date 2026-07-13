@@ -16,8 +16,8 @@ using ::testing::InSequence;
 
 /// The NPET data processing program shares this app data location
 /// DO NOT CHANGE THE NAME
-TEST(UserFilesPathTest, EndsWithNPET_FW) {
-    EXPECT_EQ(USER_FILES.filename(), "NPET_FW");
+TEST(UserFilesPathTest, EndsWithNPET) {
+    EXPECT_EQ(USER_FILES.filename(), "NPET");
 }
 
 TEST(UserFilesPathTest, IsAbsolutePath) {

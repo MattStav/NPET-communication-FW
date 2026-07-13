@@ -5,6 +5,8 @@
 #include <regex>
 #include <spdlog/async.h>
 #include <spdlog/spdlog.h>
+
+#include "helper_func.h"
 #include "logging.h"
 
 class LoggingTest : public ::testing::Test {
@@ -38,8 +40,8 @@ TEST(GetLogPathTest, IsUnderAppdata) {
 TEST(GetLogPathTest, IsUnderNPETLogsDirectory) {
     const auto path = get_log_path();
     const auto parent = path.parent_path();
-    EXPECT_EQ(parent.filename(), "logs");
-    EXPECT_EQ(parent.parent_path().filename(), "NPET");
+    EXPECT_EQ(parent.filename(), "FW_logs");
+    EXPECT_EQ(parent.parent_path(), USER_FILES);
 }
 
 TEST(GetLogPathTest, FilenameMatchesDatetimeFormat) {
@@ -85,6 +87,6 @@ TEST_F(LoggingTest, CreatesLogFile) {
 TEST_F(LoggingTest, LogFileIsUnderExpectedDirectory) {
     init_logging();
     const auto log_path = get_log_path();
-    EXPECT_EQ(log_path.parent_path().filename(), "logs");
-    EXPECT_EQ(log_path.parent_path().parent_path().filename(), "NPET");
+    EXPECT_EQ(log_path.parent_path().filename(), "FW_logs");
+    EXPECT_EQ(log_path.parent_path().parent_path(), USER_FILES);
 }

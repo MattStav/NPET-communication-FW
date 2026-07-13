@@ -7,6 +7,8 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include "helper_func.h"
+
 ///
 /// Get a path to the log directory.
 /// @return Path to where logs are stored, which is in the APPDATA folder under NPET_FW/logs with a filename based on the current datetime.
@@ -15,7 +17,7 @@ std::filesystem::path get_log_path() {
         char datetime[32];
         const std::time_t t = std::time(nullptr);
         std::strftime(datetime, sizeof(datetime), "%Y-%m-%d_%H-%M-%S", std::localtime(&t));
-        auto p = std::filesystem::path(std::getenv("APPDATA")) / "NPET" / "logs" / (std::string(datetime) + ".log");
+        auto p = USER_FILES / "FW_logs" / (std::string(datetime) + ".log");
         std::filesystem::create_directories(p.parent_path());
         return p;
     }();  // immediately invoked lambda

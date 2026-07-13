@@ -5,12 +5,14 @@
 #include <string>
 #include <quadmath.h>
 
+#include "helper_func.h"
+
 // Path to output directory
-constexpr std::string OUTPUT_DIR_NAME = "NPET_output";
+constexpr std::string OUTPUT_DIR_NAME = "FW_outputs";
 // The number defines decimal precision for meas fractional part
 constexpr char FMT[] = "%.15Qf";
 
-std::string output_file_path(int channel, const std::filesystem::path &base_dir = std::filesystem::current_path());
+std::string output_file_path(int channel, const std::filesystem::path &base_dir = USER_FILES);
 
 uint8_t xor_checksum(const std::array<std::uint8_t, 13> &set_to_check);
 

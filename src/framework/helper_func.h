@@ -10,9 +10,10 @@
 
 
 inline const char *appdata = std::getenv("APPDATA");
+// DO NOT CHANGE THIS VALUE, it matches the value used in NPET_DP
 inline const std::filesystem::path USER_FILES = appdata
-    ? std::filesystem::path(appdata) / "NPET_FW"
-    : std::filesystem::path{"NPET_FW"};
+    ? std::filesystem::path(appdata) / "NPET"
+    : std::filesystem::path{"NPET"};
 
 
 struct ISetupDiApi {

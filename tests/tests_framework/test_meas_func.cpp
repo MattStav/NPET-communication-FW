@@ -8,6 +8,10 @@
 namespace fs = std::filesystem;
 using ::testing::MatchesRegex;
 
+TEST(OutputDirTest, EndsWithOutputs) {
+    EXPECT_EQ(OUTPUT_DIR_NAME, "FW_outputs");
+}
+
 class XorChecksumTest : public testing::TestWithParam<XorChecksumParams> {
 };
 

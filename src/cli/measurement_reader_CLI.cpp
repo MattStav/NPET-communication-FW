@@ -169,7 +169,7 @@ void reader_cli_advanced(measurement_reader& reader, const meas_context& meas_se
         meas_extended& oldest = buffer5[index % 5];
         meas_extended& newest = buffer5[(index + 4) % 5];
         const int freq = std::lround(4 / (newest.approx_value() - oldest.approx_value()));
-        std::cout << "Measurement frequency: " << freq;
+        std::cout << "Measurement frequency: " << freq << "  ";
         std::cout << std::endl;
         std::cout << "Corrupted measurements: " << reader.corrupted.load(std::memory_order_relaxed);
         std::cout << std::endl;

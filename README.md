@@ -10,7 +10,7 @@
 
 This firmware facilitates control and monitoring of 
 NPET (New Pico Event Timer) devices developed at CTU FNSPE.
-Use this project with the [NPET Data Processing](https://github.com/MattStav/NPET_data_processing) 
+Use this project with the [NPET Data Processing](https://github.com/MattStav/NPET-Data-Processing) 
 to gather and process data from NPET.
 
 This FW uses CLI.

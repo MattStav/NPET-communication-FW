@@ -138,8 +138,8 @@ int main_cli() {
     init_logging();
     SPDLOG_INFO("Launching main menu CLI");
     cli::echo(NP_COMM_START_MSG.data(), fg::blue, style::bold, false);
-    cli::echo(GIT_TAG, fg::yellow);
-    SPDLOG_INFO("{}{}", NP_COMM_START_MSG, GIT_TAG);
+    cli::echo(BUILD_CONFIG " " GIT_TAG, fg::yellow);
+    SPDLOG_INFO("{} {} {}", NP_COMM_START_MSG, BUILD_CONFIG, GIT_TAG);
     cli::echo("If you have any questions please refer to the manual, which should be provided with the program.");
     cli::echo("If manual wasn't provided, you can access it from the main menu, "
               "or it can be opened by calling this program from cmd with the 'manual' command.", fg::yellow);

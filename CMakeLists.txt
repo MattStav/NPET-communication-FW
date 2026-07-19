@@ -141,6 +141,7 @@ target_include_directories(NPET_comm_FW_CLI PRIVATE
 )
 add_dependencies(NPET_comm_FW_CLI manual_header git_tag_header license_header)
 target_compile_definitions(NPET_comm_FW_CLI PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+target_compile_definitions(NPET_comm_FW_CLI PRIVATE BUILD_CONFIG="$<CONFIG>")
 # Add exe icon on Windows
 if (WIN32)
     target_sources(NPET_comm_FW_CLI PRIVATE src/icon/app.rc)

@@ -51,7 +51,7 @@ void meas_reader::data_receiver() {
         }
         if (!ec) {
             std::lock_guard lock(mtx_data);
-            // Push each byte of the packet into the queue,
+            // Push each byte of the packet into the queue;
             // it's not possible to push all at once
             for (const unsigned char byte: buf) {
                 received_data_q.push_back(byte);
@@ -59,7 +59,6 @@ void meas_reader::data_receiver() {
         }
     } // end of while loop
     stop_sign.store(true, std::memory_order_relaxed);
-    SPDLOG_DEBUG("Stop signal sent to all threads");
     SPDLOG_DEBUG("Data receiver thread stopped");
 } // end of data_receiver_func function
 
@@ -131,9 +130,7 @@ void meas_reader::data_processor(const meas_context &meas_set, const measurement
     SPDLOG_DEBUG("Data processor time const: {}", time_const.to_string());
     SPDLOG_DEBUG("Data processor measurement context : {} measurements, channel {} , monitoring {}, save {}",
                  meas_set.num_of_meas, meas_set.channel, meas_set.monitor_fn ? "true" : "false", meas_set.save);
-
-    // Process data until the end flag is set
-    while (true) {
+    while (!aborted.load(std::memory_order_relaxed)) {
         // Grab the next measurement set from the receiver queue
         auto measurement_res_raw = grab_meas_from_receiver();
         // If the returned array is empty,
@@ -199,7 +196,7 @@ void meas_reader::data_saver(const int channel_num) {
         SPDLOG_ERROR("failed to open output file: {}", output_file.getloc().name());
         throw std::runtime_error("failed to generate output file");
     }
-    while (true) { // Data saver never exits early do no data is ever lost
+    while (true) { // Data saver never exits early, so no data is ever lost
         std::optional<measurement> meas = grab_meas_from_processor(for_saver_q);
         if (!meas) break;
         output_file << meas.value().intp << " " << std::fixed << float128_to_string(meas.value().fracp) << std::endl;
@@ -226,6 +223,7 @@ void meas_reader::main(const meas_context &meas_set) {
                 if (const int ch = _getch(); ch == 27) {
                     // ESC
                     SPDLOG_DEBUG("Keyboard watcher triggered, Measurement Reader stopping ...");
+                    aborted.store(true, std::memory_order_relaxed);
                     stop_sign.store(true, std::memory_order_relaxed);
                     break;
                 }

@@ -53,6 +53,8 @@ public:
     std::queue<measurement> for_monitor_q;
     // Signal to stop the measurement
     std::atomic<bool> stop_sign{false};
+    // Signal that user aborted the measurement
+    std::atomic<bool> aborted{false};
     // Number of corrupted measurements
     std::atomic<int> corrupted;
 

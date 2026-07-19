@@ -13,8 +13,6 @@ constexpr std::string_view SYNC_MONITOR = "Synchronization monitoring";
 constexpr std::string_view ADVANCED_MONITOR = "Advanced monitoring";
 constexpr std::string_view BASIC_MONITOR = "Basic monitoring";
 constexpr std::string_view ALL_SAVED = "All measurements saved";
-constexpr std::string_view TOO_MANY_LEFT_IN_BUFFER =
-    "Measurement has already ended, data left in monitoring buffer have been dropped.";
 
 ///
 /// Print an introduction message to the console at the start of the measurement sequence
@@ -186,15 +184,9 @@ void reader_cli_advanced(meas_reader& reader, const meas_context& meas_set, cons
             std::cout << m.processed_str << std::endl;
             total_lines++;
         } // end of for loop to display buffer values
-        std::cout.flush(); // important if no newline
-        // The measurement has already ended and there are too many measurements to print still, the buffer is dropped
-        if (reader.stop_sign.load(std::memory_order_relaxed) && static_cast<double>(reader.monitor_q_size()) > 0.1 *
-            meas_set.num_of_meas && meas_set.save)
-        {
-            cli::echo(TOO_MANY_LEFT_IN_BUFFER.data(), fg::yellow);
-            SPDLOG_DEBUG(TOO_MANY_LEFT_IN_BUFFER);
-            break;
-        }
+        std::cout.flush(); // important if no newline.
+        // If the measurement was aborted, stop printing immediately
+        if (reader.aborted.load(std::memory_order_relaxed)) break;
     } // end of while loop
     print_outro(reader, meas_set);
 } // end of reader_cli_advanced function
@@ -213,8 +205,8 @@ void reader_cli_basic(meas_reader& reader, const meas_context& meas_set, const m
     auto bar = ProgressBar(meas_set.num_of_meas);
     while (true)
     {
-        // If the measurement has already ended and there are too many measurements to print still, drop them
-        if (reader.stop_sign.load(std::memory_order_relaxed) && reader.monitor_q_size() > 200) break;
+        // If the measurement was aborted, stop printing immediately
+        if (reader.aborted.load(std::memory_order_relaxed)) break;
         if (const std::optional<measurement> meas = reader.grab_meas_from_processor(reader.for_monitor_q); !meas) break;
         measurement_num++;
         bar.update(measurement_num);

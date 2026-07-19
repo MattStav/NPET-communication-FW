@@ -128,8 +128,8 @@ The user will be asked to specify the PPS channel and number of averaging measur
 The measured fractional part from the measurements will be used as the fractional part of the constant.
 Afterward, the user can select either system clock time (with or without NTP sync) or user-defined time, 
 either of which will be used as the integer part of the constant. 
-Selecting system time with NTP sync will force the Windows clock to synchronize with a NTP server,
-before grabbing the current time; 
+Selecting system time with NTP sync will force the Windows clock
+to synchronize with an NTP server before grabbing the current time; 
 this operation requires that this FW is run with administrator privileges.
 3. Clear the constant \
 This clears the NPET constant saved in NPET.

@@ -7,11 +7,11 @@
 
 #include "meas_func.h"
 
-class measurement_reader;
+class meas_reader;
 
 struct meas_context {
     int num_of_meas{5};
-    std::function<void(measurement_reader &, const meas_context &, const measurement &)> monitor_fn = nullptr;
+    std::function<void(meas_reader &, const meas_context &, const measurement &)> monitor_fn = nullptr;
     bool save{false};
     int channel{1};
 
@@ -26,7 +26,7 @@ struct meas_context {
 // Forward declaration instead of #include "NPET_comm.h"
 class NPET_comm;
 
-class measurement_reader {
+class meas_reader {
     NPET_comm &npet; // a reference to the NPET communicator instance
     std::mutex mtx_data; // a mutex to handle queue accesses
     // Queue to store the data received from NPET
@@ -74,12 +74,12 @@ public:
     }
 
     // Constructor to begin reading measurements, this class does nothing else
-    explicit measurement_reader(NPET_comm &npet, const meas_context &meas_set) : npet(npet) {
+    explicit meas_reader(NPET_comm &npet, const meas_context &meas_set) : npet(npet) {
         main(meas_set);
     }
 
     // Destructor to end the measurement sequence
-    ~measurement_reader() { end_sequence(); }
+    ~meas_reader() { end_sequence(); }
 }; // end of measurement_reader class
 
 

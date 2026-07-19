@@ -9,7 +9,7 @@
 #include <pybind11/gil.h>
 #endif
 
-#include "measurement_reader.h"
+#include "meas_reader.h"
 
 constexpr std::string_view COMM_TIMEOUT_ERR = "Communication timeout: Device did not respond within {}ms";
 constexpr std::string_view DATA_FORMAT_ERR = "Failed to set proper measured data format before reading measurements";
@@ -305,7 +305,7 @@ void NPET_comm::read_batch_measurements(const meas_context &meas_set) {
         throw std::runtime_error(SLEEP_DISABLE_ERR.data());
     }
     // Call the measurement_reader
-    [[maybe_unused]] measurement_reader session(*this, meas_set);
+    [[maybe_unused]] meas_reader session(*this, meas_set);
     // Re-enable system sleep after the critical function completes
     if (SetThreadExecutionState(ES_CONTINUOUS) == 0) {
         SPDLOG_ERROR(SLEEP_ENABLE_ERR);

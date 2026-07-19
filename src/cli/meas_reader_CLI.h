@@ -1,7 +1,7 @@
 #ifndef MEASUREMENT_READER_CLI_H
 #define MEASUREMENT_READER_CLI_H
 
-#include "measurement_reader.h"
+#include "meas_reader.h"
 
 struct meas_extended : measurement { // Inherits from measurement
     std::string processed_str{}; // Formatted string of the measurement for display
@@ -21,17 +21,17 @@ struct meas_extended : measurement { // Inherits from measurement
 };
 
 void reader_cli_sync(
-    measurement_reader &reader,
+    meas_reader &reader,
     const meas_context &meas_set,
     const measurement &time_const);
 
 void reader_cli_advanced(
-    measurement_reader &reader,
+    meas_reader &reader,
     const meas_context &meas_set,
     const measurement &time_const);
 
 void reader_cli_basic(
-    measurement_reader &reader,
+    meas_reader &reader,
     const meas_context &meas_set,
     const measurement &time_const);
 

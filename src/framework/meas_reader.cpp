@@ -10,7 +10,7 @@
 #include <queue>
 #include <thread>
 
-#include "measurement_reader.h"
+#include "meas_reader.h"
 
 #include <spdlog/spdlog.h>
 
@@ -20,7 +20,7 @@
 /// Asynchronously reads data from the serial port and adds them to the queue.
 /// Handles cancellation signal from keyboard input as well as cancellation from other threads.
 /// Inserting a sentinel value (256) into the queue to signal the processor thread to stop.
-void measurement_reader::data_receiver() {
+void meas_reader::data_receiver() {
     std::array<unsigned char, NPET_comm::PACKET_SIZE> buf{};
     SPDLOG_DEBUG("Data receiver thread started");
 
@@ -72,7 +72,7 @@ void measurement_reader::data_receiver() {
 /// while waiting, return an empty array to signal the processor thread to stop immediately.
 /// This ensures that the processor thread does not get stuck waiting for data when the program is trying to exit.
 /// @return Array of 13 bytes containing the measurement data, or an empty array if a stop signal was received while waiting for data.
-std::optional<std::array<uint8_t, 13> > measurement_reader::grab_meas_from_receiver() {
+std::optional<std::array<uint8_t, 13> > meas_reader::grab_meas_from_receiver() {
     bool has_data = false;
     // Wait until there is some data in the queue or a stop signal is received
 
@@ -124,7 +124,7 @@ std::optional<std::array<uint8_t, 13> > measurement_reader::grab_meas_from_recei
 /// @param meas_set Measurement context struct
 /// /// Contains the number of measurements, display and save flags, and channel number
 /// @param time_const Time correction constant imported from NPET
-void measurement_reader::data_processor(const meas_context &meas_set, const measurement &time_const) {
+void meas_reader::data_processor(const meas_context &meas_set, const measurement &time_const) {
     const __float128 multiplier = get_measurement_multiplier(npet.fw_version);
     int meas_counter = 0; // Track total including overflows
     SPDLOG_DEBUG("Data processor thread started");
@@ -165,7 +165,7 @@ void measurement_reader::data_processor(const meas_context &meas_set, const meas
 } // end of data_processor_func function
 
 
-std::optional<measurement> measurement_reader::grab_meas_from_processor(std::queue<measurement> &q) {
+std::optional<measurement> meas_reader::grab_meas_from_processor(std::queue<measurement> &q) {
     while (true) {
         {
             std::lock_guard lock(mtx_data);
@@ -187,7 +187,7 @@ std::optional<measurement> measurement_reader::grab_meas_from_processor(std::que
 } // end of grab_measurement_from_processor function
 
 
-void measurement_reader::data_saver(const int channel_num) {
+void meas_reader::data_saver(const int channel_num) {
     std::ofstream output_file;
     SPDLOG_DEBUG("Data saver thread started");
 
@@ -215,7 +215,7 @@ void measurement_reader::data_saver(const int channel_num) {
 /// Starts the threads to process the measurements.
 /// @param meas_set Measurement context struct
 /// /// Contains the number of measurements, monitor function, a save flag, and channel number
-void measurement_reader::main(const meas_context &meas_set) {
+void meas_reader::main(const meas_context &meas_set) {
     SPDLOG_INFO("Initiating Measurement Reader ...");
     assert(npet.port.is_open());
     // Keyboard watcher: ESC => request stop + cancel any blocking read.
@@ -238,10 +238,10 @@ void measurement_reader::main(const meas_context &meas_set) {
     const measurement time_const = npet.import_time_constant();
     assert(time_const.meas_num == -1);
     SPDLOG_DEBUG("Time constant imported from NPET: {}", time_const.to_string());
-    auto receiver = std::jthread(&measurement_reader::data_receiver, this);
-    auto processor = std::jthread(&measurement_reader::data_processor, this, meas_set, time_const);
+    auto receiver = std::jthread(&meas_reader::data_receiver, this);
+    auto processor = std::jthread(&meas_reader::data_processor, this, meas_set, time_const);
     std::thread saver;
-    if (meas_set.save) saver = std::thread(&measurement_reader::data_saver, this, meas_set.channel);
+    if (meas_set.save) saver = std::thread(&meas_reader::data_saver, this, meas_set.channel);
     std::thread monitor;
     if (meas_set.monitor_fn) {
         monitor = std::thread(
@@ -262,7 +262,7 @@ void measurement_reader::main(const meas_context &meas_set) {
 
 ///
 /// Clean up after the measurement stream.
-void measurement_reader::end_sequence() const {
+void meas_reader::end_sequence() const {
     SPDLOG_INFO("Cleaning up after Measurement Reader ...");
     if (!npet.is_responsive(true)) SPDLOG_WARN("Failed to immediately terminate measurement stream");
 }

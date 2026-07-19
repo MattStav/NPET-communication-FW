@@ -3,7 +3,7 @@
 #include <boost/asio.hpp>
 #include <spdlog/spdlog.h>
 
-#include "measurement_reader.h"
+#include "meas_reader.h"
 #include "meas_func.h"
 
 // Number defining infinite operation

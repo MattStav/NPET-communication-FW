@@ -1,5 +1,5 @@
 #include "NPET_comm.h"
-#include "measurement_reader_CLI.h"
+#include "meas_reader_CLI.h"
 
 #include <cmath>
 
@@ -40,7 +40,7 @@ void print_intro(const meas_context& meas_set, const measurement& time_const)
 /// Print measurement end message, including the number of corrupt measurements.
 /// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
 /// @param meas_set Reference to the measurement context
-void print_outro(measurement_reader& reader, const meas_context& meas_set)
+void print_outro(meas_reader& reader, const meas_context& meas_set)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (const size_t saver_initial = reader.saver_q_size(); meas_set.save && saver_initial > 0)
@@ -107,7 +107,7 @@ std::string format_measurement(
 /// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
 /// @param meas_set Reference to the measurement context
 /// @param time_const Reference to the time correction constant imported from the NPET device
-void reader_cli_sync(measurement_reader& reader, const meas_context& meas_set, const measurement& time_const)
+void reader_cli_sync(meas_reader& reader, const meas_context& meas_set, const measurement& time_const)
 {
     print_intro(meas_set, time_const);
     SPDLOG_DEBUG(SYNC_MONITOR);
@@ -124,7 +124,7 @@ void reader_cli_sync(measurement_reader& reader, const meas_context& meas_set, c
 } // end of reader_cli_cli function
 
 
-void reader_cli_advanced(measurement_reader& reader, const meas_context& meas_set, const measurement& time_const)
+void reader_cli_advanced(meas_reader& reader, const meas_context& meas_set, const measurement& time_const)
 {
     // Initialized progress string
     std::string progress;
@@ -204,7 +204,7 @@ void reader_cli_advanced(measurement_reader& reader, const meas_context& meas_se
 /// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
 /// @param meas_set Reference to the measurement context
 /// @param time_const Reference to the time correction constant imported from the NPET device
-void reader_cli_basic(measurement_reader& reader, const meas_context& meas_set, const measurement& time_const)
+void reader_cli_basic(meas_reader& reader, const meas_context& meas_set, const measurement& time_const)
 {
     print_intro(meas_set, time_const);
     SPDLOG_DEBUG(BASIC_MONITOR);

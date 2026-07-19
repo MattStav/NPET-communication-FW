@@ -5,7 +5,7 @@
 #include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.
 
 #include "helper_func.h"
-#include "measurement_reader_CLI.h"
+#include "meas_reader_CLI.h"
 #include "ntp_sync.h"
 
 constexpr std::string_view NO_PORTS = "No available COM ports found";
@@ -358,7 +358,7 @@ void NPET_comm_CLI::read_batch_measurements_CLI() {
         return;
     } // end of try-catch block
     SPDLOG_DEBUG("User specified measurement monitoring: {}", monitor);
-    std::function<void(measurement_reader&, const meas_context&, const measurement&)> monitor_fn;
+    std::function<void(meas_reader&, const meas_context&, const measurement&)> monitor_fn;
     switch (monitor) {
         case 1: monitor_fn = reader_cli_basic; break;
         case 2: monitor_fn = reader_cli_advanced; break;

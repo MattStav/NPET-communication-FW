@@ -13,14 +13,6 @@ on:
       - ".github/workflows/testing_pipeline.yml"
   pull_request:
     branches: [ "master" ]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "CMakeLists.txt"
-      - "cmake/**"
-      - "MANUAL.md"
-      - "vcpkg.json"
-      - ".github/workflows/testing_pipeline.yml"
 
 jobs:
   build-and-test:

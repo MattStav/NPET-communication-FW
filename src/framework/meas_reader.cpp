@@ -59,6 +59,8 @@ void meas_reader::data_receiver() {
         }
     } // end of while loop
     stop_sign.store(true, std::memory_order_relaxed);
+    SPDLOG_DEBUG("Data receiver thread stopping, ending measurement stream ...");
+    (void)npet.is_responsive(true);
     SPDLOG_DEBUG("Data receiver thread stopped");
 } // end of data_receiver_func function
 

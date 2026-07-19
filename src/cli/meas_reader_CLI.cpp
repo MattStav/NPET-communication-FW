@@ -122,6 +122,11 @@ void reader_cli_sync(meas_reader& reader, const meas_context& meas_set, const me
 } // end of reader_cli_cli function
 
 
+///
+/// Advanced CLI measurement monitor showing extended information about ongoing measurement.
+/// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
+/// @param meas_set Reference to the measurement context
+/// @param time_const Reference to the time correction constant imported from the NPET device
 void reader_cli_advanced(meas_reader& reader, const meas_context& meas_set, const measurement& time_const)
 {
     // Initialized progress string
@@ -191,6 +196,40 @@ void reader_cli_advanced(meas_reader& reader, const meas_context& meas_set, cons
     print_outro(reader, meas_set);
 } // end of reader_cli_advanced function
 
+
+///
+/// Basic CLI measurement monitor for a finite number of measurements
+/// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
+/// @param num_of_meas Number of measurements to read from the NPET device
+void reader_cli_basic_non_inf_meas(meas_reader& reader, int num_of_meas) {
+    int measurement_num{};
+    auto bar = ProgressBar(num_of_meas);
+    while (true)
+    {
+        // If the measurement was aborted, stop printing immediately
+        if (reader.aborted.load(std::memory_order_relaxed)) break;
+        if (const std::optional<measurement> meas = reader.grab_meas_from_processor(reader.for_monitor_q); !meas) break;
+        measurement_num++;
+        bar.update(measurement_num);
+    } // end of while loop
+} // end of reader_cli_basic_non_inf_meas function
+
+
+///
+/// Basic CLI measurement monitor for an infinite number of measurements
+/// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
+void reader_cli_basic_inf_meas(const meas_reader& reader) {
+    int i = 0;
+    while (!reader.aborted.load(std::memory_order_relaxed))
+    {
+        constexpr char frames[] = {'|', '/', '-', '\\'};
+        std::cout << "\rMeasurement running ... " << frames[i++ % 4] << std::flush;
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    } // end of while loop
+    std::cout << std::endl; // Newline required
+} // end of reader_cli_basic_inf_meas function
+
+
 ///
 /// Display only a progress bar of the measurement process.
 /// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
@@ -201,15 +240,7 @@ void reader_cli_basic(meas_reader& reader, const meas_context& meas_set, const m
     print_intro(meas_set, time_const);
     SPDLOG_DEBUG(BASIC_MONITOR);
     cli::echo(BASIC_MONITOR.data());
-    int measurement_num{};
-    auto bar = ProgressBar(meas_set.num_of_meas);
-    while (true)
-    {
-        // If the measurement was aborted, stop printing immediately
-        if (reader.aborted.load(std::memory_order_relaxed)) break;
-        if (const std::optional<measurement> meas = reader.grab_meas_from_processor(reader.for_monitor_q); !meas) break;
-        measurement_num++;
-        bar.update(measurement_num);
-    } // end of while loop
+    if (meas_set.num_of_meas == INFINITE_OP) reader_cli_basic_inf_meas(reader);
+    else reader_cli_basic_non_inf_meas(reader, meas_set.num_of_meas);
     print_outro(reader, meas_set);
 } // end of reader_cli_basic function

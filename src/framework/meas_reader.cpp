@@ -217,46 +217,55 @@ void meas_reader::data_saver(const int channel_num) {
 void meas_reader::main(const meas_context &meas_set) {
     SPDLOG_INFO("Initiating Measurement Reader ...");
     assert(npet.port.is_open());
-    // Keyboard watcher: ESC => request stop + cancel any blocking read.
-    std::jthread key_watcher([this] {
-        SPDLOG_DEBUG("Keyboard watcher (Esc) thread started");
-        while (!stop_sign.load(std::memory_order_relaxed)) {
-            if (_kbhit()) {
-                if (const int ch = _getch(); ch == 27) {
-                    // ESC
-                    SPDLOG_DEBUG("Keyboard watcher triggered, Measurement Reader stopping ...");
-                    aborted.store(true, std::memory_order_relaxed);
-                    stop_sign.store(true, std::memory_order_relaxed);
-                    break;
-                }
-            }
-            // Sleep inbetween checks, this doesnt need to respond very fast
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        } // end of while loop
-    }); // end of key_watcher thread
     // Import the time constant from NPET
     const measurement time_const = npet.import_time_constant();
     assert(time_const.meas_num == -1);
     SPDLOG_DEBUG("Time constant imported from NPET: {}", time_const.to_string());
     auto receiver = std::jthread(&meas_reader::data_receiver, this);
     auto processor = std::jthread(&meas_reader::data_processor, this, meas_set, time_const);
-    std::thread saver;
-    if (meas_set.save) saver = std::thread(&meas_reader::data_saver, this, meas_set.channel);
-    std::thread monitor;
+    std::jthread saver;
+    if (meas_set.save) saver = std::jthread(&meas_reader::data_saver, this, meas_set.channel);
+    std::jthread monitor;
     if (meas_set.monitor_fn) {
-        monitor = std::thread(
+        monitor = std::jthread(
             meas_set.monitor_fn,
             std::ref(*this),
             std::cref(meas_set),
             std::cref(time_const)
         );
     }
+    // Keyboard watcher: ESC => request stop + cancel any blocking read.
+    std::jthread key_watcher([this, &receiver, &processor, &saver, &monitor] {
+        SPDLOG_DEBUG("Keyboard watcher (Esc) thread started");
+        auto any_alive = [&] {
+            return receiver.joinable() || processor.joinable()
+                || saver.joinable()    || monitor.joinable();
+        };
+        while (any_alive()) {
+            if (_kbhit()) {
+                constexpr int ESCAPE_KEY = 27;
+                if (const int ch = _getch(); ch == ESCAPE_KEY) {
+                    SPDLOG_DEBUG("Keyboard watcher triggered, Measurement Reader stopping ...");
+                    aborted.store(true, std::memory_order_relaxed);
+                    stop_sign.store(true, std::memory_order_relaxed);
+                }
+            }
+            // Sleep inbetween checks, this doesnt need to respond very fast
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        } // end of while loop
+        SPDLOG_DEBUG("Keyboard watcher (Esc) thread stopped");
+    }); // end of key_watcher thread
     SPDLOG_DEBUG("All threads started");
     // Start the NPET measurements
     npet.port.write_some(boost::asio::buffer(get_measurement_cmd(meas_set.channel, meas_set.num_of_meas)));
     SPDLOG_DEBUG("Measurement command sent to NPET, waiting for threads to finish ...");
+    // Join the workers first, to allow key_watcher loop to finish
+    if (receiver.joinable()) receiver.join();
+    if (processor.joinable()) processor.join();
     if (saver.joinable()) saver.join();
     if (monitor.joinable()) monitor.join();
+    key_watcher.join();
+    SPDLOG_DEBUG("All threads finished");
 } // end of read_measurements function
 
 

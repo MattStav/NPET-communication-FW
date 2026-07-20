@@ -143,7 +143,7 @@ void reader_cli_advanced(meas_reader& reader, const meas_context& meas_set, cons
     print_intro(meas_set, time_const);
     SPDLOG_DEBUG(ADVANCED_MONITOR);
     cli::echo(ADVANCED_MONITOR.data());
-    while (true)
+    while (!reader.aborted.load(std::memory_order_relaxed))
     {
         const std::optional<measurement> meas = reader.grab_meas_from_processor(reader.for_monitor_q);
         if (!meas) break;
@@ -190,8 +190,6 @@ void reader_cli_advanced(meas_reader& reader, const meas_context& meas_set, cons
             total_lines++;
         } // end of for loop to display buffer values
         std::cout.flush(); // important if no newline.
-        // If the measurement was aborted, stop printing immediately
-        if (reader.aborted.load(std::memory_order_relaxed)) break;
     } // end of while loop
     print_outro(reader, meas_set);
 } // end of reader_cli_advanced function

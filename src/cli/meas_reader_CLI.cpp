@@ -27,7 +27,7 @@ void print_intro(const meas_context& meas_set, const measurement& time_const)
         SPDLOG_ERROR(MISSING_CONST);
         cli::err(MISSING_CONST.data());
     }
-    if (meas_set.num_of_meas == INFINITE_OP) cli::echo("Reading infinite measurements...");
+    if (meas_set.num_of_meas == INFINITE_OPERATION) cli::echo("Reading infinite measurements...");
     else cli::show_int("Reading measurement(s)", meas_set.num_of_meas);
     cli::show_int("Using channel", meas_set.channel);
     cli::echo("Press `Esc` to safely cancel the measurement at any time", fg::gray, style::bold);
@@ -153,7 +153,7 @@ void reader_cli_advanced(meas_reader& reader, const meas_context& meas_set, cons
         meas_extended meas_ext(meas.value());
         auto [hours, minutes, seconds] = to_hms(meas->intp);
         // Format the progress information
-        if (meas_set.num_of_meas == INFINITE_OP) progress = std::to_string(meas_count);
+        if (meas_set.num_of_meas == INFINITE_OPERATION) progress = std::to_string(meas_count);
         else progress = std::to_string(meas_count * 100 / meas_set.num_of_meas) + "%";
         progress.insert(0, " [");
         progress += ']';
@@ -238,7 +238,7 @@ void reader_cli_basic(meas_reader& reader, const meas_context& meas_set, const m
     print_intro(meas_set, time_const);
     SPDLOG_DEBUG(BASIC_MONITOR);
     cli::echo(BASIC_MONITOR.data());
-    if (meas_set.num_of_meas == INFINITE_OP) reader_cli_basic_inf_meas(reader);
+    if (meas_set.num_of_meas == INFINITE_OPERATION) reader_cli_basic_inf_meas(reader);
     else reader_cli_basic_non_inf_meas(reader, meas_set.num_of_meas);
     print_outro(reader, meas_set);
 } // end of reader_cli_basic function

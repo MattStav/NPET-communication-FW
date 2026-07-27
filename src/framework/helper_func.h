@@ -4,13 +4,14 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#define WIN32_LEAN_AND_MEAN  // Prevent windows.h from including WinSock.h
 #include <Windows.h>
 #include <setupapi.h>
 #include <devguid.h> // HAS to be after windows.h
 
 
 inline const char *appdata = std::getenv("APPDATA");
-// DO NOT CHANGE THIS VALUE, it matches the value used in NPET_DP
+// DO NOT CHANGE THIS VALUE; it matches the value used in NPET_DP
 inline const std::filesystem::path USER_FILES = appdata
     ? std::filesystem::path(appdata) / "NPET"
     : std::filesystem::path{"NPET"};

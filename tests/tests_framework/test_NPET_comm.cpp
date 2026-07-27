@@ -16,11 +16,11 @@ using ::testing::Sequence;
 
 
 TEST(Constants, InfiniteOpValue) {
-    EXPECT_EQ(INFINITE_OP, 9999);
+    EXPECT_EQ(INFINITE_OPERATION, 9999);
 }
 
 TEST(Constants, PacketSizeValue) {
-    EXPECT_EQ(NPET_comm::PACKET_SIZE, 13);
+    EXPECT_EQ(MEASUREMENT_PACKET_SIZE, 13);
 }
 
 

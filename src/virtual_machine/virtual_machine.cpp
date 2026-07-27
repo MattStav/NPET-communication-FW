@@ -82,7 +82,7 @@ void send_measurements(serial_port &port, const std::string &num_str, uint8_t &m
     });
 
     int number_of_measurements = std::stoi(num_str);
-    if (number_of_measurements == INFINITE_OP) number_of_measurements = std::numeric_limits<int>::max();
+    if (number_of_measurements == INFINITE_OPERATION) number_of_measurements = std::numeric_limits<int>::max();
     cli::show_int("Number of measurements", number_of_measurements);
     for (int i = 0; i < number_of_measurements; ++i) {
         if (stop_requested.load(std::memory_order_relaxed)) {

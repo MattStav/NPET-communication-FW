@@ -117,7 +117,7 @@ void NPET_comm_CLI::open_communication_CLI() {
             continue;
         }
         try {
-            open_communication(com_port);
+            open_communication(com_port, DEFAULT_BAUD_RATE);
         } catch (std::exception &e) {
             SPDLOG_ERROR(FAILED_OPEN_COM_PORT, e.what());
             cli::err(std::format(FAILED_OPEN_COM_PORT, e.what()));
@@ -127,7 +127,7 @@ void NPET_comm_CLI::open_communication_CLI() {
             cli::echo("COM port opened successfully", fg::yellow);
             SPDLOG_ERROR(NPET_NOT_RESPONDING);
             cli::err(NPET_NOT_RESPONDING.data());
-            port.close();
+            get_port().close();
             continue;
         }
         SPDLOG_INFO("NPET communication opened successfully");
@@ -159,8 +159,8 @@ bool NPET_comm_CLI::is_responsive_CLI() {
         SPDLOG_ERROR(NPET_NOT_RESPONDING);
         cli::err(NPET_NOT_RESPONDING.data());
         SPDLOG_DEBUG("Cancelling pending comms and purging all buffers before retrying ...");
-        port.cancel();
-        PurgeComm(port.native_handle(), PURGE_RXCLEAR | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_TXABORT);
+        get_port().cancel();
+        PurgeComm(get_port().native_handle(), PURGE_RXCLEAR | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_TXABORT);
         Sleep(RETRY_DELAY_MS);
     } // end of for loop
     SPDLOG_ERROR("NPET is not responsive after {} attempts", MAX_ATTEMPTS);
@@ -283,7 +283,7 @@ void NPET_comm_CLI::set_baud_rate_CLI() {
     SPDLOG_DEBUG("Possible new baud rates: {}", baud_rate_options);
     // Get current baud rate
     boost::asio::serial_port_base::baud_rate current_baud{};
-    port.get_option(current_baud);
+    get_port().get_option(current_baud);
     SPDLOG_DEBUG("{}: {}", BAUD_RATE_CURRENT, current_baud.value());
     cli::show_int(BAUD_RATE_CURRENT.data(), static_cast<int>(current_baud.value()));
     switch (cli::menu("New baud rate", baud_rate_options, false)) {
@@ -332,7 +332,7 @@ void NPET_comm_CLI::read_batch_measurements_CLI() {
     const std::string meas_num_str = cli::prompt("Number of measurements (-1 for inf; 0 to cancel)", "0");
     int num_of_meas = num_validation(meas_num_str);
     if (num_of_meas == 0 || num_of_meas == INVALID_NUM_SENTINEL) return;
-    if (num_of_meas == -1) num_of_meas = INFINITE_OP; // Magic number for infinite measurements
+    if (num_of_meas == -1) num_of_meas = INFINITE_OPERATION; // Magic number for infinite measurements
     SPDLOG_DEBUG("User specified number of measurements to read: {}", num_of_meas);
     // Prompt user for channel number
     const std::string channel_str = cli::prompt("Select channel to read from (1 or 2; 0 to cancel)", "1");

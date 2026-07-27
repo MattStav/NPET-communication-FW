@@ -8,6 +8,8 @@ constexpr std::string_view COMM_CLOSE = "Closing NPET communication framework";
 
 
 class NPET_comm_CLI : public NPET_comm {
+    const int DEFAULT_BAUD_RATE = 115200;
+
     measurement raw_time_constant();
 
     __float128 measure_average_fraction(int aver_num, int channel_num);

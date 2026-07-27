@@ -1,46 +1,18 @@
 #ifndef NPET_COMMUNICATOR_H
 #define NPET_COMMUNICATOR_H
-#include <boost/asio.hpp>
 #include <spdlog/spdlog.h>
 
 #include "meas_reader.h"
 #include "meas_func.h"
+#include "serial_machine.h"
 
-// Number defining infinite operation
-constexpr int INFINITE_OP = 9999;
+static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
+static constexpr int INFINITE_OPERATION = 9999;
 
-
-class NPET_comm {
+class NPET_comm : public serial_machine {
 public:
-    static constexpr std::size_t PACKET_SIZE = 13;
-
-private:
-    enum class ReadMode {
-        UntilNewline,
-        FixedBytes
-    };
-
-    std::vector<char> exchange_comm_raw(const std::string &command,
-                                        ReadMode mode = ReadMode::UntilNewline,
-                                        std::size_t fixed_bytes = PACKET_SIZE,
-                                        int timeout = 2000);
-
-    std::string exchange_comm(const std::string &command);
-
-public:
-    // io_context to manage the serial port's I/O operations
-    boost::asio::io_context io;
-    // Serial port object for communication
-    boost::asio::serial_port port;
-    // NPET firmware version
+    // Internal NPET firmware version
     int fw_version{};
-
-    // Constructor
-    NPET_comm() : port(io) {
-    }
-
-    // Open communication with NPET over serial COM port
-    void open_communication(int com_port);
 
     // Check if NPET is responsive
     [[nodiscard]] bool is_responsive(bool = false);
@@ -91,9 +63,9 @@ public:
     ~NPET_comm() {
         SPDLOG_DEBUG("NPET comm destructor called, closing communication and resetting baud rate if possible");
         // Reset to default baud rate
-        if (this->port.is_open()) {
-            if (this->is_responsive()) (void) set_baud_rate(115200); // Ignore return value
-            port.close();
+        if (is_open()) {
+            if (is_responsive()) (void) set_baud_rate(115200); // Ignore return value
+            close_communication();
         }
     } // end of destructor
 };

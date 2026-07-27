@@ -21,7 +21,7 @@
 /// Handles cancellation signal from keyboard input as well as cancellation from other threads.
 /// Inserting a sentinel value (256) into the queue to signal the processor thread to stop.
 void meas_reader::data_receiver() {
-    std::array<unsigned char, NPET_comm::PACKET_SIZE> buf{};
+    std::array<unsigned char, MEASUREMENT_PACKET_SIZE> buf{};
     SPDLOG_DEBUG("Data receiver thread started");
 
     // Read exactly 13-byte packets from the serial port
@@ -30,23 +30,23 @@ void meas_reader::data_receiver() {
         bool completed = false;
 
         // Read exactly 13 bytes - guarantees a complete packet
-        boost::asio::async_read(npet.port, boost::asio::buffer(buf),
+        boost::asio::async_read(npet.get_port(), boost::asio::buffer(buf),
                                 [&](const boost::system::error_code &error, const size_t _) {
                                     ec = error;
                                     completed = true;
                                 });
         // Run until the async read completes
-        npet.io.restart();
+        npet.get_io().restart();
         while (!completed && !stop_sign.load(std::memory_order_relaxed)) {
-            npet.io.poll_one();
+            npet.get_io().poll_one();
         }
         // If the operation was aborted by error or another thread, exit the loop
         if (ec == boost::asio::error::operation_aborted || stop_sign.load(std::memory_order_relaxed)) {
             SPDLOG_DEBUG("Data receiver thread stopping ...");
             // Cancel pending operation BEFORE exiting
-            npet.port.cancel();
+            npet.get_port().cancel();
             // Wait for the cancellation to complete
-            npet.io.run();
+            npet.get_io().run();
             break;
         }
         if (!ec) {
@@ -60,7 +60,7 @@ void meas_reader::data_receiver() {
     } // end of while loop
     stop_sign.store(true, std::memory_order_relaxed);
     SPDLOG_DEBUG("Data receiver thread stopping, ending measurement stream ...");
-    (void)npet.is_responsive(true);
+    (void) npet.is_responsive(true);
     SPDLOG_DEBUG("Data receiver thread stopped");
 } // end of data_receiver_func function
 
@@ -145,7 +145,7 @@ void meas_reader::data_processor(const meas_context &meas_set, const measurement
         } catch (const std::exception &) {
             corrupted.fetch_add(1, std::memory_order_relaxed);
             SPDLOG_WARN("Corrupted measurement received, discarding. Corrupted measurements: {}",
-                         corrupted.load(std::memory_order_relaxed));
+                        corrupted.load(std::memory_order_relaxed));
             continue;
         } {
             // Code block to limit the scope of the lock
@@ -154,7 +154,7 @@ void meas_reader::data_processor(const meas_context &meas_set, const measurement
             for_monitor_q.push(measurement_res);
         }
         // If target meas number is reached, end the measurement sequence. Except in infinite operation.
-        if (meas_counter == meas_set.num_of_meas && meas_counter != INFINITE_OP) {
+        if (meas_counter == meas_set.num_of_meas && meas_counter != INFINITE_OPERATION) {
             SPDLOG_DEBUG("Target number of measurements reached, ending measurement sequence");
             break;
         }
@@ -198,7 +198,8 @@ void meas_reader::data_saver(const int channel_num) {
         SPDLOG_ERROR("failed to open output file: {}", output_file.getloc().name());
         throw std::runtime_error("failed to generate output file");
     }
-    while (true) { // Data saver never exits early, so no data is ever lost
+    while (true) {
+        // Data saver never exits early, so no data is ever lost
         std::optional<measurement> meas = grab_meas_from_processor(for_saver_q);
         if (!meas) break;
         output_file << meas.value().intp << " " << std::fixed << float128_to_string(meas.value().fracp) << std::endl;
@@ -216,7 +217,7 @@ void meas_reader::data_saver(const int channel_num) {
 /// /// Contains the number of measurements, monitor function, a save flag, and channel number
 void meas_reader::main(const meas_context &meas_set) {
     SPDLOG_INFO("Initiating Measurement Reader ...");
-    assert(npet.port.is_open());
+    assert(npet.is_open());
     // Import the time constant from NPET
     const measurement time_const = npet.import_time_constant();
     assert(time_const.meas_num == -1);
@@ -239,7 +240,7 @@ void meas_reader::main(const meas_context &meas_set) {
         SPDLOG_DEBUG("Keyboard watcher (Esc) thread started");
         auto any_alive = [&] {
             return receiver.joinable() || processor.joinable()
-                || saver.joinable()    || monitor.joinable();
+                   || saver.joinable() || monitor.joinable();
         };
         while (any_alive()) {
             if (_kbhit()) {
@@ -257,7 +258,7 @@ void meas_reader::main(const meas_context &meas_set) {
     }); // end of key_watcher thread
     SPDLOG_DEBUG("All threads started");
     // Start the NPET measurements
-    npet.port.write_some(boost::asio::buffer(get_measurement_cmd(meas_set.channel, meas_set.num_of_meas)));
+    npet.write_to_serial(get_measurement_cmd(meas_set.channel, meas_set.num_of_meas));
     SPDLOG_DEBUG("Measurement command sent to NPET, waiting for threads to finish ...");
     // Join the workers first, to allow key_watcher loop to finish
     if (receiver.joinable()) receiver.join();
@@ -273,5 +274,6 @@ void meas_reader::main(const meas_context &meas_set) {
 /// Clean up after the measurement stream.
 void meas_reader::end_sequence() const {
     SPDLOG_INFO("Cleaning up after Measurement Reader ...");
-    if (!npet.is_responsive(true)) SPDLOG_WARN("Failed to immediately terminate measurement stream");
+    if (!npet.is_responsive(true))
+        SPDLOG_WARN("Failed to immediately terminate measurement stream");
 }

@@ -9,7 +9,7 @@ constexpr std::string_view COMM_TIMEOUT_ERR = "Communication timeout: Device did
 /// Open serial communication on the specified COM port.
 /// @param com_port COM port number to open communication on (0-based index).
 /// @param baud_rate Baud rate for the serial communication
-void serial_machine::open_communication(const int com_port, const int baud_rate) {
+void SerialMachine::open_communication(const int com_port, const int baud_rate) {
     SPDLOG_INFO("Opening communication on COM{} ...", com_port + 1);
     assert(com_port > 0);
     // +1 needed for MS Windows correction
@@ -26,18 +26,18 @@ void serial_machine::open_communication(const int com_port, const int baud_rate)
 
 
 ///
-/// Send a command to the device and get the raw response buffer asynchronously.
-/// @param command Command string to send to the device
+/// Asynchronously read a response from the device, aborting if nothing arrives within the timeout.
+/// Does not send anything first; use this directly when a command has already been written,
+/// or a device response is expected unprompted (e.g. the virtual machine's device loop).
 /// @param mode Mode to read the response, either until a newline character or a fixed number of bytes
-/// @param fixed_bytes Number of bytes to read if the mode is set to FixedBytes (default is 13, which is the typical response length for measurement data)
 /// @param timeout Timeout in milliseconds to wait for a response before aborting the operation
-/// @return Shared pointer to the response buffer
-std::vector<char> serial_machine::exchange_comm_raw(const std::string &command,
-                                                    const ReadMode mode,
-                                                    const std::size_t fixed_bytes,
-                                                    const int timeout) {
-    SPDLOG_DEBUG("Exchanging raw command with device: '{}', Mode: {}, Fixed bytes: {}, Timeout: {}ms",
-                 command, mode == ReadMode::UntilNewline ? "UntilNewline" : "FixedBytes", fixed_bytes, timeout);
+/// @param fixed_bytes Number of bytes to read if the mode is set to FixedBytes; unused otherwise
+/// @return Bytes read from the device
+std::vector<char> SerialMachine::read_with_timeout(const ReadMode mode,
+                                                   const int timeout,
+                                                   const std::size_t fixed_bytes) {
+    SPDLOG_DEBUG("Reading with timeout, Mode: {}, Fixed bytes: {}, Timeout: {}ms",
+                 mode == ReadMode::UntilNewline ? "UntilNewline" : "FixedBytes", fixed_bytes, timeout);
     const auto response_buffer = std::make_shared<boost::asio::streambuf>();
     std::optional<boost::system::error_code> timer_result;
     std::optional<boost::system::error_code> read_result;
@@ -46,11 +46,6 @@ std::vector<char> serial_machine::exchange_comm_raw(const std::string &command,
     std::vector<char> buffer;
 
     assert(port.is_open());
-    assert(!command.empty());
-    // Ensure the command ends with \r\n as expected by the device
-    std::string full_command = command;
-    if (!full_command.ends_with("\r\n")) full_command += "\r\n";
-    boost::asio::write(port, boost::asio::buffer(full_command));
     // Run the async read in a separate thread, with timeout
     timer.expires_after(std::chrono::milliseconds(timeout));
     timer.async_wait([&](const boost::system::error_code &ec) { timer_result = ec; });
@@ -75,18 +70,25 @@ std::vector<char> serial_machine::exchange_comm_raw(const std::string &command,
             }
         );
     }
-    // Block until one of the operations completes
+    // Block until ONLY this call's own operations (read + timer) have both completed.
     io.restart();
-    while (io.run_one()) {
-        if (read_result) {
+    while (!read_result || !timer_result) {
+        io.run_one();
+        if (read_result && !timer_result) {
             timer.cancel();
-        } else if (timer_result) {
+        } else if (timer_result && !read_result) {
             port.cancel(); // This stops the pending async_read_until
         }
     } // end of while loop
     if (read_result && *read_result == boost::asio::error::operation_aborted) {
-        SPDLOG_ERROR(COMM_TIMEOUT_ERR, timeout);
-        throw std::runtime_error(std::format(COMM_TIMEOUT_ERR, timeout));
+        // Distinguish a genuine timeout (the timer fired and cancelled the read) from
+        // the read being cancelled for another reason.
+        if (timer_result && !*timer_result) {
+            SPDLOG_ERROR(COMM_TIMEOUT_ERR, timeout);
+            throw CommTimeoutError(std::format(COMM_TIMEOUT_ERR, timeout));
+        }
+        SPDLOG_DEBUG("Read operation was cancelled");
+        throw OperationCancelledError("Read operation was cancelled");
     }
     if (!read_result || *read_result) {
         SPDLOG_ERROR("Read error: {}", read_result ? read_result->message() : "Unknown error");
@@ -105,16 +107,19 @@ std::vector<char> serial_machine::exchange_comm_raw(const std::string &command,
     }
     SPDLOG_DEBUG("Received raw response from device: '{:?}'", std::string(buffer.begin(), buffer.end()));
     return buffer;
-} // end of send_command_raw function
+} // end of read_with_timeout function
 
 
 ///
 /// Send a command to the device and get the response as a string.
 /// @param command Command string to send to the device
 /// @return Device response string
-std::string serial_machine::exchange_comm(const std::string &command) {
+std::string SerialMachine::exchange_comm(const std::string &command) {
+    assert(port.is_open());
+    assert(!command.empty());
     SPDLOG_DEBUG("Exchanging processed command with device: '{}'", command);
-    std::vector<char> buffer = exchange_comm_raw(command);
+    write_to_serial(command);
+    std::vector<char> buffer = read_with_timeout();
     // Convert the buffer to a string
     std::string response(buffer.begin(), buffer.end());
     // Remove trailing \n and \r
@@ -128,23 +133,38 @@ std::string serial_machine::exchange_comm(const std::string &command) {
 
 ///
 /// Send a simple command over serial connection, does NOT await response.
+/// Makes sure the command is correctly terminated.
 /// @param command Command string to send to the device
-void serial_machine::write_to_serial(const std::string &command) {
+void SerialMachine::write_to_serial(const std::string &command) {
     assert(port.is_open());
     SPDLOG_DEBUG("Writing to serial: {}", command);
-    port.write_some(boost::asio::buffer(command));
+    std::string full_command = command;
+    if (!full_command.ends_with("\r\n")) full_command += "\r\n";
+    boost::asio::write(port, boost::asio::buffer(full_command));
+}
+
+
+///
+/// Send raw bytes over the serial connection as-is, without appending a line terminator.
+/// Use this for binary payloads (e.g. measurement packets), where appending "\r\n" would
+/// corrupt the data and desync the byte stream for the reader on the other end.
+/// @param data Raw bytes to send to the device
+void SerialMachine::write_raw_to_serial(const std::span<const std::uint8_t> data) {
+    assert(port.is_open());
+    boost::asio::write(port, boost::asio::buffer(data.data(), data.size()));
 }
 
 
 ///
 /// Read whatever is currently available on the serial port, up to max_bytes.
+/// This is a blocking call!
 /// @param max_bytes Maximum number of bytes to read in this call
 /// @return Bytes read, converted to a string
-std::string serial_machine::read_from_serial(const std::size_t max_bytes) {
+std::string SerialMachine::read_from_serial(const std::size_t max_bytes) {
     assert(port.is_open());
     std::vector<char> buffer(max_bytes);
     const std::size_t bytes_read = port.read_some(boost::asio::buffer(buffer));
-    std::string response(buffer.begin(), buffer.begin() + bytes_read);
+    std::string response(buffer.data(), bytes_read);
     SPDLOG_DEBUG("Read from serial: '{:?}'", response);
     return response;
 }

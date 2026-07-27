@@ -131,7 +131,7 @@ std::string get_measurement_cmd(const int channel, const int num_of_meas) {
     const std::string meas_letter = channel == 1 ? "e" : "h";
     const std::string cmd = meas_letter + std::to_string(num_of_meas);
     SPDLOG_DEBUG("Measurement command: {}", cmd);
-    return cmd + "\r\n";
+    return cmd;
 } // end of get_measurement_command function
 
 

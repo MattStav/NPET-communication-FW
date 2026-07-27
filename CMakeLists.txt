@@ -85,6 +85,8 @@ add_custom_target(git_tag_header
 
 # List of framework source files
 file(GLOB_RECURSE NPET_FRAMEWORK_FILES "src/framework/*.cpp")
+# List of virtual machine source files
+file(GLOB_RECURSE NPET_VM_FILES "src/virtual_machine/*.cpp")
 # List of CLI source files
 file(GLOB_RECURSE NPET_CLI_FILES "src/cli/*.cpp")
 
@@ -128,8 +130,8 @@ target_compile_definitions(NPET_comm_FW_lib PRIVATE PYBIND11_ENABLED)
 # Compile source code into CLI executable
 add_executable(NPET_comm_FW_CLI
         ${NPET_CLI_FILES}
+        ${NPET_VM_FILES}
         src/main.cpp
-        src/virtual_machine/virtual_machine.cpp
 )
 target_link_libraries(NPET_comm_FW_CLI PRIVATE
         NPET_comm_FW_framework

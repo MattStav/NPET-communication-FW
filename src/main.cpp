@@ -10,7 +10,7 @@
 #include "framework/logging.h"
 #include "cli/NPET_comm_CLI.h"
 #include "cli/cli.h"
-#include "virtual_machine/virtual_machine.h"
+#include "virtual_machine/vm_main.h"
 
 #include <CLI/CLI.hpp>
 #include <spdlog/async.h>
@@ -209,7 +209,13 @@ int main(const int argc, char **argv) {
     const auto run = app.add_subcommand("run", "Run the app [default]");
     const auto manual = app.add_subcommand("manual", "Show manual");
     const auto reset = app.add_subcommand("reset", "Reset the NPET");
-    const auto virtual_machine = app.add_subcommand("virtual_machine", "Run virtual machine NPET");
+    const auto vm = app.add_subcommand("virtual", "Run virtual machine NPET which can be used to test the FW");
+    vm->set_help_flag("-h,--help", "Show help for the virtual command");
+    int vm_ch1_frequency = 100;
+    int vm_com_port{};
+    vm->add_option("-f,--frequency", vm_ch1_frequency, "Data measurement frequency [Hz] on channel 1");
+    vm->add_option("--com-port", vm_com_port, "COM port number the virtual device connects to")
+            ->required();
     const auto data_processor = app.add_subcommand(
         "dp", "Run the NPET data processor, which needs to be installed separately");
     const auto license = app.add_subcommand("license", "Show license information");
@@ -217,7 +223,7 @@ int main(const int argc, char **argv) {
     int exit_code = 1;
     if (*manual) exit_code = print_manual();
     else if (*reset) exit_code = reset_NPET();
-    else if (*virtual_machine) exit_code = launch_vm();
+    else if (*vm) exit_code = launch_vm(vm_com_port, vm_ch1_frequency);
     else if (*data_processor) exit_code = launch_data_processor();
     else if (*license) exit_code = print_license_information();
     else if (*run || app.get_subcommands().empty()) {

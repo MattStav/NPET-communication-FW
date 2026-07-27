@@ -119,7 +119,7 @@ bool NPET_comm::set_baud_rate(const int new_baud_rate) {
     SPDLOG_DEBUG("Cancelling pending operations");
     get_port().cancel();
     // THIS FUNCTION CANNOT USE SEND_COMMAND FROM THIS MODULE!!!
-    const std::string cmd = "w" + std::to_string(new_baud_rate) + "\r\n";
+    const std::string cmd = "w" + std::to_string(new_baud_rate);
     write_to_serial(cmd);
     // Read response to clear the buffer
     read_from_serial();
@@ -201,11 +201,8 @@ measurement NPET_comm::read_single_measurement(const int channel) {
         SPDLOG_ERROR(DATA_FORMAT_ERR);
         throw std::runtime_error(DATA_FORMAT_ERR.data());
     }
-    vec = exchange_comm_raw(
-        get_measurement_cmd(channel, 1),
-        ReadMode::FixedBytes,
-        MEASUREMENT_PACKET_SIZE,
-        5000);
+    write_to_serial(get_measurement_cmd(channel, 1));
+    vec = read_with_timeout(ReadMode::FixedBytes, 5000, MEASUREMENT_PACKET_SIZE);
     SPDLOG_DEBUG("Single measurement received");  // Logging the data is pointless as it's unformatted
     // Transform the binary response into a measurement array
     std::transform(vec.begin(), vec.begin() + MEASUREMENT_PACKET_SIZE, arr.begin(),

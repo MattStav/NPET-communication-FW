@@ -9,7 +9,7 @@
 static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
 static constexpr int INFINITE_OPERATION = 9999;
 
-class NPET_comm : public serial_machine {
+class NPET_comm : public SerialMachine {
 public:
     // Internal NPET firmware version
     int fw_version{};

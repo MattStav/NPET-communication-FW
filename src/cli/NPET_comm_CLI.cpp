@@ -199,7 +199,7 @@ void NPET_comm_CLI::detect_FW_ver_CLI() {
     safe_exec([&] { detect_FW_ver(); }, "detect_FW_ver");
     if (fw_version == 1) cli::echo("Detected the original NPET firmware.");
     else if (fw_version == 2) cli::echo("Detected the FW revision for NPET with analogue devices component.");
-    else if (fw_version == 3) cli::echo("Detected offline NPET", fg::yellow);
+    else if (fw_version == 3) cli::echo("Detected Virtual NPET", fg::yellow);
     else {
         SPDLOG_ERROR(FW_UNKNOWN);
         throw std::invalid_argument(FW_UNKNOWN.data());

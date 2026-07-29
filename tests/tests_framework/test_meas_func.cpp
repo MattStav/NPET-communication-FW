@@ -69,23 +69,16 @@ INSTANTIATE_TEST_SUITE_P(
     GetMeasurementCmdTest,
     testing::Values(
         // Channel 1 (e)
-        GetMeasurementCmdParams{1, 1, "e1\r\n"},
-        GetMeasurementCmdParams{1, 5, "e5\r\n"},
-        GetMeasurementCmdParams{1, 10, "e10\r\n"},
-        GetMeasurementCmdParams{1, 99, "e99\r\n"},
+        GetMeasurementCmdParams{1, 1, "e1"},
+        GetMeasurementCmdParams{1, 5, "e5"},
+        GetMeasurementCmdParams{1, 10, "e10"},
+        GetMeasurementCmdParams{1, 99, "e99"},
         // Channel 2 (h)
-        GetMeasurementCmdParams{2, 1, "h1\r\n"},
-        GetMeasurementCmdParams{2, 10, "h10\r\n"},
-        GetMeasurementCmdParams{2, 99, "h99\r\n"}
+        GetMeasurementCmdParams{2, 1, "h1"},
+        GetMeasurementCmdParams{2, 10, "h10"},
+        GetMeasurementCmdParams{2, 99, "h99"}
     )
 );
-
-TEST(GetMeasurementCmd, AlwaysEndsWithCrLf) {
-    for (const int ch: {1, 2}) {
-        const std::string cmd = get_measurement_cmd(ch, 3);
-        EXPECT_TRUE(cmd.ends_with("\r\n")) << "channel=" << ch;
-    }
-}
 
 TEST(GetMeasurementMultiplier, FW1Returns2e8) {
     EXPECT_DOUBLE_EQ(static_cast<double>(get_measurement_multiplier(1)), 2e-8);

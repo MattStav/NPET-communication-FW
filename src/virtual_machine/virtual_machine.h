@@ -1,5 +1,7 @@
 #ifndef NPET_COMM_FW_VM_H
 #define NPET_COMM_FW_VM_H
+#include <chrono>
+
 #include "meas_func.h"
 #include "serial_machine.h"
 
@@ -16,14 +18,20 @@ class VirtualMachine : public SerialMachine {
     // The time when vm was started
     const std::chrono::time_point<std::chrono::high_resolution_clock> start_time =
             std::chrono::high_resolution_clock::now();
+    // Fixed per-launch timing offset (tens of us, in seconds), simulating a device's inherent, constant clock skew
+    const __float128 timing_offset = random_offset();
 
-    std::string get_run_time() const;
+    [[nodiscard]] static __float128 random_offset();
+
+    [[nodiscard]] std::string get_run_time() const;
 
     std::string get_response(const std::string &command);
 
     void change_baud_rate(int new_baud_rate);
 
-    void send_measurements(const std::string &num_str, int sleep_ms);
+    void send_measurements(const std::string &num_str, std::chrono::microseconds period);
+
+    void listen_for_stop_command(bool &stop_requested);
 
 public:
     explicit VirtualMachine(const int ch1_frequency) : ch1_frequency(ch1_frequency) {

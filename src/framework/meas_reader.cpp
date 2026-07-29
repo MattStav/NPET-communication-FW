@@ -141,7 +141,7 @@ void meas_reader::data_processor(const meas_context &meas_set, const measurement
         measurement measurement_res;
         meas_counter++;
         try {
-            measurement_res = process_measurement(*measurement_res_raw, multiplier, time_const);
+            measurement_res = decode_measurement_set(*measurement_res_raw, multiplier, time_const);
         } catch (const std::exception &) {
             corrupted.fetch_add(1, std::memory_order_relaxed);
             SPDLOG_WARN("Corrupted measurement received, discarding. Corrupted measurements: {}",

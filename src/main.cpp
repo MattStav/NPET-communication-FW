@@ -213,7 +213,8 @@ int main(const int argc, char **argv) {
     vm->set_help_flag("-h,--help", "Show help for the virtual command");
     int vm_ch1_frequency = 100;
     int vm_com_port{};
-    vm->add_option("-f,--frequency", vm_ch1_frequency, "Data measurement frequency [Hz] on channel 1");
+    vm->add_option("-f,--frequency", vm_ch1_frequency, "Data measurement frequency [Hz] on channel 1")
+            ->check(CLI::Range(1, 2500));
     vm->add_option("--com-port", vm_com_port, "COM port number the virtual device connects to")
             ->required();
     const auto data_processor = app.add_subcommand(

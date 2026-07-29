@@ -109,7 +109,7 @@ class ProcessMeasurementInvalidHeader : public testing::TestWithParam<ProcessMea
 
 TEST_P(ProcessMeasurementInvalidHeader, Throws) {
     EXPECT_THROW(
-        process_measurement(GetParam().input, 1e-8),
+        decode_measurement_set(GetParam().input, 1e-8),
         std::invalid_argument
     );
 }
@@ -139,31 +139,31 @@ TEST(ProcessMeasurement, InvalidChecksumThrows) {
     {
         auto arr = make_zero_packet(0);
         arr[12] ^= 0xFF;
-        EXPECT_THROW(process_measurement(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
     }
     // Corrupt by flipping one bit
     {
         auto arr = make_zero_packet(0);
         arr[12] ^= 0x01;
-        EXPECT_THROW(process_measurement(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
     }
     // Corrupt by incrementing
     {
         auto arr = make_zero_packet(0);
         arr[12] += 1;
-        EXPECT_THROW(process_measurement(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
     }
     // Corrupt by zeroing
     {
         auto arr = make_zero_packet(0);
         arr[12] = 0x00;
-        EXPECT_THROW(process_measurement(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
     }
     // Corrupt by setting to max
     {
         auto arr = make_zero_packet(0);
         arr[12] = 0xFF;
-        EXPECT_THROW(process_measurement(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
     }
 }
 
@@ -172,7 +172,7 @@ class ProcessMeasurementMeasNum : public testing::TestWithParam<MeasNumParams> {
 
 TEST_P(ProcessMeasurementMeasNum, ExtractedFromByte2) {
     const auto arr = make_zero_packet(GetParam().meas_num);
-    const measurement result = process_measurement(arr, 1e-8);
+    const measurement result = decode_measurement_set(arr, 1e-8);
     EXPECT_EQ(result.meas_num, GetParam().meas_num);
 }
 
@@ -190,7 +190,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST(ProcessMeasurement, ZeroDataPacketGivesZeroMeasurement) {
     const auto arr = make_zero_packet(1);
-    const measurement result = process_measurement(arr, static_cast<__float128>(1e-8));
+    const measurement result = decode_measurement_set(arr, static_cast<__float128>(1e-8));
     EXPECT_EQ(result.intp, 0);
     EXPECT_NEAR(static_cast<double>(result.fracp), 0.0, 1e-12);
 }
@@ -201,7 +201,7 @@ class ProcessMeasurementTimeConstant : public testing::TestWithParam<TimeConstan
 TEST_P(ProcessMeasurementTimeConstant, AppliedToZeroPacket) {
     const auto &p = GetParam();
     auto arr = make_zero_packet(1);
-    const measurement result = process_measurement(arr, 1e-8, p.time_const);
+    const measurement result = decode_measurement_set(arr, 1e-8, p.time_const);
     EXPECT_EQ(result.intp, p.expected_intp);
     EXPECT_NEAR(static_cast<double>(result.fracp), p.expected_fracp, 1e-15);
 }
@@ -230,9 +230,111 @@ TEST(ProcessMeasurement, MultiplierFW1VsFW2DiffersForNonZeroPacket) {
     arr[12] = xor_checksum(arr);
     const __float128 mult1 = get_measurement_multiplier(1);
     const __float128 mult2 = get_measurement_multiplier(2);
-    const measurement r1 = process_measurement(arr, mult1);
-    const measurement r2 = process_measurement(arr, mult2);
+    const measurement r1 = decode_measurement_set(arr, mult1);
+    const measurement r2 = decode_measurement_set(arr, mult2);
     EXPECT_NE(r1.fracp, r2.fracp);
+}
+
+class EncodeDecodeRoundTripTest : public testing::TestWithParam<EncodeDecodeRoundTripParams> {
+};
+
+TEST_P(EncodeDecodeRoundTripTest, DecodesBackToRequestedTime) {
+    const auto &p = GetParam();
+    const auto bytes = encode_measurement_set(p.meas_num, p.seconds, p.fracp, p.multiplier);
+    const measurement result = decode_measurement_set(bytes, p.multiplier);
+    EXPECT_EQ(result.meas_num, p.meas_num);
+    const double expected_total = static_cast<double>(p.seconds) + static_cast<double>(p.fracp);
+    const double actual_total = static_cast<double>(result.intp) + static_cast<double>(result.fracp);
+    // The wire format's finest step is ~152.588 fs (1e-8 / 2^16 s); allow a bit of slack for rounding at both
+    // encode and decode. Comparing the combined total (rather than intp/fracp separately) sidesteps cases where
+    // the requested time sits within one tick of a whole-second boundary and legitimately rounds the other way.
+    EXPECT_NEAR(actual_total, expected_total, 2e-13);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    EncodeDecodeRoundTripTests,
+    EncodeDecodeRoundTripTest,
+    testing::Values(
+        // Zero time
+        EncodeDecodeRoundTripParams{1, 0, static_cast<__float128>(0.0), static_cast<__float128>(1e-8)},
+        // Fractional seconds at various points
+        EncodeDecodeRoundTripParams{1, 0, static_cast<__float128>(0.5), static_cast<__float128>(1e-8)},
+        // Sub-LSB input: finer than the format can represent, must round to the nearest tick, not throw or drift
+        EncodeDecodeRoundTripParams{1, 0, static_cast<__float128>(1e-15), static_cast<__float128>(1e-8)},
+        // Fractional part right at the top of its range, next to a whole-second boundary
+        EncodeDecodeRoundTripParams{1, 0, static_cast<__float128>(0.999999999999999), static_cast<__float128>(1e-8)},
+        // Non-zero seconds with an arbitrary femtosecond-precision fraction
+        EncodeDecodeRoundTripParams{5, 5, static_cast<__float128>(0.123456789012345), static_cast<__float128>(1e-8)},
+        EncodeDecodeRoundTripParams{42, 1000000, static_cast<__float128>(0.999999999999999), static_cast<__float128>(1e-8)},
+        // Different meas_num values
+        EncodeDecodeRoundTripParams{0, 10, static_cast<__float128>(0.0), static_cast<__float128>(1e-8)},
+        EncodeDecodeRoundTripParams{255, 10, static_cast<__float128>(0.0), static_cast<__float128>(1e-8)},
+        // FW1 multiplier (2e-8) rather than FW2/3's default
+        EncodeDecodeRoundTripParams{1, 100, static_cast<__float128>(0.25), static_cast<__float128>(2e-8)},
+        EncodeDecodeRoundTripParams{1, 0, static_cast<__float128>(0.0), static_cast<__float128>(2e-8)}
+    )
+);
+
+TEST(EncodeMeasurementSet, ZeroTimeMatchesKnownZeroPacket) {
+    // encode_measurement_set(_, 0, 0, _) should land exactly on the fine field's zero point (4194303 = 0x3FFFFF,
+    // little-endian across bytes 9..11), which is the same magic packet make_zero_packet() builds by hand above.
+    const auto bytes = encode_measurement_set(1, 0, static_cast<__float128>(0.0), static_cast<__float128>(1e-8));
+    EXPECT_EQ(bytes, make_zero_packet(1));
+}
+
+TEST(EncodeMeasurementSet, PreservesWholeSecondsAwayFromBoundary) {
+    const auto bytes = encode_measurement_set(1, 5, static_cast<__float128>(0.5), static_cast<__float128>(1e-8)); // 5.5 s
+    const measurement result = decode_measurement_set(bytes, static_cast<__float128>(1e-8));
+    EXPECT_EQ(result.intp, 5);
+    EXPECT_NEAR(static_cast<double>(result.fracp), 0.5, 2e-13);
+}
+
+TEST(EncodeMeasurementSet, HeaderBytesAreFixed) {
+    const auto bytes = encode_measurement_set(3, 42, static_cast<__float128>(0.0), static_cast<__float128>(1e-8));
+    EXPECT_EQ(bytes[0], 1);
+    EXPECT_EQ(bytes[1], 11);
+}
+
+TEST(EncodeMeasurementSet, ChecksumIsValid) {
+    const auto bytes = encode_measurement_set(7, 12345, static_cast<__float128>(0.67890123456789), static_cast<__float128>(1e-8));
+    EXPECT_EQ(xor_checksum(bytes), bytes[12]);
+}
+
+TEST(EncodeMeasurementSet, MeasNumStoredInByteTwo) {
+    for (const uint8_t n : {0, 1, 42, 200, 255}) {
+        const auto bytes = encode_measurement_set(n, 0, static_cast<__float128>(0.0), static_cast<__float128>(1e-8));
+        EXPECT_EQ(bytes[2], n);
+    }
+}
+
+class EncodeInvalidInputTest : public testing::TestWithParam<EncodeInvalidInputParams> {
+};
+
+TEST_P(EncodeInvalidInputTest, ThrowsInvalidArgument) {
+    const auto &p = GetParam();
+    EXPECT_THROW(
+        encode_measurement_set(0, p.seconds, p.fracp, static_cast<__float128>(1e-8)),
+        std::invalid_argument
+    );
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    EncodeInvalidInputTests,
+    EncodeInvalidInputTest,
+    testing::Values(
+        EncodeInvalidInputParams{-1, static_cast<__float128>(0.0)}, // negative seconds
+        EncodeInvalidInputParams{0, static_cast<__float128>(-0.5)}, // negative fracp
+        EncodeInvalidInputParams{0, static_cast<__float128>(1.0)}, // fracp must be < 1
+        EncodeInvalidInputParams{0, static_cast<__float128>(5.0)}
+    )
+);
+
+TEST(EncodeMeasurementSet, TimeTooLargeThrowsOutOfRange) {
+    // Comfortably past the ~2.81e6 s representable ceiling for multiplier = 1e-8 (2^48 - 1 combined ticks)
+    EXPECT_THROW(
+        encode_measurement_set(0, 3000000, static_cast<__float128>(0.0), static_cast<__float128>(1e-8)),
+        std::out_of_range
+    );
 }
 
 class Float128ToStringTest : public testing::TestWithParam<Float128ToStringParams> {

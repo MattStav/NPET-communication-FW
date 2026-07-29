@@ -61,5 +61,17 @@ struct Float128ToStringParams {
     std::string expected;
 };
 
+struct EncodeDecodeRoundTripParams {
+    uint8_t meas_num;
+    int seconds;
+    __float128 fracp;
+    __float128 multiplier;
+};
+
+struct EncodeInvalidInputParams {
+    int seconds;
+    __float128 fracp;
+};
+
 
 #endif //TEST_XOR_CHECKSUM_H

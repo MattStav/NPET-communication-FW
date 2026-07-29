@@ -207,7 +207,7 @@ measurement NPET_comm::read_single_measurement(const int channel) {
     // Transform the binary response into a measurement array
     std::transform(vec.begin(), vec.begin() + MEASUREMENT_PACKET_SIZE, arr.begin(),
                    [](const char c) { return static_cast<uint8_t>(c); });
-    return process_measurement(arr, get_measurement_multiplier(fw_version));
+    return decode_measurement_set(arr, get_measurement_multiplier(fw_version));
 } // end of read_single_measurement function
 
 

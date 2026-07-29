@@ -81,7 +81,7 @@ uint8_t xor_checksum(const std::array<std::uint8_t, 13> &set_to_check) {
 /// The data received from NPET has 13 bytes, but the first two bytes are not used in the computation.
 /// @param multiplier Multiplier depending on NPET FW version
 /// @param time_const Time correction constant, defaults to empty const
-measurement process_measurement(
+measurement decode_measurement_set(
     const std::array<std::uint8_t, 13> measurement_set,
     const __float128 &multiplier,
     const measurement &time_const
@@ -120,6 +120,67 @@ measurement process_measurement(
     );
     return result;
 } // end of compute_time_of_arrival function
+
+
+///
+/// Encode a target arrival time into the raw 13-byte format decoded by decode_measurement_set.
+/// This is the inverse of decode_measurement_set (when called with the default, zero time_const): the coarse,
+/// medium and fine fields are chosen so decoding the returned bytes reproduces the requested time as closely as
+/// the wire format allows. Its finest representable step is 1e-8 / 2^16 s (~152.588 fs), fixed regardless of
+/// multiplier, so femtosecond-precision input is rounded to the nearest representable tick - anything finer than
+/// that is lost to quantization, the same way it would be on a real device.
+/// seconds/fracp mirror measurement::intp/fracp exactly, so a decoded measurement's fields can be passed straight
+/// back in to reproduce (as closely as the format allows) the bytes it came from.
+/// @param meas_num Measurement number to embed in byte 2 (becomes measurement::meas_num on decode)
+/// @param seconds Whole-second part of the target arrival time, must be non-negative
+/// @param fracp Fractional-second part of the target arrival time, in [0, 1)
+/// @param multiplier Multiplier depending on NPET FW version; must match what decode_measurement_set is later called with
+/// @return A 13-byte measurement set, checksum included, that decodes back to approximately the requested time
+std::array<std::uint8_t, 13> encode_measurement_set(
+    const std::uint8_t meas_num,
+    const int seconds,
+    const __float128 &fracp,
+    const __float128 &multiplier
+) {
+    constexpr long long FINE_ZERO_POINT = 4'194'303LL; // -2^22 + 1, undoes the offset decode_measurement_set applies
+    constexpr long long MAX_24_BIT = 0xFFFFFF;
+    constexpr long long MAX_COMBINED = (1LL << 48) - 1; // coarse (24 bits) and medium (24 bits) packed together
+    if (seconds < 0) throw std::invalid_argument("seconds must be non-negative");
+    if (fracp < 0 || fracp >= 1) throw std::invalid_argument("fracp must be in [0, 1)");
+    // The fine term's LSB: 1e-8 / 2^16 seconds, always - decode_measurement_set never scales it by multiplier
+    const __float128 fine_lsb = powq(10, -8) / powq(2, 16);
+    const __float128 target_time = static_cast<__float128>(seconds) + fracp;
+    // Snap to the nearest point on the multiplier-sized grid; this is the coarse+medium fields, packed as one
+    // 48-bit value (coarse holds the top 24 bits, medium the bottom 24), since coarse's LSB is exactly 2^24 * medium's.
+    const long long combined = llroundq(target_time / multiplier);
+    if (combined < 0 || combined > MAX_COMBINED)
+        throw std::out_of_range("Requested time is outside the representable range");
+    const auto coarse = static_cast<std::uint32_t>(combined >> 24);
+    const auto medium = static_cast<std::uint32_t>(combined & MAX_24_BIT);
+    // Whatever the coarse/medium grid couldn't capture is encoded by the fine correction term
+    const __float128 remainder = target_time - static_cast<__float128>(combined) * multiplier;
+    const long long fine_raw = llroundq(remainder / fine_lsb) + FINE_ZERO_POINT;
+    if (fine_raw < 0 || fine_raw > MAX_24_BIT)
+        throw std::out_of_range("Requested time is outside the representable range");
+    // Combine everything together
+    std::array<std::uint8_t, 13> measurement_set{};
+    measurement_set[0] = 1;
+    measurement_set[1] = 11;
+    measurement_set[2] = meas_num;
+    measurement_set[3] = static_cast<std::uint8_t>(coarse);
+    measurement_set[4] = static_cast<std::uint8_t>(coarse >> 8);
+    measurement_set[5] = static_cast<std::uint8_t>(coarse >> 16);
+    measurement_set[6] = static_cast<std::uint8_t>(medium);
+    measurement_set[7] = static_cast<std::uint8_t>(medium >> 8);
+    measurement_set[8] = static_cast<std::uint8_t>(medium >> 16);
+    measurement_set[9] = static_cast<std::uint8_t>(fine_raw);
+    measurement_set[10] = static_cast<std::uint8_t>(fine_raw >> 8);
+    measurement_set[11] = static_cast<std::uint8_t>(fine_raw >> 16);
+    measurement_set[12] = xor_checksum(measurement_set);
+    SPDLOG_DEBUG("Encoded target time {}.{} s into measurement set: {}",
+                 seconds, float128_to_string(fracp), measurement_set);
+    return measurement_set;
+} // end of encode_measurement_set function
 
 
 ///

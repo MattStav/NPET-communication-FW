@@ -75,8 +75,13 @@ struct measurement {
     } // end of operator+= function
 }; // end of correction_holder struct
 
-measurement process_measurement(std::array<std::uint8_t, 13> measurement_set,
+measurement decode_measurement_set(std::array<std::uint8_t, 13> measurement_set,
                                 const __float128 &multiplier,
                                 const measurement &time_const = measurement{-1});
+
+std::array<std::uint8_t, 13> encode_measurement_set(std::uint8_t meas_num,
+                                                     int seconds,
+                                                     const __float128 &fracp,
+                                                     const __float128 &multiplier);
 
 #endif //MEAS_FUNC_H

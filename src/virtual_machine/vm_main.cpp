@@ -18,6 +18,10 @@ int launch_vm(const int com_port, const int ch1_frequency) {
     SPDLOG_INFO("User specified COM{} ...", com_port);
     vm.open_communication(com_port - 1, 115200);
     SPDLOG_INFO("Mock NPET device virtual machine COM port open");
+    using period = std::chrono::high_resolution_clock::period;
+    constexpr double tick_ns = static_cast<double>(period::num) * 1e9 / period::den;
+    SPDLOG_INFO("Mock tick period: {} ns", tick_ns);
+    SPDLOG_INFO("Mock is steady: {}", std::chrono::high_resolution_clock::is_steady);
     vm.device_loop();
     return 0;
 } // end of launch_vm function

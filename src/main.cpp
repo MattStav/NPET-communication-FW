@@ -2,8 +2,6 @@
 #include <string>
 #include <fstream>
 
-#include "manual_data.h"
-#include "license_data.h"
 #include "git_tag.h"
 #include "framework/NPET_comm.h"
 #include "framework/helper_func.h"
@@ -15,121 +13,12 @@
 #include <CLI/CLI.hpp>
 #include <spdlog/async.h>
 #include <spdlog/spdlog.h>
+
+#include "helper_func.h"
 #include "rang.hpp"
 
 
-using namespace rang;
-constexpr std::string_view GITHUB_URL = "https://github.com/MattStav/NPET-communication-FW/blob/master";
-const std::string NPET_COMMAND = "npet-dp --data-path " + (USER_FILES / OUTPUT_DIR_NAME).string();
-const std::string NPET_COMMAND_BACKUP = "py -m NPET_DP --data-path " + (USER_FILES / OUTPUT_DIR_NAME).string();
-const std::vector DP_COMMANDS = {NPET_COMMAND, NPET_COMMAND_BACKUP};
-const std::string MANUAL_URL = std::string(GITHUB_URL) + "/MANUAL.md";
-constexpr std::string_view NO_DATA_ERR = "No results to process yet";
-constexpr std::string_view DP_ERR = "NPET Data Processor ERROR: Command: {}; Code: {}";
 constexpr std::string_view NP_COMM_START_MSG = "NPET communication FW started: ";
-
-
-///
-/// Print the manual into the console.
-/// @return Exit code 0
-int print_manual() {
-    SPDLOG_DEBUG("Manual printing initiated ...");
-    cli::echo("To view the fully formatted latest manual see here:");
-    cli::echo(MANUAL_URL, fg::blue, style::bold);
-    cli::echo("If you cannot access the site, you may also print the unformatted manual into console.");
-    cli::echo("WARNING! The manual is quite long and its format will be broken.", fg::yellow);
-    if (cli::confirm("Confirm to print the manual")) {
-        SPDLOG_DEBUG("Manual printing confirmed, printing manual");
-        std::cout << std::endl; // Empty line
-        cli::echo(manual_text);
-        SPDLOG_DEBUG("Manual printing completed");
-    } else SPDLOG_DEBUG("Manual printing cancelled by user");
-    return 0;
-} // end of print_manual function
-
-
-///
-/// Print the license information into the console.
-int print_license_information() {
-    cli::echo("NPET communication FW License Information:\n\n");
-    cli::echo(license_text);
-    cli::echo(notice_text);
-    cli::echo("\nThird-party software licenses:\n\n");
-    cli::echo(third_party_notices_text);
-    return 0;
-} // end of print_license_information function
-
-
-///
-/// Reset NPET into default settings.
-/// @return Exit code 0
-int reset_NPET() {
-    SPDLOG_DEBUG("NPET reset initiated ...");
-    cli::echo("Resetting NPET to default settings", fg::blue, style::bold, true);
-    NPET_comm_CLI npet_comm{};
-    npet_comm.reset_CLI();
-    SPDLOG_DEBUG("NPET reset completed");
-    return 0;
-} // end of reset_NPET function
-
-
-///
-/// Launch the NPET data processor which needs to be installed separately.
-/// The data processor is a Python package that processes the raw measurement data and generates plots and reports.
-int launch_data_processor() {
-    SPDLOG_DEBUG("Launching external data processor ...");
-    int ret_code{};
-    cli::echo("Now launching external data processor");
-    for (const auto &command: DP_COMMANDS) {
-        SPDLOG_DEBUG("Launching command: {}", command);
-        ret_code = system(command.c_str());
-        if (ret_code == 0) {
-            SPDLOG_DEBUG("Data processor terminated");
-            return 0;
-        }
-        if (ret_code == 10) {
-            SPDLOG_ERROR(NO_DATA_ERR);
-            cli::err(NO_DATA_ERR.data());
-            return 1;
-        }
-        SPDLOG_ERROR(DP_ERR, command, ret_code);
-        cli::err(std::format(DP_ERR, command, ret_code));
-    } // end of for loop
-    return 1;
-} // end of launch_data_processor function
-
-
-///
-/// Settings menu
-/// @param npet_comm NPET_comm_CLI object
-void settings_menu(NPET_comm_CLI &npet_comm) {
-    SPDLOG_DEBUG("Settings menu initiated ...");
-    const std::vector<std::string> settings_menu_items = {
-        "Communication baud rate",
-        "Time correction constant",
-        "NPET FW version",
-        "Reset NPET settings",
-        "Return to main menu",
-    };
-    switch (cli::menu("Settings", settings_menu_items)) {
-        case 1: // Change baud rate
-            SPDLOG_DEBUG("Settings menu choice: Baud rate");
-            npet_comm.set_baud_rate_CLI();
-            return;
-        case 2: // Set time constant on NPET
-            SPDLOG_DEBUG("Settings menu choice: Time constant");
-            npet_comm.set_time_constant_CLI();
-            return;
-        case 3: // Set FW version
-            SPDLOG_DEBUG("Settings menu choice: FW version");
-            npet_comm.set_FW_ver_CLI();
-            return;
-        case 4: // Reset NPET
-            SPDLOG_DEBUG("Settings menu choice: Reset NPET");
-            npet_comm.reset_CLI();
-        default: ;
-    } // end of switch
-} // end of menu_settings function
 
 
 ///
@@ -166,7 +55,7 @@ int main_cli() {
         switch (cli::menu("Main menu", main_menu_items)) {
             case 1: // Settings menu
                 SPDLOG_DEBUG("Main menu choice: Settings");
-                settings_menu(npet_comm);
+                settingsMenu(npet_comm);
                 continue;
             case 2: // Generate n pulses
                 SPDLOG_DEBUG("Main menu choice: Generate pulses");
@@ -178,11 +67,11 @@ int main_cli() {
                 continue;
             case 4: // Print the manual
                 SPDLOG_DEBUG("Main menu choice: Print manual");
-                print_manual();
+                printManual();
                 continue;
             case 5: // Launch data processor
                 SPDLOG_DEBUG("Main menu choice: Launch data processor");
-                launch_data_processor();
+                launchDataProcessor();
                 continue;
             case 6: // Quit the program
                 SPDLOG_DEBUG("Main menu choice: Quit program");
@@ -222,11 +111,11 @@ int main(const int argc, char **argv) {
     const auto license = app.add_subcommand("license", "Show license information");
     CLI11_PARSE(app, argc, argv);
     int exit_code = 1;
-    if (*manual) exit_code = print_manual();
-    else if (*reset) exit_code = reset_NPET();
+    if (*manual) exit_code = printManual();
+    else if (*reset) exit_code = resetNpet();
     else if (*vm) exit_code = launch_vm(vm_com_port, vm_ch1_frequency);
-    else if (*data_processor) exit_code = launch_data_processor();
-    else if (*license) exit_code = print_license_information();
+    else if (*data_processor) exit_code = launchDataProcessor();
+    else if (*license) exit_code = printLicenseInformation();
     else if (*run || app.get_subcommands().empty()) {
         exit_code = main_cli();
         cli::confirm_exit();

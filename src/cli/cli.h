@@ -8,31 +8,31 @@ using namespace rang;
 
 ///
 /// Command Line Interface (CLI) class for user interaction.
-class cli {
+class Cli {
 public:
     static void echo(
         const std::string &msg,
-        fg fg_color = fg::gray,
-        style style_type = style::reset,
-        bool end_line = true
+        fg FG_COLOR = fg::gray,
+        style STYLE_TYPE = style::reset,
+        bool END_LINE = true
     );
 
     static void err(const std::string &msg);
 
-    static void show_int(const std::string &msg, const int &value);
+    static void showInt(const std::string &msg, const int &value);
 
-    static void show_str(const std::string &msg, const std::string &value);
+    static void showStr(const std::string &msg, const std::string &value);
 
     [[nodiscard]] static bool confirm(const std::string &question, const bool &default_yes = false);
 
-    static void confirm_exit();
+    static void confirmExit();
 
     [[nodiscard]] static std::string prompt(const std::string &question, const std::string &default_value = "");
 
     [[nodiscard]] static int menu(
         const std::string &title,
         const std::vector<std::string> &options,
-        bool end_line = true
+        bool END_LINE = true
     );
 }; // end of cli class
 
@@ -43,9 +43,9 @@ public:
 /// The progress bar is only redrawn if the percentage change since the last redraw exceeds a specified threshold, which can be set in the constructor.
 class ProgressBar {
 public:
-    explicit ProgressBar(int total, int min_percent_change_to_redraw = 1, int bar_width = 50);
+    explicit ProgressBar(int TOTAL, int MIN_PERCENT_CHANGE_TO_REDRAW = 1, int BAR_WIDTH = 50);
 
-    void update(int progress);
+    void update(int PROGRESS);
 
 private:
     int total_;

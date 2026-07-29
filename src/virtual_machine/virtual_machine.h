@@ -8,36 +8,36 @@
 
 class VirtualMachine : public SerialMachine {
     // Frequency of measurement stream on channel 1
-    int ch1_frequency{};
+    int ch1_frequency_{};
     // The time constant currently saved in NPET
-    std::string time_const{};
+    std::string time_const_;
     // The measurement counter
-    uint8_t measurement_counter = 0;
+    uint8_t measurement_counter_ = 0;
     // Flag denoting whether NPET_FW valid measurement format is set
-    bool correct_meas_format_set = false;
+    bool correct_meas_format_set_ = false;
     // The time when vm was started
-    const std::chrono::time_point<std::chrono::high_resolution_clock> start_time =
+    const std::chrono::time_point<std::chrono::high_resolution_clock> START_TIME =
             std::chrono::high_resolution_clock::now();
     // Fixed per-launch timing offset (tens of us, in seconds), simulating a device's inherent, constant clock skew
-    const __float128 timing_offset = random_offset();
+    const __float128 TIMING_OFFSET = randomOffset();
 
-    [[nodiscard]] static __float128 random_offset();
+    [[nodiscard]] static __float128 randomOffset();
 
-    [[nodiscard]] std::string get_run_time() const;
+    [[nodiscard]] std::string getRunTime() const;
 
-    std::string get_response(const std::string &command);
+    std::string getResponse(const std::string &command);
 
-    void change_baud_rate(int new_baud_rate);
+    void changeBaudRate(int NEW_BAUD_RATE);
 
-    void send_measurements(const std::string &num_str, std::chrono::microseconds period);
+    void sendMeasurements(const std::string &num_str, std::chrono::microseconds PERIOD);
 
-    void listen_for_stop_command(bool &stop_requested);
+    void listenForStopCommand(bool &stop_requested);
 
 public:
-    explicit VirtualMachine(const int ch1_frequency) : ch1_frequency(ch1_frequency) {
+    explicit VirtualMachine(const int CH1_FREQUENCY) : ch1_frequency_(CH1_FREQUENCY) {
     }
 
-    void device_loop();
+    void deviceLoop();
 };
 
 

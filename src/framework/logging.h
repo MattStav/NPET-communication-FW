@@ -3,8 +3,8 @@
 
 #include <filesystem>
 
-std::filesystem::path get_log_path();
+std::filesystem::path getLogPath();
 
-void init_logging();
+void initLogging();
 
 #endif // LOGGING_H

@@ -13,7 +13,7 @@ struct XorChecksumParams {
 };
 
 struct GetMeasurementCmdParams {
-    int channel;
+    Channel channel;
     int num;
     std::string expected;
 };
@@ -34,15 +34,15 @@ struct ProcessMeasurementInvalidHeaderParams {
 // Setting byte[9]=0xFF, byte[10]=0xFF, byte[11]=0x3F makes the fractional
 // term equal exactly 0 (cancels the built-in -2^22+1 bias in the formula).
 // With byte[3..8]=0 this gives measured_value = 0.
-static std::array<uint8_t, 13> make_zero_packet(const uint8_t meas_num = 0) {
-    std::array<uint8_t, 13> arr = {1, 11, meas_num, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0x3F, 0};
-    arr[12] = xor_checksum(arr);
+static std::array<uint8_t, 13> makeZeroPacket(const uint8_t MEAS_NUM = 0) {
+    std::array<uint8_t, 13> arr = {1, 11, MEAS_NUM, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0x3F, 0};
+    arr.at(12) = xorChecksum(arr);
     return arr;
 }
 
-static std::array<uint8_t, 13> set_header(const uint8_t b0, const uint8_t b1) {
-    std::array<uint8_t, 13> arr = {b0, b1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0x3F, 0};
-    arr[12] = xor_checksum(arr);
+static std::array<uint8_t, 13> setHeader(const uint8_t B0, const uint8_t B1) {
+    std::array<uint8_t, 13> arr = {B0, B1, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0x3F, 0};
+    arr.at(12) = xorChecksum(arr);
     return arr;
 }
 
@@ -51,9 +51,9 @@ struct MeasNumParams {
 };
 
 struct TimeConstantParams {
-    measurement time_const;
-    int         expected_intp;
-    double      expected_fracp;
+    Measurement time_const;
+    int         expected_intp{};
+    double      expected_fracp{};
 };
 
 struct Float128ToStringParams {

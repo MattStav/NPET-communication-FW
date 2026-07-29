@@ -20,53 +20,56 @@ public:
 
 class SerialMachine {
     // io_context to manage the serial port's I/O operations
-    boost::asio::io_context io;
+    boost::asio::io_context io_;
     // Serial port object for communication
-    boost::asio::serial_port port;
+    boost::asio::serial_port port_;
 
 public:
     // Constructor
-    SerialMachine() : port(io) {
+    SerialMachine() : port_(io_) {
     }
 
     // Open communication over serial COM port
-    void open_communication(int com_port, int baud_rate);
+    void openCommunication(int COM_PORT, int BAUD_RATE);
 
-    [[nodiscard]] boost::asio::io_context &get_io() {
-        return io;
+    [[nodiscard]] boost::asio::io_context &getIO() {
+        return io_;
     }
 
-    [[nodiscard]] boost::asio::serial_port &get_port() {
-        return port;
+    [[nodiscard]] boost::asio::serial_port &getPort() {
+        return port_;
     }
 
-    void write_to_serial(const std::string &command);
+    void writeToSerial(const std::string &command);
 
-    [[nodiscard]] bool is_open() const {
-        return port.is_open();
+    [[nodiscard]] bool isOpen() const {
+        return port_.is_open();
     }
 
-    void close_communication() {
-        if (port.is_open()) {
-            port.close();
+    void closeCommunication() {
+        if (port_.is_open()) {
+            port_.close();
         }
     }
 
 protected:
-    enum class ReadMode {
-        UntilNewline,
-        FixedBytes
+    /**
+     * @brief Read mode for the read_with_timeout function.
+     */
+    enum class ReadMode : std::uint8_t {
+        UNTIL_NEWLINE,
+        FIXED_BYTES,
     };
 
-    std::string exchange_comm(const std::string &command);
+    std::string exchangeComm(const std::string &command);
 
-    std::vector<char> read_with_timeout(ReadMode mode = ReadMode::UntilNewline,
-                                        int timeout = 2000,
-                                        std::size_t fixed_bytes = 1);
+    std::vector<char> readWithTimeout(ReadMode MODE = ReadMode::UNTIL_NEWLINE,
+                                        int TIMEOUT = 2000,
+                                        std::size_t FIXED_BYTES = 1);
 
-    void write_raw_to_serial(std::span<const std::uint8_t> data);
+    void writeRawToSerial(std::span<const std::uint8_t> DATA);
 
-    std::string read_from_serial(std::size_t max_bytes = 128);
+    std::string readFromSerial(std::size_t MAX_BYTES = 128);
 };
 
 

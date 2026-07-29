@@ -12,12 +12,12 @@
 class LoggingTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        spdlog::init_thread_pool(8192, 1); // create thread pool before init_logging
+        spdlog::init_thread_pool(8192, 1); // create thread pool before initLogging
     }
 
     void TearDown() override {
-        if (const auto logger = spdlog::get("Logger")) {
-            logger->flush();
+        if (const auto LOGGER = spdlog::get("Logger")) {
+            LOGGER->flush();
         }
         spdlog::drop("Logger");
         spdlog::shutdown(); // tears down thread pool cleanly
@@ -25,68 +25,68 @@ protected:
 };
 
 TEST(GetLogPathTest, IsAbsolutePath) {
-    EXPECT_TRUE(get_log_path().is_absolute());
+    EXPECT_TRUE(getLogPath().is_absolute());
 }
 
 TEST(GetLogPathTest, HasLogExtension) {
-    EXPECT_EQ(get_log_path().extension(), ".log");
+    EXPECT_EQ(getLogPath().extension(), ".log");
 }
 
 TEST(GetLogPathTest, IsUnderAppdata) {
     const char *appdata = std::getenv("APPDATA");
-    EXPECT_NE(get_log_path().string().find(appdata), std::string::npos);
+    EXPECT_NE(getLogPath().string().find(appdata), std::string::npos);
 }
 
 TEST(GetLogPathTest, IsUnderNPETLogsDirectory) {
-    const auto path = get_log_path();
-    const auto parent = path.parent_path();
-    EXPECT_EQ(parent.filename(), "FW_logs");
-    EXPECT_EQ(parent.parent_path(), USER_FILES);
+    const auto PATH = getLogPath();
+    const auto PARENT = PATH.parent_path();
+    EXPECT_EQ(PARENT.filename(), "FW_logs");
+    EXPECT_EQ(PARENT.parent_path(), USER_FILES);
 }
 
 TEST(GetLogPathTest, FilenameMatchesDatetimeFormat) {
-    const auto filename = get_log_path().stem().string();
-    const std::regex datetime_pattern(R"(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})");
-    EXPECT_TRUE(std::regex_match(filename, datetime_pattern));
+    const auto FILENAME = getLogPath().stem().string();
+    const std::regex DATETIME_PATTERN(R"(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})");
+    EXPECT_TRUE(std::regex_match(FILENAME, DATETIME_PATTERN));
 }
 
 TEST(GetLogPathTest, ReturnsSamePathOnRepeatedCalls) {
     // Static path must not change between calls
-    EXPECT_EQ(get_log_path(), get_log_path());
+    EXPECT_EQ(getLogPath(), getLogPath());
 }
 
 TEST(GetLogPathTest, ParentDirectoryExists) {
-    EXPECT_TRUE(std::filesystem::exists(get_log_path().parent_path()));
+    EXPECT_TRUE(std::filesystem::exists(getLogPath().parent_path()));
 }
 
 TEST_F(LoggingTest, CreatesLoggerNamedLogger) {
-    init_logging();
+    initLogging();
     EXPECT_NE(spdlog::get("Logger"), nullptr);
 }
 
 TEST_F(LoggingTest, LoggerLevelIsDebug) {
-    init_logging();
+    initLogging();
     EXPECT_EQ(spdlog::get("Logger")->level(), spdlog::level::debug);
 }
 
 TEST_F(LoggingTest, SecondCallDoesNotReinitialise) {
-    init_logging();
-    const auto first = spdlog::get("Logger");
-    init_logging(); // should be a no-op
-    const auto second = spdlog::get("Logger");
-    EXPECT_EQ(first, second);
+    initLogging();
+    const auto FIRST = spdlog::get("Logger");
+    initLogging(); // should be a no-op
+    const auto SECOND = spdlog::get("Logger");
+    EXPECT_EQ(FIRST, SECOND);
 }
 
 TEST_F(LoggingTest, CreatesLogFile) {
-    init_logging();
+    initLogging();
     // Give the async logger a moment to flush
     spdlog::get("Logger")->flush();
-    EXPECT_TRUE(std::filesystem::exists(get_log_path()));
+    EXPECT_TRUE(std::filesystem::exists(getLogPath()));
 }
 
 TEST_F(LoggingTest, LogFileIsUnderExpectedDirectory) {
-    init_logging();
-    const auto log_path = get_log_path();
-    EXPECT_EQ(log_path.parent_path().filename(), "FW_logs");
-    EXPECT_EQ(log_path.parent_path().parent_path(), USER_FILES);
+    initLogging();
+    const auto LOG_PATH = getLogPath();
+    EXPECT_EQ(LOG_PATH.parent_path().filename(), "FW_logs");
+    EXPECT_EQ(LOG_PATH.parent_path().parent_path(), USER_FILES);
 }

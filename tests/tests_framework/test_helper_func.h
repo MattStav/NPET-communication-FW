@@ -7,14 +7,14 @@
 
 class MockSetupDiApi : public ISetupDiApi {
 public:
-    MOCK_METHOD(HDEVINFO, GetClassDevs,
+    MOCK_METHOD(HDEVINFO, getClassDevs,
                 (const GUID*, PCTSTR, HWND, DWORD), (override));
-    MOCK_METHOD(BOOL, EnumDeviceInfo,
+    MOCK_METHOD(BOOL, enumDeviceInfo,
                 (HDEVINFO, DWORD, PSP_DEVINFO_DATA), (override));
-    MOCK_METHOD(BOOL, GetDeviceRegistryProperty,
+    MOCK_METHOD(BOOL, getDeviceRegistryProperty,
                 (HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD),
                 (override));
-    MOCK_METHOD(BOOL, DestroyDeviceInfoList, (HDEVINFO), (override));
+    MOCK_METHOD(BOOL, destroyDeviceInfoList, (HDEVINFO), (override));
 };
 
 class GetComPortsTest : public ::testing::Test {
@@ -22,15 +22,15 @@ protected:
     MockSetupDiApi api;
 
 
-    void ExpectCleanup();
+    void expectCleanup();
 };
 
 struct MockWinApi : WinApiAdapter {
-    MOCK_METHOD(BOOL, AllocateAndInitializeSid,
+    MOCK_METHOD(BOOL, allocateAndInitializeSid,
                 (PSID_IDENTIFIER_AUTHORITY, BYTE, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, PSID*),
                 (override));
-    MOCK_METHOD(BOOL, CheckTokenMembership, (HANDLE, PSID, PBOOL), (override));
-    MOCK_METHOD(PVOID, FreeSid, (PSID), (override));
+    MOCK_METHOD(BOOL, checkTokenMembership, (HANDLE, PSID, PBOOL), (override));
+    MOCK_METHOD(PVOID, freeSid, (PSID), (override));
 };
 
 class IsUserAdminTest : public ::testing::Test {
@@ -39,12 +39,12 @@ protected:
 
     void SetUp() override;
 
-    void ExpectAllocSucceeds();
+    void expectAllocSucceeds();
 
-    // Convenience: make CheckTokenMembership set *IsMember and return TRUE.
-    void ExpectCheckToken(BOOL memberValue, BOOL returnValue = TRUE);
+    // Convenience: make checkTokenMembership set *IsMember and return TRUE.
+    void expectCheckToken(BOOL memberValue, BOOL returnValue = TRUE);
 
-    void ExpectFreeSid();
+    void expectFreeSid();
 };
 
 #endif //TEST_HELPER_FUNC_H

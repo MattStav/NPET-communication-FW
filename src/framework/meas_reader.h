@@ -7,15 +7,15 @@
 
 #include "meas_func.h"
 
-class meas_reader;
+class MeasReader;
 
-struct meas_context {
+struct MeasContext {
     int num_of_meas{5};
-    std::function<void(meas_reader &, const meas_context &, const measurement &)> monitor_fn = nullptr;
+    std::function<void(MeasReader &, const MeasContext &, const Measurement &)> monitor_fn = nullptr;
     bool save{false};
     int channel{1};
 
-    [[nodiscard]] inline std::string to_string() const {
+    [[nodiscard]] std::string toString() const {
         return "meas_context{num_of_meas: " + std::to_string(num_of_meas) +
                ", monitor_fn: " + (monitor_fn ? "set" : "null") +
                ", save: " + (save ? "true" : "false") +
@@ -26,31 +26,31 @@ struct meas_context {
 // Forward declaration instead of #include "NPET_comm.h"
 class NPET_comm;
 
-class meas_reader {
-    NPET_comm &npet; // a reference to the NPET communicator instance
-    std::mutex mtx_data; // a mutex to handle queue accesses
+class MeasReader {
+    NPET_comm &npet_; // a reference to the NPET communicator instance
+    std::mutex mtx_data_; // a mutex to handle queue accesses
     // Queue to store the data received from NPET
-    std::deque<std::uint8_t> received_data_q;
+    std::deque<std::uint8_t> received_data_q_;
     // Queue to store processed measurements
-    std::queue<measurement> for_saver_q;
+    std::queue<Measurement> for_saver_q_;
 
-    void data_receiver();
+    void dataReceiver();
 
-    std::optional<std::array<uint8_t, 13> > grab_meas_from_receiver();
+    std::optional<std::array<uint8_t, 13> > grabMeasFromReceiver();
 
-    void data_processor(const meas_context &meas_set, const measurement &time_const);
+    void dataProcessor(const MeasContext &meas_set, const Measurement &time_const);
 
-    void data_saver(int channel_num);
+    void dataSaver(int CHANNEL_NUM);
 
     // Main function to read measurements from NPET, this is called in the constructor and starts the measurement sequence
-    void main(const meas_context &meas_set);
+    void main(const MeasContext &meas_set);
 
     // End the measurement sequence, this is necessary, otherwise the program will crash
-    void end_sequence() const;
+    void endSequence() const;
 
 public:
     // Queue to store processed measurements
-    std::queue<measurement> for_monitor_q;
+    std::queue<Measurement> for_monitor_q;
     // Signal to stop the measurement
     std::atomic<bool> stop_sign{false};
     // Signal that user aborted the measurement
@@ -58,30 +58,35 @@ public:
     // Number of corrupted measurements
     std::atomic<int> corrupted;
 
-    std::optional<measurement> grab_meas_from_processor(std::queue<measurement> &q);
+    std::optional<Measurement> grabMeasFromProcessor(std::queue<Measurement> &q);
 
-    size_t receiver_q_size() {
-        std::lock_guard lock(mtx_data);
-        return received_data_q.size();
+    size_t receiverQSize() {
+        std::scoped_lock const LOCK(mtx_data_);
+        return received_data_q_.size();
     }
 
-    size_t saver_q_size() {
-        std::lock_guard lock(mtx_data);
-        return for_saver_q.size();
+    size_t saverQSize() {
+        std::scoped_lock const LOCK(mtx_data_);
+        return for_saver_q_.size();
     }
 
-    size_t monitor_q_size() {
-        std::lock_guard lock(mtx_data);
+    size_t monitorQSize() {
+        std::scoped_lock const LOCK(mtx_data_);
         return for_monitor_q.size();
     }
 
     // Constructor to begin reading measurements, this class does nothing else
-    explicit meas_reader(NPET_comm &npet, const meas_context &meas_set) : npet(npet) {
+    explicit MeasReader(NPET_comm &npet, const MeasContext &meas_set) : npet_(npet) {
         main(meas_set);
     }
 
+    MeasReader(const MeasReader &) = delete;
+    MeasReader &operator=(const MeasReader &) = delete;
+    MeasReader(MeasReader &&) = delete;
+    MeasReader &operator=(MeasReader &&) = delete;
+
     // Destructor to end the measurement sequence
-    ~meas_reader() { end_sequence(); }
+    ~MeasReader() { endSequence(); }
 }; // end of measurement_reader class
 
 

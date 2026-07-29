@@ -16,7 +16,7 @@ class XorChecksumTest : public testing::TestWithParam<XorChecksumParams> {
 };
 
 TEST_P(XorChecksumTest, ReturnsExpectedResult) {
-    EXPECT_EQ(xor_checksum(GetParam().input), GetParam().expected);
+    EXPECT_EQ(xorChecksum(GetParam().input), GetParam().expected);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -61,7 +61,7 @@ class GetMeasurementCmdTest : public testing::TestWithParam<GetMeasurementCmdPar
 
 TEST_P(GetMeasurementCmdTest, ReturnsExpectedResult) {
     const auto &p = GetParam();
-    EXPECT_EQ(get_measurement_cmd(p.channel, p.num), p.expected);
+    EXPECT_EQ(getMeasurementCmd(p.channel, p.num), p.expected);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -69,38 +69,38 @@ INSTANTIATE_TEST_SUITE_P(
     GetMeasurementCmdTest,
     testing::Values(
         // Channel 1 (e)
-        GetMeasurementCmdParams{1, 1, "e1"},
-        GetMeasurementCmdParams{1, 5, "e5"},
-        GetMeasurementCmdParams{1, 10, "e10"},
-        GetMeasurementCmdParams{1, 99, "e99"},
+        GetMeasurementCmdParams{Channel::CH1, 1, "e1"},
+        GetMeasurementCmdParams{Channel::CH1, 5, "e5"},
+        GetMeasurementCmdParams{Channel::CH1, 10, "e10"},
+        GetMeasurementCmdParams{Channel::CH1, 99, "e99"},
         // Channel 2 (h)
-        GetMeasurementCmdParams{2, 1, "h1"},
-        GetMeasurementCmdParams{2, 10, "h10"},
-        GetMeasurementCmdParams{2, 99, "h99"}
+        GetMeasurementCmdParams{Channel::CH2, 1, "h1"},
+        GetMeasurementCmdParams{Channel::CH2, 10, "h10"},
+        GetMeasurementCmdParams{Channel::CH2, 99, "h99"}
     )
 );
 
 TEST(GetMeasurementMultiplier, FW1Returns2e8) {
-    EXPECT_DOUBLE_EQ(static_cast<double>(get_measurement_multiplier(1)), 2e-8);
+    EXPECT_DOUBLE_EQ(static_cast<double>(getMeasurementMultiplier(1)), 2e-8);
 }
 
 TEST(GetMeasurementMultiplier, FW2Returns1e8) {
-    EXPECT_DOUBLE_EQ(static_cast<double>(get_measurement_multiplier(2)), 1e-8);
+    EXPECT_DOUBLE_EQ(static_cast<double>(getMeasurementMultiplier(2)), 1e-8);
 }
 
 TEST(GetMeasurementMultiplier, FW3Returns1e8) {
-    EXPECT_DOUBLE_EQ(static_cast<double>(get_measurement_multiplier(3)), 1e-8);
+    EXPECT_DOUBLE_EQ(static_cast<double>(getMeasurementMultiplier(3)), 1e-8);
 }
 
 TEST(GetMeasurementMultiplier, FW2AndFW3AreEqual) {
-    EXPECT_DOUBLE_EQ(static_cast<double>(get_measurement_multiplier(2)),
-                     static_cast<double>(get_measurement_multiplier(3)));
+    EXPECT_DOUBLE_EQ(static_cast<double>(getMeasurementMultiplier(2)),
+                     static_cast<double>(getMeasurementMultiplier(3)));
 }
 
 TEST(GetMeasurementMultiplier, UnknownVersionThrows) {
-    EXPECT_THROW(get_measurement_multiplier(0), std::invalid_argument);
-    EXPECT_THROW(get_measurement_multiplier(4), std::invalid_argument);
-    EXPECT_THROW(get_measurement_multiplier(-1), std::invalid_argument);
+    EXPECT_THROW(getMeasurementMultiplier(0), std::invalid_argument);
+    EXPECT_THROW(getMeasurementMultiplier(4), std::invalid_argument);
+    EXPECT_THROW(getMeasurementMultiplier(-1), std::invalid_argument);
 }
 
 
@@ -109,7 +109,7 @@ class ProcessMeasurementInvalidHeader : public testing::TestWithParam<ProcessMea
 
 TEST_P(ProcessMeasurementInvalidHeader, Throws) {
     EXPECT_THROW(
-        decode_measurement_set(GetParam().input, 1e-8),
+        decodeMeasurementSet(GetParam().input, 1e-8),
         std::invalid_argument
     );
 }
@@ -119,51 +119,51 @@ INSTANTIATE_TEST_SUITE_P(
     ProcessMeasurementInvalidHeader,
     testing::Values(
         // Invalid first byte
-        ProcessMeasurementInvalidHeaderParams{set_header(0, 11)},
-        ProcessMeasurementInvalidHeaderParams{set_header(2, 11)},
-        ProcessMeasurementInvalidHeaderParams{set_header(255, 11)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(0, 11)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(2, 11)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(255, 11)},
         // Invalid second byte
-        ProcessMeasurementInvalidHeaderParams{set_header(1, 0)},
-        ProcessMeasurementInvalidHeaderParams{set_header(1, 10)},
-        ProcessMeasurementInvalidHeaderParams{set_header(1, 12)},
-        ProcessMeasurementInvalidHeaderParams{set_header(1, 255)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(1, 0)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(1, 10)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(1, 12)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(1, 255)},
         // Both bytes invalid
-        ProcessMeasurementInvalidHeaderParams{set_header(0, 0)},
-        ProcessMeasurementInvalidHeaderParams{set_header(2, 10)},
-        ProcessMeasurementInvalidHeaderParams{set_header(255, 255)}
+        ProcessMeasurementInvalidHeaderParams{setHeader(0, 0)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(2, 10)},
+        ProcessMeasurementInvalidHeaderParams{setHeader(255, 255)}
     )
 );
 
 TEST(ProcessMeasurement, InvalidChecksumThrows) {
     // Corrupt by flipping all bits
     {
-        auto arr = make_zero_packet(0);
+        auto arr = makeZeroPacket(0);
         arr[12] ^= 0xFF;
-        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decodeMeasurementSet(arr, 1e-8), std::runtime_error);
     }
     // Corrupt by flipping one bit
     {
-        auto arr = make_zero_packet(0);
+        auto arr = makeZeroPacket(0);
         arr[12] ^= 0x01;
-        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decodeMeasurementSet(arr, 1e-8), std::runtime_error);
     }
     // Corrupt by incrementing
     {
-        auto arr = make_zero_packet(0);
+        auto arr = makeZeroPacket(0);
         arr[12] += 1;
-        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decodeMeasurementSet(arr, 1e-8), std::runtime_error);
     }
     // Corrupt by zeroing
     {
-        auto arr = make_zero_packet(0);
+        auto arr = makeZeroPacket(0);
         arr[12] = 0x00;
-        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decodeMeasurementSet(arr, 1e-8), std::runtime_error);
     }
     // Corrupt by setting to max
     {
-        auto arr = make_zero_packet(0);
+        auto arr = makeZeroPacket(0);
         arr[12] = 0xFF;
-        EXPECT_THROW(decode_measurement_set(arr, 1e-8), std::runtime_error);
+        EXPECT_THROW(decodeMeasurementSet(arr, 1e-8), std::runtime_error);
     }
 }
 
@@ -171,8 +171,8 @@ class ProcessMeasurementMeasNum : public testing::TestWithParam<MeasNumParams> {
 };
 
 TEST_P(ProcessMeasurementMeasNum, ExtractedFromByte2) {
-    const auto arr = make_zero_packet(GetParam().meas_num);
-    const measurement result = decode_measurement_set(arr, 1e-8);
+    const auto arr = makeZeroPacket(GetParam().meas_num);
+    const Measurement result = decodeMeasurementSet(arr, 1e-8);
     EXPECT_EQ(result.meas_num, GetParam().meas_num);
 }
 
@@ -189,8 +189,8 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 TEST(ProcessMeasurement, ZeroDataPacketGivesZeroMeasurement) {
-    const auto arr = make_zero_packet(1);
-    const measurement result = decode_measurement_set(arr, static_cast<__float128>(1e-8));
+    const auto arr = makeZeroPacket(1);
+    const Measurement result = decodeMeasurementSet(arr, static_cast<__float128>(1e-8));
     EXPECT_EQ(result.intp, 0);
     EXPECT_NEAR(static_cast<double>(result.fracp), 0.0, 1e-12);
 }
@@ -200,8 +200,8 @@ class ProcessMeasurementTimeConstant : public testing::TestWithParam<TimeConstan
 
 TEST_P(ProcessMeasurementTimeConstant, AppliedToZeroPacket) {
     const auto &p = GetParam();
-    auto arr = make_zero_packet(1);
-    const measurement result = decode_measurement_set(arr, 1e-8, p.time_const);
+    auto arr = makeZeroPacket(1);
+    const Measurement result = decodeMeasurementSet(arr, 1e-8, p.time_const);
     EXPECT_EQ(result.intp, p.expected_intp);
     EXPECT_NEAR(static_cast<double>(result.fracp), p.expected_fracp, 1e-15);
 }
@@ -227,11 +227,11 @@ INSTANTIATE_TEST_SUITE_P(
 TEST(ProcessMeasurement, MultiplierFW1VsFW2DiffersForNonZeroPacket) {
     // Use a packet with a non-zero mid-word to make multiplier matter
     std::array<uint8_t, 13> arr = {1, 11, 1, 0, 0, 0, 100, 0, 0, 0xFF, 0xFF, 0x3F, 0};
-    arr[12] = xor_checksum(arr);
-    const __float128 mult1 = get_measurement_multiplier(1);
-    const __float128 mult2 = get_measurement_multiplier(2);
-    const measurement r1 = decode_measurement_set(arr, mult1);
-    const measurement r2 = decode_measurement_set(arr, mult2);
+    arr[12] = xorChecksum(arr);
+    const __float128 mult1 = getMeasurementMultiplier(1);
+    const __float128 mult2 = getMeasurementMultiplier(2);
+    const Measurement r1 = decodeMeasurementSet(arr, mult1);
+    const Measurement r2 = decodeMeasurementSet(arr, mult2);
     EXPECT_NE(r1.fracp, r2.fracp);
 }
 
@@ -240,8 +240,9 @@ class EncodeDecodeRoundTripTest : public testing::TestWithParam<EncodeDecodeRoun
 
 TEST_P(EncodeDecodeRoundTripTest, DecodesBackToRequestedTime) {
     const auto &p = GetParam();
-    const auto bytes = encode_measurement_set(p.meas_num, p.seconds, p.fracp, p.multiplier);
-    const measurement result = decode_measurement_set(bytes, p.multiplier);
+    const Measurement INPUT{.meas_num = p.meas_num, .intp = p.seconds, .fracp = p.fracp};
+    const auto bytes = encodeMeasurementSet(INPUT, p.multiplier);
+    const Measurement result = decodeMeasurementSet(bytes, p.multiplier);
     EXPECT_EQ(result.meas_num, p.meas_num);
     const double expected_total = static_cast<double>(p.seconds) + static_cast<double>(p.fracp);
     const double actual_total = static_cast<double>(result.intp) + static_cast<double>(result.fracp);
@@ -276,33 +277,38 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 TEST(EncodeMeasurementSet, ZeroTimeMatchesKnownZeroPacket) {
-    // encode_measurement_set(_, 0, 0, _) should land exactly on the fine field's zero point (4194303 = 0x3FFFFF,
-    // little-endian across bytes 9..11), which is the same magic packet make_zero_packet() builds by hand above.
-    const auto bytes = encode_measurement_set(1, 0, static_cast<__float128>(0.0), static_cast<__float128>(1e-8));
-    EXPECT_EQ(bytes, make_zero_packet(1));
+    // encodeMeasurementSet(_, 0, 0, _) should land exactly on the fine field's zero point (4194303 = 0x3FFFFF,
+    // little-endian across bytes 9..11), which is the same magic packet makeZeroPacket() builds by hand above.
+    const Measurement INPUT{.meas_num = 1, .intp = 0, .fracp = static_cast<__float128>(0.0)};
+    const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
+    EXPECT_EQ(bytes, makeZeroPacket(1));
 }
 
 TEST(EncodeMeasurementSet, PreservesWholeSecondsAwayFromBoundary) {
-    const auto bytes = encode_measurement_set(1, 5, static_cast<__float128>(0.5), static_cast<__float128>(1e-8)); // 5.5 s
-    const measurement result = decode_measurement_set(bytes, static_cast<__float128>(1e-8));
+    const Measurement INPUT{.meas_num = 1, .intp = 5, .fracp = static_cast<__float128>(0.5)}; // 5.5 s
+    const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
+    const Measurement result = decodeMeasurementSet(bytes, static_cast<__float128>(1e-8));
     EXPECT_EQ(result.intp, 5);
     EXPECT_NEAR(static_cast<double>(result.fracp), 0.5, 2e-13);
 }
 
 TEST(EncodeMeasurementSet, HeaderBytesAreFixed) {
-    const auto bytes = encode_measurement_set(3, 42, static_cast<__float128>(0.0), static_cast<__float128>(1e-8));
+    const Measurement INPUT{.meas_num = 3, .intp = 42, .fracp = static_cast<__float128>(0.0)};
+    const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
     EXPECT_EQ(bytes[0], 1);
     EXPECT_EQ(bytes[1], 11);
 }
 
 TEST(EncodeMeasurementSet, ChecksumIsValid) {
-    const auto bytes = encode_measurement_set(7, 12345, static_cast<__float128>(0.67890123456789), static_cast<__float128>(1e-8));
-    EXPECT_EQ(xor_checksum(bytes), bytes[12]);
+    const Measurement INPUT{.meas_num = 7, .intp = 12345, .fracp = static_cast<__float128>(0.67890123456789)};
+    const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
+    EXPECT_EQ(xorChecksum(bytes), bytes[12]);
 }
 
 TEST(EncodeMeasurementSet, MeasNumStoredInByteTwo) {
     for (const uint8_t n : {0, 1, 42, 200, 255}) {
-        const auto bytes = encode_measurement_set(n, 0, static_cast<__float128>(0.0), static_cast<__float128>(1e-8));
+        const Measurement INPUT{.meas_num = n, .intp = 0, .fracp = static_cast<__float128>(0.0)};
+        const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
         EXPECT_EQ(bytes[2], n);
     }
 }
@@ -312,8 +318,9 @@ class EncodeInvalidInputTest : public testing::TestWithParam<EncodeInvalidInputP
 
 TEST_P(EncodeInvalidInputTest, ThrowsInvalidArgument) {
     const auto &p = GetParam();
+    const Measurement INPUT{.meas_num = 0, .intp = p.seconds, .fracp = p.fracp};
     EXPECT_THROW(
-        encode_measurement_set(0, p.seconds, p.fracp, static_cast<__float128>(1e-8)),
+        encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8)),
         std::invalid_argument
     );
 }
@@ -331,8 +338,9 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST(EncodeMeasurementSet, TimeTooLargeThrowsOutOfRange) {
     // Comfortably past the ~2.81e6 s representable ceiling for multiplier = 1e-8 (2^48 - 1 combined ticks)
+    const Measurement INPUT{.meas_num = 0, .intp = 3000000, .fracp = static_cast<__float128>(0.0)};
     EXPECT_THROW(
-        encode_measurement_set(0, 3000000, static_cast<__float128>(0.0), static_cast<__float128>(1e-8)),
+        encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8)),
         std::out_of_range
     );
 }
@@ -341,18 +349,18 @@ class Float128ToStringTest : public testing::TestWithParam<Float128ToStringParam
 };
 
 TEST_P(Float128ToStringTest, ReturnsExpectedString) {
-    EXPECT_EQ(float128_to_string(GetParam().input), GetParam().expected);
+    EXPECT_EQ(float128ToString(GetParam().input), GetParam().expected);
 }
 
 TEST_P(Float128ToStringTest, Has15DecimalDigits) {
-    const std::string s = float128_to_string(GetParam().input);
+    const std::string s = float128ToString(GetParam().input);
     const auto dot = s.find('.');
     ASSERT_NE(dot, std::string::npos);
     EXPECT_EQ(s.size() - dot - 1, 15u);
 }
 
 TEST_P(Float128ToStringTest, ContainsDecimalPoint) {
-    EXPECT_NE(float128_to_string(GetParam().input).find('.'), std::string::npos);
+    EXPECT_NE(float128ToString(GetParam().input).find('.'), std::string::npos);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -423,7 +431,7 @@ INSTANTIATE_TEST_SUITE_P(ChannelVariants, FilenameFormatTest, ::testing::Values(
 // The returned path must end with the correct filename pattern
 TEST_P(FilenameFormatTest, FilenameMatchesPattern) {
     const int channel = GetParam();
-    const std::string result = output_file_path(channel, base_dir);
+    const std::string result = outputFilePath(channel, base_dir);
     const std::string fname = basename(result);
     EXPECT_THAT(fname, MatchesRegex(make_pattern(channel)))
             << "Unexpected filename for channel " << channel
@@ -433,7 +441,7 @@ TEST_P(FilenameFormatTest, FilenameMatchesPattern) {
 // The file extension must always be ".out"
 TEST_P(FilenameFormatTest, ExtensionIsOut) {
     const int channel = GetParam();
-    const fs::path result(output_file_path(channel, base_dir));
+    const fs::path result(outputFilePath(channel, base_dir));
     EXPECT_EQ(result.extension().string(), ".out")
         << "Wrong extension for channel " << channel;
 }
@@ -441,7 +449,7 @@ TEST_P(FilenameFormatTest, ExtensionIsOut) {
 // The stem must start with "EPOCH" followed by the channel number
 TEST_P(FilenameFormatTest, StemStartsWithEpochAndChannel) {
     const int channel = GetParam();
-    const fs::path result(output_file_path(channel, base_dir));
+    const fs::path result(outputFilePath(channel, base_dir));
     const std::string stem = result.stem().string(); // e.g. "EPOCH7_20240101_120000"
     const std::string expected_prefix = "EPOCH" + std::to_string(channel) + "_";
     EXPECT_EQ(stem.substr(0, expected_prefix.size()), expected_prefix)
@@ -451,7 +459,7 @@ TEST_P(FilenameFormatTest, StemStartsWithEpochAndChannel) {
 // The timestamp embedded in the stem must be a valid YYYYMMDD_HHMMSS string
 TEST_P(FilenameFormatTest, EmbeddedTimestampIsValid) {
     const int channel = GetParam();
-    const fs::path result(output_file_path(channel, base_dir));
+    const fs::path result(outputFilePath(channel, base_dir));
     const std::string stem = result.stem().string();
     // Strip "EPOCH<channel>_" prefix to isolate the timestamp
     const std::string prefix = "EPOCH" + std::to_string(channel) + "_";
@@ -491,7 +499,7 @@ class DirectoryCreationTest : public OutputFileNameTest {
 TEST_F(DirectoryCreationTest, CreatesDirectoryWhenAbsent) {
     const fs::path output_dir = base_dir / OUTPUT_DIR_NAME;
     ASSERT_FALSE(fs::exists(output_dir)) << "Precondition: dir should not exist yet";
-    output_file_path(1, base_dir);
+    outputFilePath(1, base_dir);
     EXPECT_TRUE(fs::exists(output_dir)) << "Directory was not created";
     EXPECT_TRUE(fs::is_directory(output_dir)) << "Path exists but is not a directory";
 }
@@ -500,14 +508,14 @@ TEST_F(DirectoryCreationTest, CreatesDirectoryWhenAbsent) {
 TEST_F(DirectoryCreationTest, DoesNotFailWhenDirectoryAlreadyExists) {
     fs::create_directories(base_dir);
     ASSERT_TRUE(fs::exists(base_dir));
-    EXPECT_NO_THROW(output_file_path(1, base_dir));
+    EXPECT_NO_THROW(outputFilePath(1, base_dir));
 }
 
 // Multiple successive calls must not recreate / destroy the directory
 TEST_F(DirectoryCreationTest, DirectoryStillExistsAfterMultipleCalls) {
-    output_file_path(1, base_dir);
-    output_file_path(1, base_dir);
-    output_file_path(2, base_dir);
+    outputFilePath(1, base_dir);
+    outputFilePath(1, base_dir);
+    outputFilePath(2, base_dir);
     EXPECT_TRUE(fs::is_directory(base_dir));
 }
 
@@ -519,7 +527,7 @@ TEST_F(DirectoryCreationTest, ExistingFilesInDirectoryArePreserved) {
         f << "keep me";
     }
     ASSERT_TRUE(fs::exists(sentinel));
-    output_file_path(1, base_dir);
+    outputFilePath(1, base_dir);
     EXPECT_TRUE(fs::exists(sentinel)) << "Pre-existing file was removed";
 }
 
@@ -529,20 +537,20 @@ class ReturnValueTest : public OutputFileNameTest {
 
 // Returned path must include the output directory as its parent
 TEST_F(ReturnValueTest, ParentDirectoryMatchesOutputDir) {
-    const fs::path result(output_file_path(1, base_dir));
+    const fs::path result(outputFilePath(1, base_dir));
     EXPECT_EQ(result.parent_path(), base_dir / OUTPUT_DIR_NAME)
         << "Parent path: " << result.parent_path();
 }
 
 // The returned string must be non-empty
 TEST_F(ReturnValueTest, ReturnValueIsNonEmpty) {
-    EXPECT_FALSE(output_file_path(1, base_dir).empty());
+    EXPECT_FALSE(outputFilePath(1, base_dir).empty());
 }
 
 // The returned path must use the native directory separator (i.e., be a
 // well-formed path, not a bare filename)
 TEST_F(ReturnValueTest, ReturnValueContainsDirectorySeparator) {
-    const std::string result = output_file_path(1, base_dir);
+    const std::string result = outputFilePath(1, base_dir);
     const bool has_sep =
             result.find('/') != std::string::npos ||
             result.find('\\') != std::string::npos;
@@ -550,13 +558,13 @@ TEST_F(ReturnValueTest, ReturnValueContainsDirectorySeparator) {
 }
 
 TEST_F(ReturnValueTest, PathContainsExpectedDirectoryAndFilename) {
-    const fs::path result(output_file_path(1, base_dir));
+    const fs::path result(outputFilePath(1, base_dir));
     EXPECT_FALSE(result.filename().empty());
     EXPECT_EQ(result.parent_path().filename(), OUTPUT_DIR_NAME);
 }
 
 TEST_F(ReturnValueTest, DoesNotCreateFile) {
-    const fs::path result(output_file_path(1, base_dir));
+    const fs::path result(outputFilePath(1, base_dir));
 
     EXPECT_FALSE(fs::exists(result));
     EXPECT_TRUE(fs::exists(base_dir));
@@ -569,17 +577,17 @@ class UniquenessTest : public OutputFileNameTest {
 // Two calls with different channels in the same second must return
 // different filenames
 TEST_F(UniquenessTest, DifferentChannelsProduceDifferentNames) {
-    const std::string a = output_file_path(1, base_dir);
-    const std::string b = output_file_path(2, base_dir);
+    const std::string a = outputFilePath(1, base_dir);
+    const std::string b = outputFilePath(2, base_dir);
     EXPECT_NE(a, b);
 }
 
 // Calls separated by at least one second must produce different names
 // for the same channel (timestamp uniqueness)
 TEST_F(UniquenessTest, SameChannelDifferentSecondsProduceDifferentNames) {
-    const std::string first = output_file_path(1, base_dir);
+    const std::string first = outputFilePath(1, base_dir);
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    const std::string second = output_file_path(1, base_dir);
+    const std::string second = outputFilePath(1, base_dir);
     EXPECT_NE(first, second)
         << "Expected different names after 1-second sleep";
 }
@@ -592,7 +600,7 @@ class TimestampProximityTest : public OutputFileNameTest {
 // the time at which the function was called.
 TEST_F(TimestampProximityTest, TimestampIsCloseToCallTime) {
     const std::time_t before = std::time(nullptr);
-    const std::string result = output_file_path(1, base_dir);
+    const std::string result = outputFilePath(1, base_dir);
     const std::time_t after = std::time(nullptr);
     const fs::path p(result);
     const std::string stem = p.stem().string(); // EPOCH0_YYYYMMDD_HHMMSS

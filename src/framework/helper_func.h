@@ -9,60 +9,78 @@
 #include <setupapi.h>
 #include <devguid.h> // HAS to be after windows.h
 
-
-inline const char *appdata = std::getenv("APPDATA");
-// DO NOT CHANGE THIS VALUE; it matches the value used in NPET_DP
-inline const std::filesystem::path USER_FILES = appdata
-    ? std::filesystem::path(appdata) / "NPET"
-    : std::filesystem::path{"NPET"};
+///
+/// Get Path to the directory where user data is to be stored.
+/// Do NOT change the name of the directory, it matches the value used in NPET_DP.
+/// @return Path to the directory where user data should be stored
+inline std::filesystem::path getUserFilesPath() noexcept {
+    try {
+        std::string appdata;
+        if (const DWORD SIZE = GetEnvironmentVariableA("APPDATA", nullptr, 0); SIZE > 0) {
+            appdata.resize(SIZE - 1);
+            GetEnvironmentVariableA("APPDATA", appdata.data(), SIZE);
+        }
+        return !appdata.empty()
+            ? std::filesystem::path(appdata) / "NPET"
+            : std::filesystem::path{"NPET"};
+    } catch (...) {
+        return std::filesystem::path{"NPET"};
+    }
+}
+inline const std::filesystem::path USER_FILES = getUserFilesPath();
 
 
 struct ISetupDiApi {
-    virtual HDEVINFO GetClassDevs(const GUID *classGuid, PCTSTR enumerator,
+    virtual HDEVINFO getClassDevs(const GUID *classGuid, PCTSTR enumerator,
                                   HWND hwndParent, DWORD flags) = 0;
 
-    virtual BOOL EnumDeviceInfo(HDEVINFO devInfo, DWORD index,
+    virtual BOOL enumDeviceInfo(HDEVINFO devInfo, DWORD index,
                                 PSP_DEVINFO_DATA devInfoData) = 0;
 
-    virtual BOOL GetDeviceRegistryProperty(HDEVINFO devInfo,
+    virtual BOOL getDeviceRegistryProperty(HDEVINFO devInfo,
                                            PSP_DEVINFO_DATA devInfoData,
                                            DWORD property, PDWORD propertyRegDataType,
                                            PBYTE propertyBuffer, DWORD propertyBufferSize,
                                            PDWORD requiredSize) = 0;
 
-    virtual BOOL DestroyDeviceInfoList(HDEVINFO devInfo) = 0;
+    virtual BOOL destroyDeviceInfoList(HDEVINFO devInfo) = 0;
 
+    ISetupDiApi() = default;
     virtual ~ISetupDiApi() = default;
+    ISetupDiApi(const ISetupDiApi &) = delete;
+    ISetupDiApi &operator=(const ISetupDiApi &) = delete;
+    ISetupDiApi(ISetupDiApi &&) = delete;
+    ISetupDiApi &operator=(ISetupDiApi &&) = delete;
 };
 
 struct Win32SetupDiApi : ISetupDiApi {
-    HDEVINFO GetClassDevs(const GUID *classGuid, const PCTSTR enumerator,
-                          HWND hwndParent, const DWORD flags) override {
-        return SetupDiGetClassDevs(classGuid, enumerator, hwndParent, flags);
+    HDEVINFO getClassDevs(const GUID *classGuid, const PCTSTR ENUMERATOR,
+                          HWND hwndParent, const DWORD FLAGS) override {
+        return SetupDiGetClassDevs(classGuid, ENUMERATOR, hwndParent, FLAGS);
     }
 
-    BOOL EnumDeviceInfo(const HDEVINFO devInfo, const DWORD index,
+    BOOL enumDeviceInfo(const HDEVINFO DEV_INFO, const DWORD INDEX,
                         PSP_DEVINFO_DATA devInfoData) override {
-        return SetupDiEnumDeviceInfo(devInfo, index, devInfoData);
+        return SetupDiEnumDeviceInfo(DEV_INFO, INDEX, devInfoData);
     }
 
-    BOOL GetDeviceRegistryProperty(const HDEVINFO devInfo, PSP_DEVINFO_DATA devInfoData,
-                                   const DWORD property, PDWORD propertyRegDataType,
-                                   PBYTE propertyBuffer, const DWORD propertyBufferSize,
+    BOOL getDeviceRegistryProperty(const HDEVINFO DEV_INFO, PSP_DEVINFO_DATA devInfoData,
+                                   const DWORD PROPERTY, PDWORD propertyRegDataType,
+                                   PBYTE propertyBuffer, const DWORD PROPERTY_BUFFER_SIZE,
                                    PDWORD requiredSize) override {
-        return SetupDiGetDeviceRegistryProperty(devInfo, devInfoData, property,
+        return SetupDiGetDeviceRegistryProperty(DEV_INFO, devInfoData, PROPERTY,
                                                 propertyRegDataType, propertyBuffer,
-                                                propertyBufferSize, requiredSize);
+                                                PROPERTY_BUFFER_SIZE, requiredSize);
     }
 
-    BOOL DestroyDeviceInfoList(HDEVINFO devInfo) override {
+    BOOL destroyDeviceInfoList(HDEVINFO devInfo) override {
         return SetupDiDestroyDeviceInfoList(devInfo);
     }
 };
 
 
 struct WinApiAdapter {
-    virtual BOOL AllocateAndInitializeSid(
+    virtual BOOL allocateAndInitializeSid(
         PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
         BYTE nSubAuthorityCount,
         DWORD dwSubAuthority0, DWORD dwSubAuthority1,
@@ -71,41 +89,53 @@ struct WinApiAdapter {
         DWORD dwSubAuthority6, DWORD dwSubAuthority7,
         PSID *pSid) = 0;
 
-    virtual BOOL CheckTokenMembership(HANDLE TokenHandle, PSID SidToCheck, PBOOL IsMember) = 0;
+    virtual BOOL checkTokenMembership(HANDLE TokenHandle, PSID SidToCheck, PBOOL IsMember) = 0;
 
-    virtual PVOID FreeSid(PSID pSid) = 0;
+    virtual PVOID freeSid(PSID pSid) = 0;
 
+    WinApiAdapter() = default;
     virtual ~WinApiAdapter() = default;
+    WinApiAdapter(const WinApiAdapter &) = delete;
+    WinApiAdapter &operator=(const WinApiAdapter &) = delete;
+    WinApiAdapter(WinApiAdapter &&) = delete;
+    WinApiAdapter &operator=(WinApiAdapter &&) = delete;
 };
 
 struct RealWinApi : WinApiAdapter {
-    BOOL AllocateAndInitializeSid(
+    BOOL allocateAndInitializeSid(
         PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
-        const BYTE nSubAuthorityCount,
-        const DWORD dwSubAuthority0, const DWORD dwSubAuthority1,
-        const DWORD dwSubAuthority2, const DWORD dwSubAuthority3,
-        const DWORD dwSubAuthority4, const DWORD dwSubAuthority5,
-        const DWORD dwSubAuthority6, const DWORD dwSubAuthority7,
+        const BYTE N_SUB_AUTHORITY_COUNT,
+        const DWORD DW_SUB_AUTHORITY0, const DWORD DW_SUB_AUTHORITY1,
+        const DWORD DW_SUB_AUTHORITY2, const DWORD DW_SUB_AUTHORITY3,
+        const DWORD DW_SUB_AUTHORITY4, const DWORD DW_SUB_AUTHORITY5,
+        const DWORD DW_SUB_AUTHORITY6, const DWORD DW_SUB_AUTHORITY7,
         PSID *pSid) override {
-        return ::AllocateAndInitializeSid(pIdentifierAuthority, nSubAuthorityCount,
-                                          dwSubAuthority0, dwSubAuthority1, dwSubAuthority2, dwSubAuthority3,
-                                          dwSubAuthority4, dwSubAuthority5, dwSubAuthority6, dwSubAuthority7, pSid);
+        return ::AllocateAndInitializeSid(pIdentifierAuthority, N_SUB_AUTHORITY_COUNT,
+                                          DW_SUB_AUTHORITY0, DW_SUB_AUTHORITY1, DW_SUB_AUTHORITY2, DW_SUB_AUTHORITY3,
+                                          DW_SUB_AUTHORITY4, DW_SUB_AUTHORITY5, DW_SUB_AUTHORITY6, DW_SUB_AUTHORITY7, pSid);
     }
 
-    BOOL CheckTokenMembership(HANDLE TokenHandle, const PSID SidToCheck, PBOOL IsMember) override {
-        return ::CheckTokenMembership(TokenHandle, SidToCheck, IsMember);
+    BOOL checkTokenMembership(HANDLE TokenHandle, const PSID SID_TO_CHECK, PBOOL IsMember) override {
+        return ::CheckTokenMembership(TokenHandle, SID_TO_CHECK, IsMember);
     }
 
-    PVOID FreeSid(const PSID pSid) override {
-        return ::FreeSid(pSid);
+    PVOID freeSid(const PSID P_SID) override {
+        return ::FreeSid(P_SID);
     }
 };
 
-inline Win32SetupDiApi g_win32_api;
-inline RealWinApi g_real_win_api;
+inline Win32SetupDiApi &getWin32Api() {
+    static Win32SetupDiApi instance;
+    return instance;
+}
 
-std::vector<std::string> get_com_ports(ISetupDiApi &api = g_win32_api);
+inline RealWinApi &getRealWinApi() {
+    static RealWinApi instance;
+    return instance;
+}
 
-bool is_user_admin(WinApiAdapter &api = g_real_win_api);
+std::vector<std::string> getComPorts(ISetupDiApi &api = getWin32Api());
+
+bool isUserAdmin(WinApiAdapter &api = getRealWinApi());
 
 #endif //HELPER_FUNC_H

@@ -2,7 +2,12 @@
 #define NPET_COMM_FW_VM_MAIN_H
 
 
-int launch_vm(int com_port, int ch1_frequency);
+struct VmConfig {
+    int com_port;
+    int ch1_frequency;
+};
+
+int launchVm(VmConfig CONFIG);
 
 
 #endif //NPET_COMM_FW_VM_MAIN_H

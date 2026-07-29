@@ -5,15 +5,15 @@
 
 
 TEST(MeasurementStruct, DefaultConstruction) {
-    measurement m;
-    EXPECT_EQ(m.meas_num, 0);
-    EXPECT_EQ(m.intp, 0);
-    EXPECT_DOUBLE_EQ((double)m.fracp, 0.0);
+    constexpr Measurement M;
+    EXPECT_EQ(M.meas_num, 0);
+    EXPECT_EQ(M.intp, 0);
+    EXPECT_DOUBLE_EQ(static_cast<double>(M.fracp), 0.0);
 }
 
 TEST(MeasurementStruct, IsEmptyTrueWhenIntAndFracZero) {
-    measurement m{10, 0, 0.0};
-    EXPECT_TRUE(m.is_empty());
+    constexpr Measurement M{.meas_num = 10, .intp = 0, .fracp = 0.0};
+    EXPECT_TRUE(M.isEmpty());
 }
 
 class MeasurementIsEmpty : public testing::TestWithParam<IsEmptyParams> {
@@ -21,8 +21,8 @@ class MeasurementIsEmpty : public testing::TestWithParam<IsEmptyParams> {
 
 TEST_P(MeasurementIsEmpty, IsNeverEmpty) {
     const auto &p = GetParam();
-    measurement m{p.meas_num, p.intp, p.fracp};
-    EXPECT_FALSE(m.is_empty());
+    const Measurement M{.meas_num = p.meas_num, .intp = p.intp, .fracp = p.fracp};
+    EXPECT_FALSE(M.isEmpty());
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -45,14 +45,14 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 TEST(MeasurementStruct, IsValidFalseOnlyForNegTwo) {
-    EXPECT_FALSE((measurement{-2, 0, {}}).is_valid());
+    EXPECT_FALSE((Measurement{-2, 0, {}}).isValid());
 }
 
 TEST(MeasurementStruct, IsValidTrueForAllOtherMeasNums) {
-    EXPECT_TRUE((measurement{0, 0, {}}).is_valid());
-    EXPECT_TRUE((measurement{1, 0, {}}).is_valid());
-    EXPECT_TRUE((measurement{-1, 0, {}}).is_valid());
-    EXPECT_TRUE((measurement{255,0, {}}).is_valid());
+    EXPECT_TRUE((Measurement{0, 0, {}}).isValid());
+    EXPECT_TRUE((Measurement{1, 0, {}}).isValid());
+    EXPECT_TRUE((Measurement{-1, 0, {}}).isValid());
+    EXPECT_TRUE((Measurement{255,0, {}}).isValid());
 }
 
 class MeasurementToString : public testing::TestWithParam<ToStringParams> {
@@ -60,8 +60,8 @@ class MeasurementToString : public testing::TestWithParam<ToStringParams> {
 
 TEST_P(MeasurementToString, ReturnsExpectedString) {
     const auto &p = GetParam();
-    measurement m{0, p.intp, p.fracp};
-    EXPECT_EQ(m.to_string(), p.expected);
+    Measurement const M{.meas_num = 0, .intp = p.intp, .fracp = p.fracp};
+    EXPECT_EQ(M.toString(), p.expected);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -81,7 +81,7 @@ class MeasurementResolve : public testing::TestWithParam<ResolveParams> {
 
 TEST_P(MeasurementResolve, ReturnsExpectedResult) {
     const auto &p = GetParam();
-    measurement m{0, p.intp, p.fracp};
+    Measurement m{.meas_num = 0, .intp = p.intp, .fracp = p.fracp};
     m.resolve();
     EXPECT_EQ(m.intp, p.expected_intp);
     EXPECT_NEAR((double)m.fracp, p.expected_fracp, 1e-15);
@@ -117,8 +117,8 @@ class MeasurementRound : public testing::TestWithParam<RoundParams> {
 
 TEST_P(MeasurementRound, ReturnsExpectedResult) {
     const auto &p = GetParam();
-    const measurement m{0, p.intp, p.fracp};
-    EXPECT_EQ(m.round(), p.expected);
+    const Measurement M{.meas_num = 0, .intp = p.intp, .fracp = p.fracp};
+    EXPECT_EQ(M.round(), p.expected);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -153,27 +153,27 @@ class MeasurementOperatorPlus : public testing::TestWithParam<OperatorPlusParams
 
 TEST_P(MeasurementOperatorPlus, ReturnsExpectedResult) {
     const auto &p = GetParam();
-    const measurement a{0, p.a_intp, p.a_fracp};
-    const measurement b{0, p.b_intp, p.b_fracp};
-    const measurement c = a + b;
-    EXPECT_EQ(c.intp, p.expected_intp);
-    EXPECT_NEAR((double)c.fracp, p.expected_fracp, 1e-15);
+    const Measurement A{.meas_num = 0, .intp = p.a_intp, .fracp = p.a_fracp};
+    const Measurement B{.meas_num = 0, .intp = p.b_intp, .fracp = p.b_fracp};
+    const Measurement C = A + B;
+    EXPECT_EQ(C.intp, p.expected_intp);
+    EXPECT_NEAR((double)C.fracp, p.expected_fracp, 1e-15);
 }
 
 TEST_P(MeasurementOperatorPlus, DoesNotModifyOperands) {
     const auto &p = GetParam();
-    measurement a{0, p.a_intp, p.a_fracp};
-    measurement b{0, p.b_intp, p.b_fracp};
-    [[maybe_unused]] const measurement c = a + b;
-    EXPECT_EQ(a.intp, p.a_intp);
-    EXPECT_EQ(b.intp, p.b_intp);
+    const Measurement A{.meas_num = 0, .intp = p.a_intp, .fracp = p.a_fracp};
+    const Measurement B{.meas_num = 0, .intp = p.b_intp, .fracp = p.b_fracp};
+    [[maybe_unused]] const Measurement C = A + B;
+    EXPECT_EQ(A.intp, p.a_intp);
+    EXPECT_EQ(B.intp, p.b_intp);
 }
 
 TEST_P(MeasurementOperatorPlus, ReturnsExpectedResultAssign) {
     const auto &p = GetParam();
-    measurement a{0, p.a_intp, p.a_fracp};
-    const measurement b{0, p.b_intp, p.b_fracp};
-    a += b;
+    Measurement a{.meas_num = 0, .intp = p.a_intp, .fracp = p.a_fracp};
+    const Measurement B{.meas_num = 0, .intp = p.b_intp, .fracp = p.b_fracp};
+    a += B;
     EXPECT_EQ(a.intp, p.expected_intp);
     EXPECT_NEAR((double)a.fracp, p.expected_fracp, 1e-15);
 }

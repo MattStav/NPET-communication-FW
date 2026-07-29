@@ -1,5 +1,7 @@
 #include "logging.h"
 
+#include <array>
+#include <ctime>
 #include <windows.h>
 
 #include <spdlog/spdlog.h>
@@ -12,43 +14,45 @@
 ///
 /// Get a path to the log directory.
 /// @return Path to where logs are stored, which is in the APPDATA folder under NPET_FW/logs with a filename based on the current datetime.
-std::filesystem::path get_log_path() {
-    static const std::filesystem::path path = []() {
-        char datetime[32];
-        const std::time_t t = std::time(nullptr);
-        std::strftime(datetime, sizeof(datetime), "%Y-%m-%d_%H-%M-%S", std::localtime(&t));
-        auto p = USER_FILES / "FW_logs" / (std::string(datetime) + ".log");
+std::filesystem::path getLogPath() {
+    static const std::filesystem::path PATH = [] {
+        std::array<char, 32> datetime{};
+        const std::time_t T = std::time(nullptr);
+        std::tm tm{};
+        localtime_s(&tm, &T);
+        std::strftime(datetime.data(), datetime.size(), "%Y-%m-%d_%H-%M-%S", &tm);
+        auto p = USER_FILES / "FW_logs" / (std::string(datetime.data()) + ".log");
         std::filesystem::create_directories(p.parent_path());
         return p;
     }();  // immediately invoked lambda
-    return path;
+    return PATH;
 } // end of get_log_path function
 
 
 /// Initialize file logging using spdlog library.
-void init_logging() {
+void initLogging() {
     assert(spdlog::thread_pool() != nullptr && "spdlog thread pool must be initialised before calling init_logging()");
     if (spdlog::get("Logger")) {
         SPDLOG_DEBUG("File logging already initiated");
         return;
     }
-    const std::filesystem::path log_path = get_log_path();
+    const std::filesystem::path LOG_PATH = getLogPath();
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-        log_path.string(),
+        LOG_PATH.string(),
         true
     );
     file_sink->set_pattern("[%H:%M:%S.%e] [Thread: %t] [%l] [%s:%# %!] %v");
     file_sink->set_level(spdlog::level::debug);
-    const auto logger = std::make_shared<spdlog::async_logger>(
+    const auto LOGGER = std::make_shared<spdlog::async_logger>(
         "Logger",
         file_sink,
         spdlog::thread_pool(),
         spdlog::async_overflow_policy::block
     );
-    logger->set_level(spdlog::level::debug);
-    spdlog::set_default_logger(logger);
+    LOGGER->set_level(spdlog::level::debug);
+    spdlog::set_default_logger(LOGGER);
     spdlog::flush_on(spdlog::level::info);
     spdlog::set_level(spdlog::level::debug);
     SPDLOG_DEBUG("Logging successfully initiated ...");
-    SPDLOG_INFO("Logs saved to: {}", log_path.string());
-} // end of init_file_logging function
+    SPDLOG_INFO("Logs saved to: {}", LOG_PATH.string());
+} // end of initLogging function

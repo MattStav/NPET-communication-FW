@@ -4,17 +4,17 @@
 
 
 TEST(MeasContext, DefaultValues) {
-    const meas_context ctx{};
-    EXPECT_EQ(ctx.num_of_meas, 5);
-    EXPECT_EQ(ctx.channel, 1);
-    EXPECT_FALSE(ctx.save);
-    EXPECT_FALSE(ctx.monitor_fn);
+    const MeasContext CTX{};
+    EXPECT_EQ(CTX.num_of_meas, 5);
+    EXPECT_EQ(CTX.channel, 1);
+    EXPECT_FALSE(CTX.save);
+    EXPECT_FALSE(CTX.monitor_fn);
 }
 
 class MeasContextToStringTest : public testing::TestWithParam<MeasContextToStringParams> {};
 
 TEST_P(MeasContextToStringTest, ContainsExpectedSubstring) {
-    EXPECT_NE(GetParam().ctx.to_string().find(GetParam().expected_substring), std::string::npos);
+    EXPECT_NE(GetParam().ctx.toString().find(GetParam().expected_substring), std::string::npos);
 }
 
 INSTANTIATE_TEST_SUITE_P(

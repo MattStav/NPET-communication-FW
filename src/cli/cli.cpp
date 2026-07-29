@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <rang.hpp>
 #include <spdlog/spdlog.h>
@@ -15,22 +16,22 @@ constexpr std::string_view MENU_INVALID_CHOICE = "Invalid choice {}";
 ///
 /// Print a styled message to the console.
 /// @param msg Message to print
-/// @param fg_color Foreground color
-/// @param style_type Style type
-/// @param end_line Whether to end the line after the message
-void cli::echo(const string &msg, const fg fg_color, const style style_type, const bool end_line) {
+/// @param END_LINE Whether to end the line after the message
+/// @param FG_COLOR Foreground color
+/// @param STYLE_TYPE Style type
+void Cli::echo(const string &msg, const fg FG_COLOR, const style STYLE_TYPE, const bool END_LINE) {
     SPDLOG_DEBUG("CLI -> {}", msg);
-    cout << style_type << fg_color << msg << style::reset;
-    end_line ? cout << endl : cout << "";
+    cout << STYLE_TYPE << FG_COLOR << msg << style::reset;
+    END_LINE ? cout << '\n' : cout << "";
 } // end of echo function
 
 
 ///
 /// Print an error message to the console.
 /// @param msg Message to print
-void cli::err(const string &msg) {
+void Cli::err(const string &msg) {
     SPDLOG_ERROR("CLI ERROR -> {}", msg);
-    cout << style::bold << style::reversed << fg::red << msg << " " << style::reset << endl;
+    cout << style::bold << style::reversed << fg::red << msg << " " << style::reset << '\n';
 } // end of echo function
 
 
@@ -38,9 +39,9 @@ void cli::err(const string &msg) {
 /// Show a value in CLI
 /// @param msg Message to print
 /// @param value Value to show
-void cli::show_int(const string &msg, const int &value) {
+void Cli::showInt(const string &msg, const int &value) {
     SPDLOG_DEBUG("CLI SHOW -> {}; Value: {}", msg, value);
-    cout << msg << ": " << style::italic << bg::blue << " " << value << " " << style::reset << endl;
+    cout << msg << ": " << style::italic << bg::blue << " " << value << " " << style::reset << '\n';
 } // end of show_int function
 
 
@@ -48,9 +49,9 @@ void cli::show_int(const string &msg, const int &value) {
 /// Show a value in CLI
 /// @param msg Message to print
 /// @param value Value to show
-void cli::show_str(const string &msg, const string &value) {
+void Cli::showStr(const string &msg, const string &value) {
     SPDLOG_DEBUG("CLI SHOW -> {}; Value: {}", msg, value);
-    cout << msg << ": " << style::italic << bg::blue << " " << value << " " << style::reset << endl;
+    cout << msg << ": " << style::italic << bg::blue << " " << value << " " << style::reset << '\n';
 } // end of show_str function
 
 
@@ -59,17 +60,19 @@ void cli::show_str(const string &msg, const string &value) {
 /// @param question User confirm question
 /// @param default_yes Default to yes if True else False
 /// @return Bool value of user input
-bool cli::confirm(const string &question, const bool &default_yes) {
+bool Cli::confirm(const string &question, const bool &default_yes) {
     SPDLOG_DEBUG("CLI CONFIRM -> {}; default? {}", question, default_yes);
     string answer;
     bool ret = default_yes;
 
-    const string choices = default_yes ? " [Y/n] " : " [y/N] ";
-    cout << fg::cyan << question << fg::reset << choices;
+    const string CHOICES = default_yes ? " [Y/n] " : " [y/N] ";
+    cout << fg::cyan << question << fg::reset << CHOICES;
     getline(cin, answer);
     // Normalize input
     ranges::transform(answer, answer.begin(), ::tolower);
-    if (!answer.empty()) ret = answer == "y" || answer == "yes" || answer == "1";
+    if (!answer.empty()) {
+        ret = answer == "y" || answer == "yes" || answer == "1";
+    }
     SPDLOG_DEBUG("CLI CONFIRM -> User input: {}; interpreted as: {}", answer, ret);
     return ret;
 } // end of confirm function
@@ -77,9 +80,9 @@ bool cli::confirm(const string &question, const bool &default_yes) {
 
 ///
 /// Ask the user to press Enter to exit the program.
-void cli::confirm_exit() {
+void Cli::confirmExit() {
     SPDLOG_DEBUG("CLI CONFIRM EXIT -> Asking user to press Enter to exit the program");
-    cout << "Press " << style::blink << fg::red << "Enter" << style::reset << " to exit the program." << endl;
+    cout << "Press " << style::blink << fg::red << "Enter" << style::reset << " to exit the program." << '\n';
     string dummy;
     getline(cin, dummy);
     SPDLOG_DEBUG("CLI CONFIRM EXIT -> Confirmed");
@@ -91,7 +94,7 @@ void cli::confirm_exit() {
 /// @param question User prompt question
 /// @param default_value Default value if the user input is empty
 /// @return User input or default value
-string cli::prompt(const string &question, const string &default_value) {
+string Cli::prompt(const string &question, const string &default_value) {
     SPDLOG_DEBUG("CLI PROMPT -> {}; default: {}", question, default_value);
     string input;
 
@@ -111,74 +114,77 @@ string cli::prompt(const string &question, const string &default_value) {
 /// List a menu of options and ask the user to select one.
 /// @param title Menu title
 /// @param options Menu options
-/// @param end_line Whether to end the line after the menu
+/// @param END_LINE Whether to end the line after the menu
 /// @return Index of the selected option (1-based). Returns -2 for invalid input.
-int cli::menu(const string &title, const vector<string> &options, const bool end_line) {
+int Cli::menu(const string &title, const vector<string> &options, const bool END_LINE) {
     string user_choice{};
     int choice_int{};
     SPDLOG_DEBUG("CLI MENU -> {}; options: {}", title, options);
     // Display the menu options
-    cout << style::underline << "--- " << title << " ---" << style::reset << endl;
+    cout << style::underline << "--- " << title << " ---" << style::reset << '\n';
     for (size_t i = 0; i < options.size(); ++i) {
-        cout << i + 1 << ". " << options[i] << endl;
+        cout << i + 1 << ". " << options.at(i) << '\n';
     }
     user_choice = prompt("Select a number corresponding to an option");
     try {
         choice_int = stoi(user_choice);
-        if (choice_int < 1 || choice_int > static_cast<int>(options.size()))
+        if (choice_int < 1 || std::cmp_greater(choice_int, options.size())) {
             throw invalid_argument("Choice out of range");
+        }
     } catch (const invalid_argument &) {
         SPDLOG_ERROR(MENU_INVALID_CHOICE, choice_int);
         err(std::format(MENU_INVALID_CHOICE, choice_int));
-        std::cout << std::endl;
+        std::cout << '\n';
         return -2;
     }
     SPDLOG_DEBUG("CLI MENU -> User selected: {}", user_choice);
-    if (end_line) std::cout << std::endl;
+    if (END_LINE) {
+        std::cout << '\n';
+    }
     return choice_int;
 } // end of menu function
 
 
 ///
 /// Draw a progress bar in CLI, redraws a previous line.
-/// @param percentage Current progress percentage (0-100)
-/// @param bar_width The bar width in CLI
-void draw_progress_bar(const int percentage, const int bar_width) {
-    const int pos = percentage * bar_width / 100;
+/// @param PERCENTAGE Current progress percentage (0-100)
+/// @param BAR_WIDTH Width of the progress bar in characters
+static void drawProgressBar(const int PERCENTAGE, const int BAR_WIDTH) {
+    const int POS = PERCENTAGE * BAR_WIDTH / 100;
     std::cout << "\033[1A\r["
-            << std::string(pos, '=')
-            << (pos < bar_width ? ">" : "")
-            << std::string(std::max(0, bar_width - pos - 1), ' ')
+            << std::string(POS, '=')
+            << (POS < BAR_WIDTH ? ">" : "")
+            << std::string(std::max(0, BAR_WIDTH - POS - 1), ' ')
             << "] "
-            << percentage << "%"
+            << PERCENTAGE << "%"
             << std::flush
-            << std::endl;
+            << '\n';
 }
 
 
 ///
 /// Create a CLI Progress bar object which can be used to show process progress.
-/// @param total Total value corresponding to 100% progress
-/// @param min_percent_change_to_redraw Minimum percentage change required to redraw the progress bar
-/// @param bar_width The bar width in CLI
-ProgressBar::ProgressBar(const int total, const int min_percent_change_to_redraw, const int bar_width)
-    : total_(total), change_trigger_(min_percent_change_to_redraw), bar_width_(bar_width) {
+/// @param BAR_WIDTH Width of the progress bar in characters
+/// @param TOTAL Total value corresponding to 100% progress
+/// @param MIN_PERCENT_CHANGE_TO_REDRAW Minimum percentage change required to redraw the progress bar
+ProgressBar::ProgressBar(const int TOTAL, const int MIN_PERCENT_CHANGE_TO_REDRAW, const int BAR_WIDTH)
+    : total_(TOTAL), change_trigger_(MIN_PERCENT_CHANGE_TO_REDRAW), bar_width_(BAR_WIDTH) {
     assert(total_ > 0);
     assert(change_trigger_ > 0);
-    std::cout << std::endl;
-    draw_progress_bar(0, bar_width_);
+    std::cout << '\n';
+    drawProgressBar(0, bar_width_);
 }
 
 
 ///
 /// Update the progress bar.
 /// Whether the bar is redraw in CLI depends on change_trigger_ parameter.
-/// @param progress The latest progress value
-void ProgressBar::update(const int progress) {
-    const float ratio = static_cast<float>(progress) / static_cast<float>(total_);
-    const int percentage = static_cast<int>(ratio * 100.0f);
-    if (percentage != prev_bucket_ && percentage / change_trigger_ != prev_bucket_) {
-        draw_progress_bar(percentage, bar_width_);
+/// @param PROGRESS Current progress value (0 to total_)
+void ProgressBar::update(const int PROGRESS) {
+    const float RATIO = static_cast<float>(PROGRESS) / static_cast<float>(total_);
+    const int PERCENTAGE = static_cast<int>(RATIO * 100.0F);
+    if (PERCENTAGE != prev_bucket_ && PERCENTAGE / change_trigger_ != prev_bucket_) {
+        drawProgressBar(PERCENTAGE, bar_width_);
     }
-    prev_bucket_ = percentage / change_trigger_;;
+    prev_bucket_ = PERCENTAGE / change_trigger_;;
 }

@@ -3,7 +3,7 @@
 #include "meas_reader.h"
 
 struct MeasContextToStringParams {
-    meas_context ctx;
+    MeasContext ctx;
     std::string  expected_substring;
 };
 

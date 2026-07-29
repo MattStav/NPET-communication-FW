@@ -10,37 +10,39 @@
 // Path to output directory
 constexpr std::string OUTPUT_DIR_NAME = "FW_outputs";
 // The number defines decimal precision for meas fractional part
-constexpr char FMT[] = "%.15Qf";
+constexpr auto FMT = "%.15Qf";
 
-std::string output_file_path(int channel, const std::filesystem::path &base_dir = USER_FILES);
+std::string outputFilePath(int CHANNEL, const std::filesystem::path &base_dir = USER_FILES);
 
-uint8_t xor_checksum(const std::array<std::uint8_t, 13> &set_to_check);
+uint8_t xorChecksum(const std::array<std::uint8_t, 13> &set_to_check);
 
-std::string get_measurement_cmd(int channel, int num_of_meas);
+enum class Channel : std::uint8_t { CH1 = 1, CH2 = 2 };
 
-__float128 get_measurement_multiplier(int fw_version);
+std::string getMeasurementCmd(Channel CHANNEL, int NUM_OF_MEAS);
 
-std::string float128_to_string(__float128 value);
+__float128 getMeasurementMultiplier(int FW_VERSION);
+
+std::string float128ToString(__float128 VALUE);
 
 ///
 /// Struct to hold measurement data with integer and fractional parts
-struct measurement {
+struct Measurement {
     int meas_num{0}; // Time constants have -1
     int intp{0};
     __float128 fracp{0.0};
 
-    [[nodiscard]] std::string to_string() const {
-        return std::to_string(intp) + " " + float128_to_string(fracp);
+    [[nodiscard]] std::string toString() const {
+        return std::to_string(intp) + " " + float128ToString(fracp);
     } // end of to_string function
 
     ///
     /// Check if the measurement is invalid, which is indicated by meas_num being -2.
     /// @return True if the measurement is valid, else False
-    [[nodiscard]] bool is_valid() const {
+    [[nodiscard]] bool isValid() const {
         return meas_num != -2;
     } // end of is_valid function
 
-    [[nodiscard]] bool is_empty() const {
+    [[nodiscard]] bool isEmpty() const {
         return intp == 0 && fracp == 0.0;
     } // end of is_empty function
 
@@ -64,24 +66,21 @@ struct measurement {
     ///
     /// Sum operation of 2 measurements.
     /// The measurement_num of the resulting measurement is taken from the first operand.
-    measurement operator+(const measurement &other) const {
-        return {meas_num, intp + other.intp, fracp + other.fracp};
+    Measurement operator+(const Measurement &other) const {
+        return {.meas_num = meas_num, .intp = intp + other.intp, .fracp = fracp + other.fracp};
     } // end of operator+ function
 
-    measurement &operator+=(const measurement &other) {
+    Measurement &operator+=(const Measurement &other) {
         intp += other.intp;
         fracp += other.fracp;
         return *this;
     } // end of operator+= function
 }; // end of correction_holder struct
 
-measurement decode_measurement_set(std::array<std::uint8_t, 13> measurement_set,
+Measurement decodeMeasurementSet(std::array<std::uint8_t, 13> MEASUREMENT_SET,
                                 const __float128 &multiplier,
-                                const measurement &time_const = measurement{-1});
+                                const Measurement &time_const = Measurement{.meas_num = -1});
 
-std::array<std::uint8_t, 13> encode_measurement_set(std::uint8_t meas_num,
-                                                     int seconds,
-                                                     const __float128 &fracp,
-                                                     const __float128 &multiplier);
+std::array<std::uint8_t, 13> encodeMeasurementSet(const Measurement &measurement, const __float128 &multiplier);
 
 #endif //MEAS_FUNC_H

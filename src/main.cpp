@@ -6,8 +6,6 @@
 #include "framework/NPET_comm.h"
 #include "framework/helper_func.h"
 #include "framework/logging.h"
-#include "cli/NPET_comm_CLI.h"
-#include "cli/cli.h"
 #include "cli/helper_func.h"
 #include "virtual_machine/vm_main.h"
 
@@ -16,73 +14,6 @@
 #include <spdlog/spdlog.h>
 
 #include "rang.hpp"
-
-
-constexpr std::string_view NP_COMM_START_MSG = "NPET communication FW started: ";
-
-
-///
-/// Main CLI function
-static int mainCli() {
-    initLogging();
-    SPDLOG_INFO("Launching main menu CLI");
-    Cli::echo(std::string(NP_COMM_START_MSG), fg::blue, style::bold, false);
-    Cli::echo(BUILD_CONFIG " " GIT_TAG, fg::yellow);
-    SPDLOG_INFO("{} {} {}", NP_COMM_START_MSG, BUILD_CONFIG, GIT_TAG);
-    Cli::echo("If you have any questions please refer to the manual, which should be provided with the program.");
-    Cli::echo("If manual wasn't provided, you can access it from the main menu, "
-              "or it can be opened by calling this program from cmd with the 'manual' command.", fg::yellow);
-    std::cout << '\n'; // Empty line.
-    Cli::showStr("Log path", getLogPath().string()); // Already automatically included in logs
-    // Confirm that the NPET is ready to connect
-    if (!Cli::confirm("Please confirm that the NPET is configured to 115200 Baud rate and 8N1 mode!", true)) {
-        SPDLOG_DEBUG("User did not confirm NPET configuration, exiting program");
-        return 1;
-    }
-    SPDLOG_DEBUG("User confirmed NPET configuration, proceeding with initialization");
-    SPDLOG_INFO("Initializing NPET communication framework in CLI mode");
-    NPET_comm_CLI npet_comm{};
-    const std::vector<std::string> MAIN_MENU_ITEMS = {
-        "Settings",
-        "Generate pulses",
-        "Take n measurements",
-        "Print manual",
-        "Launch data processor",
-        "Quit program",
-    };
-    while (npet_comm.is_responsive_CLI()) {
-        SPDLOG_DEBUG("NPET is responsive, opening main menu");
-        switch (Cli::menu("Main menu", MAIN_MENU_ITEMS)) {
-            case 1: // Settings menu
-                SPDLOG_DEBUG("Main menu choice: Settings");
-                settingsMenu(npet_comm);
-                continue;
-            case 2: // Generate n pulses
-                SPDLOG_DEBUG("Main menu choice: Generate pulses");
-                npet_comm.generate_pulses_CLI();
-                continue;
-            case 3: // Read measurements with a specific setting
-                SPDLOG_DEBUG("Main menu choice: Read measurements");
-                npet_comm.read_batch_measurements_CLI();
-                continue;
-            case 4: // Print the manual
-                SPDLOG_DEBUG("Main menu choice: Print manual");
-                printManual();
-                continue;
-            case 5: // Launch data processor
-                SPDLOG_DEBUG("Main menu choice: Launch data processor");
-                launchDataProcessor();
-                continue;
-            case 6: // Quit the program
-                SPDLOG_DEBUG("Main menu choice: Quit program");
-                // Class destructors handle cleanup
-                return 0;
-            default: ;
-        } // end of switch
-    } // end of infinite while loop
-    SPDLOG_ERROR("NPET is not responsive, exiting program");
-    return 1;
-} // end of the main function
 
 
 int main(const int argc, char *const*argv) {
@@ -122,7 +53,7 @@ int main(const int argc, char *const*argv) {
     } else if (*LICENSE) {
         exit_code = printLicenseInformation();
     } else if (*RUN || app.get_subcommands().empty()) {
-        exit_code = mainCli();
+        exit_code = singleNPETMainMenu();
         Cli::confirmExit();
     }
     spdlog::shutdown(); // Ensure all logs are flushed before exiting

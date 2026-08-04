@@ -7,7 +7,7 @@
 // Base fixture
 class NPETCommFixture : public ::testing::Test {
 protected:
-    NPET_comm comm;
+    NPETComm comm;
 };
 
 // Firmware test params

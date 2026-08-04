@@ -7,7 +7,7 @@ int printManual();
 int printLicenseInformation();
 int resetNpet();
 int launchDataProcessor();
-void settingsMenu(NPET_comm_CLI &npet_comm);
+void settingsMenu(NPETCommCLI &npet_comm);
 int singleNPETMainMenu();
 
 #endif //NPET_COMM_FW_HELPER_FUNC_H

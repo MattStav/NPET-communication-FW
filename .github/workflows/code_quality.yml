@@ -53,6 +53,24 @@ jobs:
           curl -L https://raw.githubusercontent.com/agauniyal/rang/master/include/rang.hpp \
             -o /mingw64/include/rang.hpp
 
+      # meas_func.h includes <quadmath.h> for __float128 formatting. g++ finds it via its
+      # own built-in search paths, but clang-tidy (running as a Clang frontend in g++
+      # compatibility mode) doesn't reliably replicate that, causing a hard
+      # "'quadmath.h' file not found" error that corrupts the rest of the TU's analysis.
+      # Locate it in this run's actual MSYS2 install and point clang-tidy at it explicitly,
+      # rather than hardcoding a path that could drift with package updates.
+      - name: Locate quadmath.h
+        id: quadmath
+        run: |
+          QUADMATH_PATH=$(find /mingw64 -name quadmath.h | head -n1)
+          if [ -z "$QUADMATH_PATH" ]; then
+            echo "quadmath.h not found under /mingw64" >&2
+            exit 1
+          fi
+          QUADMATH_DIR=$(dirname "$QUADMATH_PATH")
+          echo "Found quadmath.h in $QUADMATH_DIR"
+          echo "dir=$QUADMATH_DIR" >> "$GITHUB_OUTPUT"
+
       - name: Configure
         run: |
           cmake -S . -B build \
@@ -73,5 +91,6 @@ jobs:
         run: |
           run-clang-tidy \
             -p build \
+            -extra-arg=-isystem${{ steps.quadmath.outputs.dir }} \
             -warnings-as-errors='*' \
-            '^.*[/\\]src[/\\].*'
+            '^(?!.*[/\\]_deps[/\\]).*[/\\]src[/\\].*'

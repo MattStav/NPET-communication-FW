@@ -9,7 +9,7 @@
 static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
 static constexpr int INFINITE_OPERATION = 9999;
 
-class NPET_comm : public SerialMachine {
+class NPETComm : public SerialMachine {
 public:
     // Internal NPET firmware version
     int fw_version{};
@@ -59,14 +59,14 @@ public:
 
     std::string getStatus();
 
-    NPET_comm() = default;
-    NPET_comm(const NPET_comm &) = delete;
-    NPET_comm &operator=(const NPET_comm &) = delete;
-    NPET_comm(NPET_comm &&) = delete;
-    NPET_comm &operator=(NPET_comm &&) = delete;
+    NPETComm() = default;
+    NPETComm(const NPETComm &) = delete;
+    NPETComm &operator=(const NPETComm &) = delete;
+    NPETComm(NPETComm &&) = delete;
+    NPETComm &operator=(NPETComm &&) = delete;
 
     // Destructor
-    ~NPET_comm() {
+    ~NPETComm() {
         SPDLOG_DEBUG("NPET comm destructor called, closing communication and resetting baud rate if possible");
         // Reset to default baud rate
         if (isOpen()) {

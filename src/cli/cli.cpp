@@ -164,11 +164,9 @@ static void drawProgressBar(const int PERCENTAGE, const int BAR_WIDTH) {
 
 ///
 /// Create a CLI Progress bar object which can be used to show process progress.
-/// @param BAR_WIDTH Width of the progress bar in characters
-/// @param TOTAL Total value corresponding to 100% progress
-/// @param MIN_PERCENT_CHANGE_TO_REDRAW Minimum percentage change required to redraw the progress bar
-ProgressBar::ProgressBar(const int TOTAL, const int MIN_PERCENT_CHANGE_TO_REDRAW, const int BAR_WIDTH)
-    : total_(TOTAL), change_trigger_(MIN_PERCENT_CHANGE_TO_REDRAW), bar_width_(BAR_WIDTH) {
+/// @param CONFIG Progress bar configuration (total, redraw threshold, bar width)
+ProgressBar::ProgressBar(const ProgressBarConfig CONFIG)
+    : total_(CONFIG.total), change_trigger_(CONFIG.min_percent_change_to_redraw), bar_width_(CONFIG.bar_width) {
     assert(total_ > 0);
     assert(change_trigger_ > 0);
     std::cout << '\n';

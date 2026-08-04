@@ -41,9 +41,15 @@ public:
 /// CLI progress bar that shows the progress of a long-running operation.
 /// The progress bar is updated by calling the update() method with the current progress value.
 /// The progress bar is only redrawn if the percentage change since the last redraw exceeds a specified threshold, which can be set in the constructor.
+struct ProgressBarConfig {
+    int total{};
+    int min_percent_change_to_redraw{1};
+    int bar_width{50};
+};
+
 class ProgressBar {
 public:
-    explicit ProgressBar(int TOTAL, int MIN_PERCENT_CHANGE_TO_REDRAW = 1, int BAR_WIDTH = 50);
+    explicit ProgressBar(ProgressBarConfig CONFIG);
 
     void update(int PROGRESS);
 

@@ -26,6 +26,49 @@ void SerialMachine::openCommunication(const int COM_PORT, const int BAUD_RATE) {
 
 
 ///
+/// Block until the pending read and timer operations have both completed, cancelling
+/// whichever one is still outstanding once the other finishes.
+/// @param timer Timer guarding the read operation
+/// @param read_result Set once the read operation completes
+/// @param timer_result Set once the timer fires or is cancelled
+void SerialMachine::waitForReadOrTimeout(boost::asio::steady_timer &timer,
+                                         std::optional<boost::system::error_code> &read_result,
+                                         std::optional<boost::system::error_code> &timer_result) {
+    while (!read_result || !timer_result) {
+        io_.run_one();
+        if (read_result && !timer_result) {
+            timer.cancel();
+        } else if (timer_result && !read_result) {
+            port_.cancel(); // This stops the pending async_read_until
+        }
+    }
+}
+
+///
+/// Translate a completed read/timer result pair into the appropriate exception, if any.
+/// @param read_result Result of the read operation
+/// @param timer_result Result of the timer operation
+/// @param TIMEOUT Timeout in milliseconds, used for the timeout error message
+void SerialMachine::throwOnReadError(const std::optional<boost::system::error_code> &read_result,
+                                     const std::optional<boost::system::error_code> &timer_result,
+                                     const int TIMEOUT) {
+    if (read_result && *read_result == boost::asio::error::operation_aborted) {
+        // Distinguish a genuine timeout (the timer fired and cancelled the read) from
+        // the read being cancelled for another reason.
+        if (timer_result && !*timer_result) {
+            SPDLOG_ERROR(COMM_TIMEOUT_ERR, TIMEOUT);
+            throw CommTimeoutError(std::format(COMM_TIMEOUT_ERR, TIMEOUT));
+        }
+        SPDLOG_DEBUG("Read operation was cancelled");
+        throw OperationCancelledError("Read operation was cancelled");
+    }
+    if (!read_result || *read_result) {
+        SPDLOG_ERROR("Read error: {}", read_result ? read_result->message() : "Unknown error");
+        throw std::runtime_error("Read error: " + (read_result ? read_result->message() : "Unknown error"));
+    }
+}
+
+///
 /// Asynchronously read a response from the device, aborting if nothing arrives within the timeout.
 /// Does not send anything first; use this directly when a command has already been written,
 /// or a device response is expected unprompted (e.g. the virtual machine's device loop).
@@ -57,7 +100,7 @@ std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
                 bytes_transferred = BT;
             }
         );
-    } else {
+    } else if (MODE == ReadMode::FIXED_BYTES) {
         assert(FIXED_BYTES > 0);
         buffer.resize(FIXED_BYTES);
         boost::asio::async_read(
@@ -72,28 +115,8 @@ std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
     }
     // Block until ONLY this call's own operations (read + timer) have both completed.
     io_.restart();
-    while (!read_result || !timer_result) {
-        io_.run_one();
-        if (read_result && !timer_result) {
-            timer.cancel();
-        } else if (timer_result && !read_result) {
-            port_.cancel(); // This stops the pending async_read_until
-        }
-    } // end of while loop
-    if (read_result && *read_result == boost::asio::error::operation_aborted) {
-        // Distinguish a genuine timeout (the timer fired and cancelled the read) from
-        // the read being cancelled for another reason.
-        if (timer_result && !*timer_result) {
-            SPDLOG_ERROR(COMM_TIMEOUT_ERR, TIMEOUT);
-            throw CommTimeoutError(std::format(COMM_TIMEOUT_ERR, TIMEOUT));
-        }
-        SPDLOG_DEBUG("Read operation was cancelled");
-        throw OperationCancelledError("Read operation was cancelled");
-    }
-    if (!read_result || *read_result) {
-        SPDLOG_ERROR("Read error: {}", read_result ? read_result->message() : "Unknown error");
-        throw std::runtime_error("Read error: " + (read_result ? read_result->message() : "Unknown error"));
-    }
+    waitForReadOrTimeout(timer, read_result, timer_result);
+    throwOnReadError(read_result, timer_result, TIMEOUT);
     // Convert the buffer to a vector of chars
     if (MODE == ReadMode::UNTIL_NEWLINE) {
         // Read the whole buffer; in some cases there can be more data then, bytes_transferred, e.g., constant import
@@ -101,7 +124,7 @@ std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
             boost::asio::buffers_begin(RESPONSE_BUFFER->data()),
             boost::asio::buffers_end(RESPONSE_BUFFER->data())
         };
-    } else {
+    } else if (MODE == ReadMode::FIXED_BYTES) {
         // async_read should have filled buffer; shrink to actual bytes if needed
         if (bytes_transferred < buffer.size()) {
             buffer.resize(bytes_transferred);

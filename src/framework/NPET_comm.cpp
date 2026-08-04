@@ -19,7 +19,7 @@ constexpr std::string_view SLEEP_ENABLE_ERR = "Failed to re-enable windows sleep
 ///
 /// Checks if the NPET device is connected and responsive.
 /// @return: True, indicating the device is responsive. Otherwise, return false.
-bool NPET_comm::isResponsive(const bool END_STREAM) {
+bool NPETComm::isResponsive(const bool END_STREAM) {
     SPDLOG_DEBUG("Checking if NPET is responsive");
     const std::string RESPONSE = exchangeComm("c");
     // The NPET responds with "c0" to the "c" command.
@@ -37,7 +37,7 @@ bool NPET_comm::isResponsive(const bool END_STREAM) {
 /// Firmware version must be either 1, 2, or 3.
 /// Version is saved into the fw_version attribute.
 /// @param NEW_FW_VERSION New firmware version to set
-void NPET_comm::setFWVer(const int NEW_FW_VERSION) {
+void NPETComm::setFWVer(const int NEW_FW_VERSION) {
     SPDLOG_DEBUG("Setting NPET firmware version to {}", NEW_FW_VERSION);
     assert((NEW_FW_VERSION == 1 || NEW_FW_VERSION == 2 || NEW_FW_VERSION == 3) && "Invalid NPET firmware version");
     fw_version = NEW_FW_VERSION;
@@ -48,7 +48,7 @@ void NPET_comm::setFWVer(const int NEW_FW_VERSION) {
 ///
 /// Automatically detect the NPET firmware version by querying the device.
 /// The firmware version is saved into the fw_version attribute.
-void NPET_comm::detectFWVer() {
+void NPETComm::detectFWVer() {
     SPDLOG_DEBUG("Detecting NPET firmware version");
     // Strings to find
     const std::string REVISION_STRING = "ADI";
@@ -73,7 +73,7 @@ void NPET_comm::detectFWVer() {
 /// Save the new frequency into the frequency attribute.
 /// @param NEW_FREQUENCY New pulse generation frequency in Hz
 /// @return True if the frequency was successfully set, otherwise false
-bool NPET_comm::setFrequency(const int NEW_FREQUENCY) {
+bool NPETComm::setFrequency(const int NEW_FREQUENCY) {
     SPDLOG_DEBUG("Setting pulse generation frequency to {} Hz", NEW_FREQUENCY);
     assert(NEW_FREQUENCY >= 1);
     const std::string RET = exchangeComm("k" + std::to_string(NEW_FREQUENCY));
@@ -89,7 +89,7 @@ bool NPET_comm::setFrequency(const int NEW_FREQUENCY) {
 /// Command the NPET device to generate a specified number of pulses.
 /// @param NUM_OF_PULSES Number of pulses to generate, -1 for infinite
 /// @return True if the command was successful, otherwise false
-bool NPET_comm::generatePulses(const int NUM_OF_PULSES) {
+bool NPETComm::generatePulses(const int NUM_OF_PULSES) {
     std::string log_num = NUM_OF_PULSES == -1 ? "infinite" : std::to_string(NUM_OF_PULSES);
     SPDLOG_DEBUG("Generating {} pulses from NPET", log_num);
     assert(NUM_OF_PULSES >= 0 || NUM_OF_PULSES == -1);
@@ -115,7 +115,7 @@ bool NPET_comm::generatePulses(const int NUM_OF_PULSES) {
 /// DO NOT DISCONNECT THE DEVICE WHILE CHANGING THE BAUD RATE.
 /// @param NEW_BAUD_RATE New baud rate to set
 /// @return True if the baud rate was successfully changed, otherwise false
-bool NPET_comm::setBaudRate(const int NEW_BAUD_RATE) {
+bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
     SPDLOG_DEBUG("Setting baud rate to {}", NEW_BAUD_RATE);
     assert(NEW_BAUD_RATE > 0);
     // Cancel any pending operations before changing the baud rate
@@ -139,7 +139,7 @@ bool NPET_comm::setBaudRate(const int NEW_BAUD_RATE) {
 /// Set the measured data format on the NPET device.
 /// @param FORMAT Measured data format. 0 for binary, 1 for ASCII
 /// @return True if the format was successfully set, otherwise false
-bool NPET_comm::setMeasuredDataFormat(const int FORMAT) {
+bool NPETComm::setMeasuredDataFormat(const int FORMAT) {
     std::string log_format = FORMAT == 0 ? "binary" : "ASCII";
     SPDLOG_DEBUG("Setting measured data format to {}", log_format);
     assert(FORMAT == 0 || FORMAT == 1);
@@ -158,7 +158,7 @@ bool NPET_comm::setMeasuredDataFormat(const int FORMAT) {
 /// Windows sleep is disabled while the measurements are being read.
 /// @param meas_set Measurement context struct
 /// /// Contains the number of measurements, display and save flags, and channel number
-void NPET_comm::readBatchMeasurements(const MeasContext &meas_set) {
+void NPETComm::readBatchMeasurements(const MeasContext &meas_set) {
     SPDLOG_DEBUG("Reading batch measurements from NPET");
     assert(meas_set.num_of_meas > 0);
     assert(meas_set.channel == 1 || meas_set.channel == 2);
@@ -192,7 +192,7 @@ void NPET_comm::readBatchMeasurements(const MeasContext &meas_set) {
 /// Read a single measurement from the specified channel.
 /// @param CHANNEL Channel to read from (1 or 2)
 /// @return Single measurement from the specified channel
-Measurement NPET_comm::readSingleMeasurement(const int CHANNEL) {
+Measurement NPETComm::readSingleMeasurement(const int CHANNEL) {
     SPDLOG_DEBUG("Reading single measurement from NPET");
     assert(CHANNEL == 1 || CHANNEL == 2);
     std::vector<char> vec{};
@@ -219,7 +219,7 @@ Measurement NPET_comm::readSingleMeasurement(const int CHANNEL) {
 /// @param CHANNEL Channel to read from (1 or 2)
 /// @return Single measurement from the specified channel in raw string format, without termination.
 /// /// Empty string if no measurement was read.
-std::string NPET_comm::readSingleMeasurementRaw(const int CHANNEL) {
+std::string NPETComm::readSingleMeasurementRaw(const int CHANNEL) {
     SPDLOG_DEBUG("Reading single raw measurement from NPET");
     assert(CHANNEL == 1 || CHANNEL == 2);
     const Measurement MEAS = readSingleMeasurement(CHANNEL);
@@ -235,7 +235,7 @@ std::string NPET_comm::readSingleMeasurementRaw(const int CHANNEL) {
 /// Export the time constant to the NPET device.
 /// @param constant Time constant in measurement format
 /// @return True if the time constant was successfully exported, otherwise false.
-bool NPET_comm::exportTimeConstant(const Measurement &constant) {
+bool NPETComm::exportTimeConstant(const Measurement &constant) {
     SPDLOG_DEBUG("Exporting time constant to NPET: '{}'", constant.toString());
     assert(!constant.isEmpty());
     const bool SUCCESS = exportTimeConstantRaw(constant.toString());
@@ -251,7 +251,7 @@ bool NPET_comm::exportTimeConstant(const Measurement &constant) {
 /// @param constant_raw Time constant in string format, without termination!
 /// Can be a maximum of 28 characters long.
 /// @return True if the time constant was successfully exported, otherwise false.
-bool NPET_comm::exportTimeConstantRaw(const std::string &constant_raw) {
+bool NPETComm::exportTimeConstantRaw(const std::string &constant_raw) {
     SPDLOG_DEBUG("Exporting raw time constant to NPET: '{}'", constant_raw);
     SPDLOG_WARN("This will overwrite the previous time correction constant!");
     assert(constant_raw.length() <= 28);
@@ -267,7 +267,7 @@ bool NPET_comm::exportTimeConstantRaw(const std::string &constant_raw) {
 ///
 /// Clear the time constant saved in the NPET devic.
 /// @return True if the time constant was successfully cleared on the NPET, otherwise false.
-bool NPET_comm::clearTimeConstant() {
+bool NPETComm::clearTimeConstant() {
     SPDLOG_DEBUG("Clearing time constant from NPET");
     const std::string EMPTY_CONSTANT(28, ' '); // 28 spaces
     const bool SUCCESS = exportTimeConstantRaw(EMPTY_CONSTANT);
@@ -283,7 +283,7 @@ bool NPET_comm::clearTimeConstant() {
 /// This should be the only way to get the time constant within the program!!
 /// Ensuring that the value saved in NPET and in the program are always the same.
 /// @return Measurement object containing the time constant.
-Measurement NPET_comm::importTimeConstant() {
+Measurement NPETComm::importTimeConstant() {
     SPDLOG_DEBUG("Importing time constant from NPET");
     // Send command to get the time constant
     std::string raw_const = exchangeComm("n1");
@@ -315,7 +315,7 @@ Measurement NPET_comm::importTimeConstant() {
 ///
 /// Import the time correction constant from the NPET device in raw string format, without termination.
 /// @return Time constant imported from the NPET device in raw string format, without termination.
-std::string NPET_comm::importTimeConstantRaw() {
+std::string NPETComm::importTimeConstantRaw() {
     SPDLOG_DEBUG("Importing raw time constant from NPET");
     const Measurement CONSTANT = importTimeConstant();
     if (CONSTANT.isEmpty()) {
@@ -330,7 +330,7 @@ std::string NPET_comm::importTimeConstantRaw() {
 /// Get the status of the NPET device.
 /// This command is only of use when NPET is set in measurement streaming mode, but it is NOT receiving any data.
 /// @return Current status of the NPET device, check docu for more details.
-std::string NPET_comm::getStatus() {
+std::string NPETComm::getStatus() {
     SPDLOG_DEBUG("Getting status from NPET");
     const std::string RET = exchangeComm("s1");
     SPDLOG_DEBUG("Status received from NPET: '{}'", RET);

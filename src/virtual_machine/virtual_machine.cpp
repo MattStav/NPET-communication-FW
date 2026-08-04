@@ -163,7 +163,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
     listenForStopCommand(stop_requested);
     getIO().restart();
     // Align to the next tick of the start_time grid
-    const auto TICKS_ELAPSED = (std::chrono::high_resolution_clock::now() - START_TIME) / PERIOD;
+    const auto TICKS_ELAPSED = (std::chrono::high_resolution_clock::now() - START_TIME) / PERIOD; // NOLINT(readability-redundant-parentheses)
     auto next_tick = START_TIME + (TICKS_ELAPSED + 1) * PERIOD;
     while (true) {
         // Wait for the next fixed tick since start_time, while still polling for the stop command to arrive

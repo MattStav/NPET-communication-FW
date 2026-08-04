@@ -24,10 +24,10 @@ struct MeasContext {
 };
 
 // Forward declaration instead of #include "NPET_comm.h"
-class NPET_comm;
+class NPETComm;
 
 class MeasReader {
-    NPET_comm &npet_; // a reference to the NPET communicator instance
+    NPETComm &npet_; // a reference to the NPET communicator instance
     std::mutex mtx_data_; // a mutex to handle queue accesses
     // Queue to store the data received from NPET
     std::deque<std::uint8_t> received_data_q_;
@@ -76,7 +76,7 @@ public:
     }
 
     // Constructor to begin reading measurements, this class does nothing else
-    explicit MeasReader(NPET_comm &npet, const MeasContext &meas_set) : npet_(npet) {
+    explicit MeasReader(NPETComm &npet, const MeasContext &meas_set) : npet_(npet) {
         main(meas_set);
     }
 

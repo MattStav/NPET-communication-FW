@@ -17,6 +17,7 @@ Checks: >
   -cppcoreguidelines-non-private-member-variables-in-classes,
   -misc-non-private-member-variables-in-classes,
   -misc-include-cleaner,
+  -misc-use-anonymous-namespace,
   -modernize-use-trailing-return-type,
   -modernize-use-anonymous-namespace,
   -readability-magic-numbers,

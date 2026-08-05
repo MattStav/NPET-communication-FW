@@ -3,7 +3,7 @@
 #include <boost/asio.hpp>
 #include <string>
 #include <fstream>
-#include <quadmath.h>
+#include <quadmath.h> // NOLINT(clang-diagnostic-error)
 #include <spdlog/spdlog.h>
 #ifdef PYBIND11_ENABLED
 #include <pybind11/gil.h>

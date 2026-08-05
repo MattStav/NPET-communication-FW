@@ -1,7 +1,7 @@
 #include "NPET_comm_CLI.h"
 
 #include <conio.h>
-#include <quadmath.h>
+#include <quadmath.h> // NOLINT(clang-diagnostic-error)
 #include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.
 
 #include "meas_reader_CLI.h"

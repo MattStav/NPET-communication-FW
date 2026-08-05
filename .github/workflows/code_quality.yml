@@ -53,32 +53,6 @@ jobs:
           curl -L https://raw.githubusercontent.com/agauniyal/rang/master/include/rang.hpp \
             -o /mingw64/include/rang.hpp
 
-      # meas_func.h includes <quadmath.h> for __float128 formatting. g++ finds it via its
-      # own built-in search paths, but clang-tidy (running as a Clang frontend in g++
-      # compatibility mode) doesn't reliably replicate that, causing a hard
-      # "'quadmath.h' file not found" error that corrupts the rest of the TU's analysis.
-      # Locate it in this run's actual MSYS2 installation and point clang-tidy at it explicitly,
-      # rather than hardcoding a path that could drift with package updates.
-      #
-      # run-clang-tidy is a Python script: it spawns clang-tidy.exe (a native Windows binary)
-      # directly via subprocess, which bypasses MSYS2 bash's automatic POSIX->Windows path
-      # translation (that translation only kicks in when bash itself launches a native exe).
-      # So the -isystem path must already be a real Windows path before it's handed off, or
-      # clang-tidy.exe fails to resolve the leading "/" and reports "file not found" even
-      # though the directory is correct.
-      - name: Locate quadmath.h
-        id: quadmath
-        run: |
-          QUADMATH_PATH=$(find /mingw64 -name quadmath.h | head -n1)
-          if [ -z "$QUADMATH_PATH" ]; then
-            echo "quadmath.h not found under /mingw64" >&2
-            exit 1
-          fi
-          QUADMATH_DIR=$(dirname "$QUADMATH_PATH")
-          QUADMATH_DIR_WIN=$(cygpath -m "$QUADMATH_DIR")
-          echo "Found quadmath.h in $QUADMATH_DIR ($QUADMATH_DIR_WIN)"
-          echo "dir=$QUADMATH_DIR_WIN" >> "$GITHUB_OUTPUT"
-
       - name: Configure
         run: |
           cmake -S . -B build \
@@ -99,7 +73,6 @@ jobs:
         run: |
           run-clang-tidy \
             -p build \
-            -extra-arg=-isystem${{ steps.quadmath.outputs.dir }} \
             -warnings-as-errors='*' \
             -header-filter='.*' \
             '^(?!.*[/\\]_deps[/\\])(?!.*[/\\]icon[/\\]).*[/\\]src[/\\].*'

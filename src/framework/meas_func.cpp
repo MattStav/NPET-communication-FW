@@ -3,7 +3,6 @@
 #include <array>
 #include <cassert>
 #include <ctime>
-#include <quadmath.h>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.

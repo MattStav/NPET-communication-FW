@@ -29,6 +29,7 @@ Checks: >
 
 WarningsAsErrors: ''
 HeaderFilterRegex: '^.*[/\\]src[/\\].*'
+SystemHeaders: false
 FormatStyle: none
 
 CheckOptions:

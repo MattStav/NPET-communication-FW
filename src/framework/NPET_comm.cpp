@@ -78,9 +78,11 @@ bool NPETComm::setFrequency(const int NEW_FREQUENCY) {
     assert(NEW_FREQUENCY >= 1);
     const std::string RET = exchangeComm("k" + std::to_string(NEW_FREQUENCY));
     const bool SUCCESS = RET.starts_with('k');
-    SUCCESS
-        ? SPDLOG_INFO("Pulse generation frequency successfully set to {} Hz", NEW_FREQUENCY)
-        : SPDLOG_ERROR("Failed to set pulse generation frequency to {} Hz", NEW_FREQUENCY);
+    if (SUCCESS) {
+        SPDLOG_INFO("Pulse generation frequency successfully set to {} Hz", NEW_FREQUENCY);
+    } else {
+        SPDLOG_ERROR("Failed to set pulse generation frequency to {} Hz", NEW_FREQUENCY);
+    }
     return SUCCESS;
 } // end of set_frequency function
 
@@ -101,9 +103,11 @@ bool NPETComm::generatePulses(const int NUM_OF_PULSES) {
     }
     const std::string RET = exchangeComm("p" + num_of_pulses_str);
     const bool SUCCESS = RET.starts_with('p');
-    SUCCESS
-        ? SPDLOG_INFO("Pulse generation command successful for {} pulses", log_num)
-        : SPDLOG_ERROR("Pulse generation command failed for {} pulses", log_num);
+    if (SUCCESS) {
+        SPDLOG_INFO("Pulse generation command successful for {} pulses", log_num);
+    } else {
+        SPDLOG_ERROR("Pulse generation command failed for {} pulses", log_num);
+    }
     return SUCCESS;
 } // end of generate_pulses function
 
@@ -128,9 +132,11 @@ bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
     readFromSerial();
     getPort().set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
     const bool SUCCESS = isResponsive();
-    SUCCESS
-        ? SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE)
-        : SPDLOG_ERROR("Failed to set baud rate to {}", NEW_BAUD_RATE);
+    if (SUCCESS) {
+        SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE);
+    } else {
+        SPDLOG_ERROR("Failed to set baud rate to {}", NEW_BAUD_RATE);
+    }
     return SUCCESS;
 } // end of set_baud_rate function
 
@@ -145,9 +151,11 @@ bool NPETComm::setMeasuredDataFormat(const int FORMAT) {
     assert(FORMAT == 0 || FORMAT == 1);
     const std::string RET = exchangeComm("a" + std::to_string(FORMAT));
     const bool SUCCESS = RET.starts_with('a');
-    SUCCESS
-        ? SPDLOG_INFO("Measured data format successfully set to {}", LOG_FORMAT)
-        : SPDLOG_ERROR("Failed to set measured data format to {}", LOG_FORMAT);
+    if (SUCCESS) {
+        SPDLOG_INFO("Measured data format successfully set to {}", LOG_FORMAT);
+    } else {
+        SPDLOG_ERROR("Failed to set measured data format to {}", LOG_FORMAT);
+    }
     return SUCCESS;
 } // end of set_measured_data_format function
 
@@ -239,9 +247,11 @@ bool NPETComm::exportTimeConstant(const Measurement &constant) {
     SPDLOG_DEBUG("Exporting time constant to NPET: '{}'", constant.toString());
     assert(!constant.isEmpty());
     const bool SUCCESS = exportTimeConstantRaw(constant.toString());
-    SUCCESS
-        ? SPDLOG_INFO("Time constant successfully exported to NPET: {}", constant.toString())
-        : SPDLOG_ERROR("Failed to export time constant to NPET: {}", constant.toString());
+    if (SUCCESS) {
+        SPDLOG_INFO("Time constant successfully exported to NPET: {}", constant.toString());
+    } else {
+        SPDLOG_ERROR("Failed to export time constant to NPET: {}", constant.toString());
+    }
     return SUCCESS;
 } // end of exportTimeConstant function
 
@@ -257,9 +267,11 @@ bool NPETComm::exportTimeConstantRaw(const std::string &constant_raw) {
     assert(constant_raw.length() <= 28);
     const std::string RET = exchangeComm("j" + constant_raw);
     const bool SUCCESS = RET.starts_with('j');
-    SUCCESS
-        ? SPDLOG_INFO("Raw time constant successfully exported to NPET: '{}'", constant_raw)
-        : SPDLOG_ERROR("Failed to export raw time constant to NPET: '{}'", constant_raw);
+    if (SUCCESS) {
+        SPDLOG_INFO("Raw time constant successfully exported to NPET: '{}'", constant_raw);
+    } else {
+        SPDLOG_ERROR("Failed to export raw time constant to NPET: '{}'", constant_raw);
+    }
     return SUCCESS;
 } // end of export_time_constant_raw function
 
@@ -271,9 +283,11 @@ bool NPETComm::clearTimeConstant() {
     SPDLOG_DEBUG("Clearing time constant from NPET");
     const std::string EMPTY_CONSTANT(28, ' '); // 28 spaces
     const bool SUCCESS = exportTimeConstantRaw(EMPTY_CONSTANT);
-    SUCCESS
-        ? SPDLOG_INFO("Time constant successfully cleared from NPET")
-        : SPDLOG_ERROR("Failed to clear time constant from NPET");
+    if (SUCCESS) {
+        SPDLOG_INFO("Time constant successfully cleared from NPET");
+    } else {
+        SPDLOG_ERROR("Failed to clear time constant from NPET");
+    }
     return SUCCESS;
 } // end of clearTimeConstant function
 

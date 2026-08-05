@@ -59,6 +59,13 @@ jobs:
       # "'quadmath.h' file not found" error that corrupts the rest of the TU's analysis.
       # Locate it in this run's actual MSYS2 installation and point clang-tidy at it explicitly,
       # rather than hardcoding a path that could drift with package updates.
+      #
+      # run-clang-tidy is a Python script: it spawns clang-tidy.exe (a native Windows binary)
+      # directly via subprocess, which bypasses MSYS2 bash's automatic POSIX->Windows path
+      # translation (that translation only kicks in when bash itself launches a native exe).
+      # So the -isystem path must already be a real Windows path before it's handed off, or
+      # clang-tidy.exe fails to resolve the leading "/" and reports "file not found" even
+      # though the directory is correct.
       - name: Locate quadmath.h
         id: quadmath
         run: |
@@ -68,8 +75,9 @@ jobs:
             exit 1
           fi
           QUADMATH_DIR=$(dirname "$QUADMATH_PATH")
-          echo "Found quadmath.h in $QUADMATH_DIR"
-          echo "dir=$QUADMATH_DIR" >> "$GITHUB_OUTPUT"
+          QUADMATH_DIR_WIN=$(cygpath -m "$QUADMATH_DIR")
+          echo "Found quadmath.h in $QUADMATH_DIR ($QUADMATH_DIR_WIN)"
+          echo "dir=$QUADMATH_DIR_WIN" >> "$GITHUB_OUTPUT"
 
       - name: Configure
         run: |

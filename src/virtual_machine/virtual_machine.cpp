@@ -234,7 +234,7 @@ void VirtualMachine::deviceLoop() {
         SPDLOG_INFO("Waiting for data...");
         std::vector<char> buffer;
         try {
-            buffer = readWithTimeout(ReadMode::UNTIL_NEWLINE, 10000);
+            buffer = readWithTimeout(ReadMode::UNTIL_NEWLINE, std::chrono::milliseconds(10000));
         } catch (const CommTimeoutError &e) {
             SPDLOG_DEBUG("No data received: {}", e.what());
             continue;

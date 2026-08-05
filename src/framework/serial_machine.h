@@ -1,5 +1,6 @@
 #ifndef NPET_COMM_FW_SERIAL_MACHINE_H
 #define NPET_COMM_FW_SERIAL_MACHINE_H
+#include <chrono>
 #include <optional>
 #include <span>
 #include <string>
@@ -34,7 +35,7 @@ class SerialMachine {
     // Translate a completed read/timer result pair into the appropriate exception, if any.
     static void throwOnReadError(const std::optional<boost::system::error_code> &read_result,
                                   const std::optional<boost::system::error_code> &timer_result,
-                                  int TIMEOUT);
+                                  std::chrono::milliseconds TIMEOUT);
 
 public:
     // Constructor
@@ -75,7 +76,7 @@ protected:
     std::string exchangeComm(const std::string &command);
 
     std::vector<char> readWithTimeout(ReadMode MODE = ReadMode::UNTIL_NEWLINE,
-                                        int TIMEOUT = 2000,
+                                        std::chrono::milliseconds TIMEOUT = std::chrono::milliseconds(2000),
                                         std::size_t FIXED_BYTES = 1);
 
     void writeRawToSerial(std::span<const std::uint8_t> DATA);

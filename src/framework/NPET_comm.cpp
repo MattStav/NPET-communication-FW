@@ -205,7 +205,7 @@ Measurement NPETComm::readSingleMeasurement(const int CHANNEL) {
         throw std::runtime_error(std::string(DATA_FORMAT_ERR));
     }
     writeToSerial(getMeasurementCmd(static_cast<Channel>(CHANNEL), 1));
-    vec = readWithTimeout(ReadMode::FIXED_BYTES, 5000, MEASUREMENT_PACKET_SIZE);
+    vec = readWithTimeout(ReadMode::FIXED_BYTES, std::chrono::milliseconds(5000), MEASUREMENT_PACKET_SIZE);
     SPDLOG_DEBUG("Single measurement received"); // Logging the data is pointless as it's unformatted
     // Transform the binary response into a measurement array
     std::transform(vec.begin(), vec.begin() + MEASUREMENT_PACKET_SIZE, arr.begin(),

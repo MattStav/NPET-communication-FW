@@ -48,16 +48,16 @@ void SerialMachine::waitForReadOrTimeout(boost::asio::steady_timer &timer,
 /// Translate a completed read/timer result pair into the appropriate exception, if any.
 /// @param read_result Result of the read operation
 /// @param timer_result Result of the timer operation
-/// @param TIMEOUT Timeout in milliseconds, used for the timeout error message
+/// @param TIMEOUT Timeout, used for the timeout error message
 void SerialMachine::throwOnReadError(const std::optional<boost::system::error_code> &read_result,
                                      const std::optional<boost::system::error_code> &timer_result,
-                                     const int TIMEOUT) {
+                                     const std::chrono::milliseconds TIMEOUT) {
     if (read_result && *read_result == boost::asio::error::operation_aborted) {
         // Distinguish a genuine timeout (the timer fired and cancelled the read) from
         // the read being cancelled for another reason.
         if (timer_result && !*timer_result) {
-            SPDLOG_ERROR(COMM_TIMEOUT_ERR, TIMEOUT);
-            throw CommTimeoutError(std::format(COMM_TIMEOUT_ERR, TIMEOUT));
+            SPDLOG_ERROR(COMM_TIMEOUT_ERR, TIMEOUT.count());
+            throw CommTimeoutError(std::format(COMM_TIMEOUT_ERR, TIMEOUT.count()));
         }
         SPDLOG_DEBUG("Read operation was cancelled");
         throw OperationCancelledError("Read operation was cancelled");
@@ -73,14 +73,14 @@ void SerialMachine::throwOnReadError(const std::optional<boost::system::error_co
 /// Does not send anything first; use this directly when a command has already been written,
 /// or a device response is expected unprompted (e.g. the virtual machine's device loop).
 /// @param MODE Mode to read the response, either until a newline character or a fixed number of bytes
-/// @param TIMEOUT Timeout in milliseconds to wait for a response before aborting the operation
+/// @param TIMEOUT Time to wait for a response before aborting the operation
 /// @param FIXED_BYTES Number of bytes to read if the mode is set to FixedBytes; unused otherwise
 /// @return Bytes read from the device
 std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
-                                                 const int TIMEOUT,
+                                                 const std::chrono::milliseconds TIMEOUT,
                                                  const std::size_t FIXED_BYTES) {
     SPDLOG_DEBUG("Reading with timeout, Mode: {}, Fixed bytes: {}, Timeout: {}ms",
-                 MODE == ReadMode::UNTIL_NEWLINE ? "UntilNewline" : "FixedBytes", FIXED_BYTES, TIMEOUT);
+                 MODE == ReadMode::UNTIL_NEWLINE ? "UntilNewline" : "FixedBytes", FIXED_BYTES, TIMEOUT.count());
     const auto RESPONSE_BUFFER = std::make_shared<boost::asio::streambuf>();
     std::optional<boost::system::error_code> timer_result;
     std::optional<boost::system::error_code> read_result;
@@ -90,7 +90,7 @@ std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
 
     assert(port_.is_open());
     // Run the async read in a separate thread, with timeout
-    timer.expires_after(std::chrono::milliseconds(TIMEOUT));
+    timer.expires_after(TIMEOUT);
     timer.async_wait([&](const boost::system::error_code &ec) { timer_result = ec; });
     if (MODE == ReadMode::UNTIL_NEWLINE) {
         boost::asio::async_read_until(

@@ -1,5 +1,6 @@
 #ifndef NPET_COMM_CLI_H
 #define NPET_COMM_CLI_H
+#include <cstdint>
 #include <utility>
 
 #include "NPET_comm.h"
@@ -16,7 +17,14 @@ class NPETCommCLI : public NPETComm {
 
     __float128 measureAverageFraction(int AVER_NUM, int CHANNEL_NUM);
 
-    int calcInteger(int INT_LOGIC, int CHANNEL_NUM);
+    /// Logic used to define the integer part of the time correction constant.
+    enum class IntLogic : std::uint8_t {
+        MANUAL = 1,
+        SYSTEM_TIME = 2,
+        NTP_SYNC = 3,
+    };
+
+    int calcInteger(IntLogic INT_LOGIC, int CHANNEL_NUM);
 
     /// Centralized error handler for CLI functions
     /// @tparam Func Function type

@@ -468,7 +468,7 @@ void NPETCommCLI::setTimeConstantCLI() {
             if (INT_CHOICE == 4) {
                 return;
             }
-            new_const.intp = calcInteger(INT_CHOICE, PPS_CHANNEL);
+            new_const.intp = calcInteger(static_cast<IntLogic>(INT_CHOICE), PPS_CHANNEL);
             SPDLOG_DEBUG("Calculated integer part of the time correction constant: {}", new_const.intp);
             break;
         }
@@ -603,15 +603,17 @@ __float128 NPETCommCLI::measureAverageFraction(const int AVER_NUM, const int CHA
 ///
 /// Define the integer part of the time correction constant.
 /// @param INT_LOGIC Either ask the user to define the integer part of the time constant or grab system time
-/// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2). Only used if int_logic is 1 or 2.
+/// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2). Only used if INT_LOGIC is
+///        IntLogic::SYSTEM_TIME or IntLogic::NTP_SYNC.
 /// @return The integer part of the time correction constant
-int NPETCommCLI::calcInteger(const int INT_LOGIC, const int CHANNEL_NUM) {
-    SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}", INT_LOGIC);
+int NPETCommCLI::calcInteger(const IntLogic INT_LOGIC, const int CHANNEL_NUM) {
+    SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}",
+                 static_cast<int>(INT_LOGIC));
     int user_choice{};
     int clock_seconds{};
 
     switch (INT_LOGIC) {
-        case 1:
+        case IntLogic::MANUAL:
             SPDLOG_DEBUG("Logic: Define manually, user will be prompted to enter the target time ...");
             // User defined integer part
             Cli::echo("Enter time of the next 1 Hz measurement in hh:mm:ss format");
@@ -638,14 +640,14 @@ int NPETCommCLI::calcInteger(const int INT_LOGIC, const int CHANNEL_NUM) {
             SPDLOG_DEBUG(
                 "Final confirmation received, time correction constant integer part will be set to the defined clock seconds");
             break;
-        case 3:
+        case IntLogic::NTP_SYNC:
             SPDLOG_DEBUG("Logic: Synchronize system time with NTP server ...");
             // Query an NTP server for the current time
             if (!ensureAccurateSystemTime()) {
                 Cli::err("Failed to synchronize system time with NTP server");
             }
-        // Intentional fallthrough to case 2
-        case 2: {
+        // Intentional fallthrough to case IntLogic::SYSTEM_TIME
+        case IntLogic::SYSTEM_TIME: {
             SPDLOG_DEBUG("Logic: Use system time ...");
             // Get the current system time
             Cli::echo("Calculating time correction integer constant from system time");

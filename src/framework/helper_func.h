@@ -14,16 +14,16 @@
 /// @return Path to the directory where user data should be stored
 inline std::filesystem::path getUserFilesPath() noexcept {
     try {
-        std::string appdata;
-        if (const DWORD SIZE = GetEnvironmentVariableA("APPDATA", nullptr, 0); SIZE > 0) {
+        std::wstring appdata;
+        if (const DWORD SIZE = GetEnvironmentVariableW(L"APPDATA", nullptr, 0); SIZE > 0) {
             appdata.resize(SIZE - 1);
-            GetEnvironmentVariableA("APPDATA", appdata.data(), SIZE);
+            GetEnvironmentVariableW(L"APPDATA", appdata.data(), SIZE);
         }
         return !appdata.empty()
-            ? std::filesystem::path(appdata) / "NPET"
-            : std::filesystem::path{"NPET"};
+            ? std::filesystem::path(appdata) / L"NPET"
+            : std::filesystem::path{L"NPET"};
     } catch (...) {
-        return std::filesystem::path{"NPET"};
+        return std::filesystem::path{L"NPET"};
     }
 }
 inline const std::filesystem::path USER_FILES = getUserFilesPath();

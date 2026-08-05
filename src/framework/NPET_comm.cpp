@@ -140,14 +140,14 @@ bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
 /// @param FORMAT Measured data format. 0 for binary, 1 for ASCII
 /// @return True if the format was successfully set, otherwise false
 bool NPETComm::setMeasuredDataFormat(const int FORMAT) {
-    std::string log_format = FORMAT == 0 ? "binary" : "ASCII";
-    SPDLOG_DEBUG("Setting measured data format to {}", log_format);
+    const std::string LOG_FORMAT = FORMAT == 0 ? "binary" : "ASCII";
+    SPDLOG_DEBUG("Setting measured data format to {}", LOG_FORMAT);
     assert(FORMAT == 0 || FORMAT == 1);
     const std::string RET = exchangeComm("a" + std::to_string(FORMAT));
     const bool SUCCESS = RET.starts_with('a');
     SUCCESS
-        ? SPDLOG_INFO("Measured data format successfully set to {}", log_format)
-        : SPDLOG_ERROR("Failed to set measured data format to {}", log_format);
+        ? SPDLOG_INFO("Measured data format successfully set to {}", LOG_FORMAT)
+        : SPDLOG_ERROR("Failed to set measured data format to {}", LOG_FORMAT);
     return SUCCESS;
 } // end of set_measured_data_format function
 

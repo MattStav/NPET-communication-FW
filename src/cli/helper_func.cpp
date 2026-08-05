@@ -69,22 +69,21 @@ int launchDataProcessor() {
         "npet-dp --data-path " + (USER_FILES / OUTPUT_DIR_NAME).string(),
         "py -m NPET_DP --data-path " + (USER_FILES / OUTPUT_DIR_NAME).string(),
     };
-    int ret_code{};
     Cli::echo("Now launching external data processor");
     for (const auto &command: DP_COMMANDS) {
         SPDLOG_DEBUG("Launching command: {}", command);
-        ret_code = system(command.c_str()); // NOLINT(bugprone-command-processor, concurrency-mt-unsafe)
-        if (ret_code == 0) {
+        const int RET_CODE = system(command.c_str()); // NOLINT(bugprone-command-processor, concurrency-mt-unsafe)
+        if (RET_CODE == 0) {
             SPDLOG_DEBUG("Data processor terminated");
             return 0;
         }
-        if (ret_code == 10) {
+        if (RET_CODE == 10) {
             SPDLOG_ERROR(NO_DATA_ERR);
             Cli::err(std::string(NO_DATA_ERR));
             return 1;
         }
-        SPDLOG_ERROR(DP_ERR, command, ret_code);
-        Cli::err(std::format(DP_ERR, command, ret_code));
+        SPDLOG_ERROR(DP_ERR, command, RET_CODE);
+        Cli::err(std::format(DP_ERR, command, RET_CODE));
     } // end of for loop
     return 1;
 } // end of launch_data_processor function

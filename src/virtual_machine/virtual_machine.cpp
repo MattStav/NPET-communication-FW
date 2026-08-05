@@ -252,12 +252,12 @@ void VirtualMachine::deviceLoop() {
             continue;
         }
         // Get a response to the request
-        std::string response = getResponse(ret);
-        if (response.empty()) {
+        const std::string RESPONSE = getResponse(ret);
+        if (RESPONSE.empty()) {
             continue;
         }
-        SPDLOG_INFO("Writing response: {:?}", response);
-        writeToSerial(response);
+        SPDLOG_INFO("Writing response: {:?}", RESPONSE);
+        writeToSerial(RESPONSE);
     } // end of while loop
     SPDLOG_INFO("Virtual machine shut down");
 } // end of device_loop function

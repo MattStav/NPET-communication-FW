@@ -16,6 +16,7 @@ Checks: >
   -cppcoreguidelines-pro-type-reinterpret-cast,
   -cppcoreguidelines-non-private-member-variables-in-classes,
   -misc-non-private-member-variables-in-classes,
+  -misc-include-cleaner,
   -modernize-use-trailing-return-type,
   -modernize-use-anonymous-namespace,
   -readability-magic-numbers,

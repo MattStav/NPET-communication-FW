@@ -103,6 +103,7 @@ When building from the terminal, follow these steps:
 ### 5. Run the executable `NPET_comm_FW_CLI`
 
 ## Importing the FW Python library
+__WARNING: The Python library is currently not maintained!__
 __WARNING: The Python library is compiled for MinGW Python!__
 Make sure to use the MinGW Python interpreter when importing the library in your Python script.
 To import the built Python library in your Python script,

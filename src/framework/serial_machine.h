@@ -23,7 +23,7 @@ class SerialMachine {
     // io_context to manage the serial port's I/O operations
     boost::asio::io_context io_;
     // Serial port object for communication
-    boost::asio::serial_port port_;
+    boost::asio::serial_port port_{io_};
 
     // Block until the pending read and timer operations have both completed,
     // cancelling whichever one is still outstanding once the other finishes.
@@ -38,8 +38,7 @@ class SerialMachine {
 
 public:
     // Constructor
-    SerialMachine() : port_(io_) {
-    }
+    SerialMachine() = default;
 
     // Open communication over serial COM port
     void openCommunication(int COM_PORT, int BAUD_RATE);

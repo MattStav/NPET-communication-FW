@@ -30,9 +30,9 @@ class MeasReader {
     NPETComm &npet_; // a reference to the NPET communicator instance
     std::mutex mtx_data_; // a mutex to handle queue accesses
     // Queue to store the data received from NPET
-    std::deque<std::uint8_t> received_data_q_;
+    std::deque<std::uint8_t> received_data_q_{};
     // Queue to store processed measurements
-    std::queue<Measurement> for_saver_q_;
+    std::queue<Measurement> for_saver_q_{};
 
     void dataReceiver();
 
@@ -50,7 +50,7 @@ class MeasReader {
 
 public:
     // Queue to store processed measurements
-    std::queue<Measurement> for_monitor_q;
+    std::queue<Measurement> for_monitor_q{};
     // Signal to stop the measurement
     std::atomic<bool> stop_sign{false};
     // Signal that user aborted the measurement

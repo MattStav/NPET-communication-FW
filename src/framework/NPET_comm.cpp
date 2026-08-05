@@ -3,7 +3,7 @@
 #include <boost/asio.hpp>
 #include <string>
 #include <fstream>
-#include <quadmath.h> // NOLINT(clang-diagnostic-error)
+#include <quadmath.h>
 #include <spdlog/spdlog.h>
 #ifdef PYBIND11_ENABLED
 #include <pybind11/gil.h>
@@ -54,7 +54,7 @@ void NPETComm::detectFWVer() {
     const std::string REVISION_STRING = "ADI";
     const std::string OFFLINE_STRING = "offline";
     // Get and check the FW version
-    if (const std::string RES = exchangeComm("?"); RES.contains(REVISION_STRING)) { // NOLINT(*-branch-clone)
+    if (const std::string RES = exchangeComm("?"); RES.contains(REVISION_STRING)) {
         // Set the FW version to 2 running NPET with the latest components revision
         setFWVer(2);
     } else if (RES.contains(OFFLINE_STRING)) {

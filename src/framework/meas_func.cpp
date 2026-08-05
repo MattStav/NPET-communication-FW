@@ -18,7 +18,7 @@ constexpr std::string_view INVALID_MEASUREMENT_ERR = "Invalid measurement data r
 std::string float128ToString(const __float128 VALUE) {
     std::array<char, 256> buf{};
     // Fixed decimal with the correct quad precision rounding
-    quadmath_snprintf(buf.data(), buf.size(), FMT, VALUE); // NOLINT(cppcoreguidelines-pro-type-vararg)
+    quadmath_snprintf(buf.data(), buf.size(), FMT, VALUE);
     return buf.data();
 } // end of float128_to_string function
 

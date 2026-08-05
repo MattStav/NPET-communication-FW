@@ -74,7 +74,7 @@ void MeasReader::dataReceiver() {
 /// This ensures that the processor thread does not get stuck waiting for data when the program is trying to exit.
 /// @return Array of 13 bytes containing the measurement data, or an empty array if a stop signal was received while waiting for data.
 std::optional<std::array<uint8_t, 13> > MeasReader::grabMeasFromReceiver() {
-    bool has_data = false; // NOLINT(misc-const-correctness) - reassigned in loop below, false positive
+    bool has_data = false;
     // Wait until there is some data in the queue or a stop signal is received
 
     while (true) {
@@ -99,7 +99,7 @@ std::optional<std::array<uint8_t, 13> > MeasReader::grabMeasFromReceiver() {
         {
             // Code block to limit the scope of the lock
             std::scoped_lock const LOCK(mtx_data_);
-            const uint8_t FIRST = received_data_q_.front(); // NOLINT(cppcoreguidelines-init-variables) - false positive, front() return is copy-initialized
+            const uint8_t FIRST = received_data_q_.front();
             // Peek at the second byte without removing
             auto it = received_data_q_.begin();
             std::advance(it, 1);

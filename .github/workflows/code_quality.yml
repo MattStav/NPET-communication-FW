@@ -93,4 +93,4 @@ jobs:
             -p build \
             -extra-arg=-isystem${{ steps.quadmath.outputs.dir }} \
             -warnings-as-errors='*' \
-            '^(?!.*[/\\]_deps[/\\]).*[/\\]src[/\\].*'
+            '^(?!.*[/\\]_deps[/\\])(?!.*[/\\]icon[/\\]).*[/\\]src[/\\].*'

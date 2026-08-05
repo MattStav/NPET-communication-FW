@@ -81,14 +81,14 @@ It is important that the configuration runs with the following args:
 - Path to vcpkg toolchain file, this arg depends on your vcpkg installation
   but can be something like:
   `-DCMAKE_TOOLCHAIN_FILE=C:\Users\[username]\.vcpkg-clion\vcpkg\scripts\buildsystems\vcpkg.cmake`
-- Selection of the vcpkg target triplet, which depends on your system,
+- Selection of the vcpkg target triplet, which depends on your system 
   but can be something like: `-DVCPKG_TARGET_TRIPLET=x64-mingw-static`.
   __The triplet should be static!__
   This is so the program can be built into a standalone executable.
 
 ### 4. Build the project
 When using the IDE built-in build function,
-it is necessary to set toolset to `msys64\mingw64`.
+it is necessary to set the toolset to `msys64\mingw64`.
 When building from the terminal, follow these steps:
 
 1. Create a build directory `mkdir build` and navigate into it: `cd build`

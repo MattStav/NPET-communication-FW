@@ -57,7 +57,7 @@ jobs:
       # own built-in search paths, but clang-tidy (running as a Clang frontend in g++
       # compatibility mode) doesn't reliably replicate that, causing a hard
       # "'quadmath.h' file not found" error that corrupts the rest of the TU's analysis.
-      # Locate it in this run's actual MSYS2 install and point clang-tidy at it explicitly,
+      # Locate it in this run's actual MSYS2 installation and point clang-tidy at it explicitly,
       # rather than hardcoding a path that could drift with package updates.
       - name: Locate quadmath.h
         id: quadmath

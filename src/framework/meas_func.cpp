@@ -3,6 +3,7 @@
 #include <array>
 #include <cassert>
 #include <ctime>
+#include <quadmath.h>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.
@@ -18,7 +19,7 @@ constexpr std::string_view INVALID_MEASUREMENT_ERR = "Invalid measurement data r
 std::string float128ToString(const __float128 VALUE) {
     std::array<char, 256> buf{};
     // Fixed decimal with the correct quad precision rounding
-    quadmath_snprintf(buf.data(), buf.size(), FMT, VALUE);
+    quadmath_snprintf(buf.data(), buf.size(), FMT, VALUE); // NOLINT(*-pro-type-vararg)
     return buf.data();
 } // end of float128_to_string function
 

@@ -13,7 +13,7 @@
 /// @return A random offset expressed in seconds
 __float128 VirtualMachine::randomOffset() {
     std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(static_cast<std::mt19937::result_type>(rd()));
     std::uniform_real_distribution dist(1e-2, 1e-1);
     return dist(gen);
 } // end of random_offset function
@@ -91,9 +91,9 @@ std::string VirtualMachine::getResponse(const std::string &command) {
     }
     if (command.starts_with('n')) {
         // Get time constant command
-        const std::string TC = "n1\r\n" + time_const_ + "\r\n";
-        SPDLOG_INFO("Sending time constant: {:?}", TC);
-        return TC;
+        std::string tc = "n1\r\n" + time_const_ + "\r\n";
+        SPDLOG_INFO("Sending time constant: {:?}", tc);
+        return tc;
     }
     SPDLOG_ERROR("Undefined command for offline operation");
     return "";
@@ -150,7 +150,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
         return;
     }
     std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(static_cast<std::mt19937::result_type>(rd()));
     int number_of_measurements = std::stoi(num_str);
     int i{};
     // Emulate infinite operation, by generating as many measurements as possible

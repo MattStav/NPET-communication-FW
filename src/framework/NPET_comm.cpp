@@ -332,7 +332,7 @@ std::string NPETComm::importTimeConstantRaw() {
 /// @return Current status of the NPET device, check docu for more details.
 std::string NPETComm::getStatus() {
     SPDLOG_DEBUG("Getting status from NPET");
-    const std::string RET = exchangeComm("s1");
-    SPDLOG_DEBUG("Status received from NPET: '{}'", RET);
-    return RET;
+    std::string ret = exchangeComm("s1");
+    SPDLOG_DEBUG("Status received from NPET: '{}'", ret);
+    return ret;
 } // end of get_status function

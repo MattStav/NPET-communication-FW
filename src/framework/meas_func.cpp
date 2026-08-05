@@ -200,9 +200,9 @@ std::array<std::uint8_t, 13> encodeMeasurementSet(
 /// @return Formatted measurement command string
 std::string getMeasurementCmd(const Channel CHANNEL, const int NUM_OF_MEAS) {
     const std::string MEAS_LETTER = CHANNEL == Channel::CH1 ? "e" : "h";
-    const std::string CMD = MEAS_LETTER + std::to_string(NUM_OF_MEAS);
-    SPDLOG_DEBUG("Measurement command: {}", CMD);
-    return CMD;
+    std::string cmd = MEAS_LETTER + std::to_string(NUM_OF_MEAS);
+    SPDLOG_DEBUG("Measurement command: {}", cmd);
+    return cmd;
 } // end of get_measurement_command function
 
 

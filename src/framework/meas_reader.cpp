@@ -99,7 +99,7 @@ std::optional<std::array<uint8_t, 13> > MeasReader::grabMeasFromReceiver() {
         {
             // Code block to limit the scope of the lock
             std::scoped_lock const LOCK(mtx_data_);
-            const uint8_t FIRST = received_data_q_.front();
+            const uint8_t FIRST = received_data_q_.front(); // NOLINT(cppcoreguidelines-init-variables) - false positive, front() return is copy-initialized
             // Peek at the second byte without removing
             auto it = received_data_q_.begin();
             std::advance(it, 1);

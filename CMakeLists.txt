@@ -10,6 +10,12 @@ project(NPET_comm_FW LANGUAGES C CXX)
 
 enable_testing()
 
+# Ensure WIN32_LEAN_AND_MEAN is defined before any translation unit is compiled, so that
+# <windows.h> never pulls in the legacy winsock.h regardless of header include order
+if (WIN32)
+    add_compile_definitions(WIN32_LEAN_AND_MEAN)
+endif ()
+
 # Find dependencies
 find_package(CLI11 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)

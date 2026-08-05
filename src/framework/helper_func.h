@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <string>
 #include <vector>
-#define WIN32_LEAN_AND_MEAN  // Prevent windows.h from including WinSock.h
 #include <Windows.h>
 #include <setupapi.h>
 #include <devguid.h> // HAS to be after windows.h

@@ -13,7 +13,7 @@
 /// @return A random offset expressed in seconds
 __float128 VirtualMachine::randomOffset() {
     std::random_device rd;
-    std::mt19937 gen(static_cast<std::mt19937::result_type>(rd()));
+    std::mt19937 gen(rd()); // NOLINT(bugprone-narrowing-conversions, cppcoreguidelines-narrowing-conversions)
     std::uniform_real_distribution dist(1e-2, 1e-1);
     return dist(gen);
 } // end of random_offset function
@@ -150,7 +150,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
         return;
     }
     std::random_device rd;
-    std::mt19937 gen(static_cast<std::mt19937::result_type>(rd()));
+    std::mt19937 gen(rd()); // NOLINT(bugprone-narrowing-conversions, cppcoreguidelines-narrowing-conversions)
     int number_of_measurements = std::stoi(num_str);
     int i{};
     // Emulate infinite operation, by generating as many measurements as possible

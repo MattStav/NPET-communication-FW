@@ -174,18 +174,16 @@ bool NPETCommCLI::isResponsiveCLI() {
 /// Ask the user to select what version of FW the connected NPET device is running.
 /// Firmware version is saved into the fw_version attribute.
 void NPETCommCLI::setFwVerCLI() {
-    const std::vector<std::string> FW_OPTIONS = {
-        "Original",
-        "Revision for NPET with AD component",
+    const std::vector FW_OPTIONS = {
+        std::string(FWVersion(FWVersion::ORIGINAL).getDescription()),
+        std::string(FWVersion(FWVersion::AD_REVISION).getDescription()),
     };
-    SPDLOG_DEBUG("{}: {}", FW_CURRENT, fw_version);
-    Cli::showInt(std::string(FW_CURRENT), fw_version);
+    SPDLOG_DEBUG("{}: {}", FW_CURRENT, fw_version.getValue());
+    Cli::showInt(std::string(FW_CURRENT), fw_version.getValue());
     SPDLOG_DEBUG("Selecting new version from: {}", FW_OPTIONS);
     const int USER_CHOICE = Cli::menu("What firmware is your NPET using?", FW_OPTIONS, false);
-    if (USER_CHOICE == 1) {
-        Cli::echo("Selected the original NPET firmware.");
-    } else if (USER_CHOICE == 2) {
-        Cli::echo("Selected the revised NPET firmware.");
+    if (USER_CHOICE == FWVersion::ORIGINAL || USER_CHOICE == FWVersion::AD_REVISION) {
+        Cli::echo("Selected firmware: " + FW_OPTIONS.at(USER_CHOICE - 1));
     } else {
         SPDLOG_ERROR(FW_INVALID);
         Cli::err(std::string(FW_INVALID));
@@ -201,13 +199,14 @@ void NPETCommCLI::setFwVerCLI() {
 void NPETCommCLI::detectFwVerCLI() {
     SPDLOG_DEBUG("Detecting NPET firmware version ...");
     safeExec([&] { detectFWVer(); }, "detect_FW_ver");
-    if (fw_version == 1) {
-        Cli::echo("Detected the original NPET firmware.");
-    } else if (fw_version == 2) {
-        Cli::echo("Detected the FW revision for NPET with analogue devices component.");
-    } else if (fw_version == 3) {
-        Cli::echo("Detected Virtual NPET", fg::yellow);
-    } else {
+    try {
+        const std::string DESCRIPTION = "Detected firmware: " + std::string(fw_version.getDescription());
+        if (fw_version.getValue() == FWVersion::VIRTUAL) {
+            Cli::echo(DESCRIPTION, fg::yellow);
+        } else {
+            Cli::echo(DESCRIPTION);
+        }
+    } catch (const std::invalid_argument &) {
         SPDLOG_ERROR(FW_UNKNOWN);
         throw std::invalid_argument(std::string(FW_UNKNOWN));
     }

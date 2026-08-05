@@ -4,6 +4,7 @@
 
 #include "meas_reader.h"
 #include "meas_func.h"
+#include "fw_version.h"
 #include "serial_machine.h"
 
 static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
@@ -12,7 +13,7 @@ static constexpr int INFINITE_OPERATION = 9999;
 class NPETComm : public SerialMachine {
 public:
     // Internal NPET firmware version
-    int fw_version{};
+    FWVersion fw_version{};
 
     // Check if NPET is responsive
     [[nodiscard]] bool isResponsive(bool END_STREAM = false);

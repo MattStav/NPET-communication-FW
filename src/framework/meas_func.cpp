@@ -203,21 +203,3 @@ std::string getMeasurementCmd(const Channel CHANNEL, const int NUM_OF_MEAS) {
     SPDLOG_DEBUG("Measurement command: {}", cmd);
     return cmd;
 } // end of get_measurement_command function
-
-
-///
-/// Get the measurement multiplier based on NPET firmware version.
-/// @param FW_VERSION NPET firmware version (1, 2, or 3)
-/// @return Measurement multiplier as a 128-bit floating point number
-__float128 getMeasurementMultiplier(const int FW_VERSION) {
-    __float128 mult{};
-    if (FW_VERSION == 1) {
-        mult = 0.00000002;
-    } else if (FW_VERSION == 2 || FW_VERSION == 3) {
-        mult = 0.00000001;
-    } else {
-        throw std::invalid_argument("Unknown FW version");
-    }
-    SPDLOG_DEBUG("Measurement multiplier for FW version {}: {}", FW_VERSION, float128ToString(mult));
-    return mult;
-} // end of get_measurement_multiplier function

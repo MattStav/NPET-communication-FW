@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include "fw_version.h"
 #include "gmock/gmock-matchers.h"
 
 namespace fs = std::filesystem;
@@ -79,30 +80,6 @@ INSTANTIATE_TEST_SUITE_P(
         GetMeasurementCmdParams{Channel::CH2, 99, "h99"}
     )
 );
-
-TEST(GetMeasurementMultiplier, FW1Returns2e8) {
-    EXPECT_DOUBLE_EQ(static_cast<double>(getMeasurementMultiplier(1)), 2e-8);
-}
-
-TEST(GetMeasurementMultiplier, FW2Returns1e8) {
-    EXPECT_DOUBLE_EQ(static_cast<double>(getMeasurementMultiplier(2)), 1e-8);
-}
-
-TEST(GetMeasurementMultiplier, FW3Returns1e8) {
-    EXPECT_DOUBLE_EQ(static_cast<double>(getMeasurementMultiplier(3)), 1e-8);
-}
-
-TEST(GetMeasurementMultiplier, FW2AndFW3AreEqual) {
-    EXPECT_DOUBLE_EQ(static_cast<double>(getMeasurementMultiplier(2)),
-                     static_cast<double>(getMeasurementMultiplier(3)));
-}
-
-TEST(GetMeasurementMultiplier, UnknownVersionThrows) {
-    EXPECT_THROW(getMeasurementMultiplier(0), std::invalid_argument);
-    EXPECT_THROW(getMeasurementMultiplier(4), std::invalid_argument);
-    EXPECT_THROW(getMeasurementMultiplier(-1), std::invalid_argument);
-}
-
 
 class ProcessMeasurementInvalidHeader : public testing::TestWithParam<ProcessMeasurementInvalidHeaderParams> {
 };
@@ -228,8 +205,8 @@ TEST(ProcessMeasurement, MultiplierFW1VsFW2DiffersForNonZeroPacket) {
     // Use a packet with a non-zero mid-word to make multiplier matter
     std::array<uint8_t, 13> arr = {1, 11, 1, 0, 0, 0, 100, 0, 0, 0xFF, 0xFF, 0x3F, 0};
     arr[12] = xorChecksum(arr);
-    const __float128 mult1 = getMeasurementMultiplier(1);
-    const __float128 mult2 = getMeasurementMultiplier(2);
+    const __float128 mult1 = FWVersion(FWVersion::ORIGINAL).getMultiplier();
+    const __float128 mult2 = FWVersion(FWVersion::AD_REVISION).getMultiplier();
     const Measurement r1 = decodeMeasurementSet(arr, mult1);
     const Measurement r2 = decodeMeasurementSet(arr, mult2);
     EXPECT_NE(r1.fracp, r2.fracp);

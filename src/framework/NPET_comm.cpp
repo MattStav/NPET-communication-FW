@@ -39,9 +39,10 @@ bool NPETComm::isResponsive(const bool END_STREAM) {
 /// @param NEW_FW_VERSION New firmware version to set
 void NPETComm::setFWVer(const int NEW_FW_VERSION) {
     SPDLOG_DEBUG("Setting NPET firmware version to {}", NEW_FW_VERSION);
-    assert((NEW_FW_VERSION == 1 || NEW_FW_VERSION == 2 || NEW_FW_VERSION == 3) && "Invalid NPET firmware version");
-    fw_version = NEW_FW_VERSION;
-    SPDLOG_INFO("NPET firmware successfully version set to {}", fw_version);
+    assert((NEW_FW_VERSION == FWVersion::ORIGINAL || NEW_FW_VERSION == FWVersion::AD_REVISION ||
+            NEW_FW_VERSION == FWVersion::VIRTUAL) && "Invalid NPET firmware version");
+    fw_version = FWVersion(NEW_FW_VERSION);
+    SPDLOG_INFO("NPET firmware successfully version set to {}", fw_version.getValue());
 } // end of set_NPET_FW_ver function
 
 
@@ -218,7 +219,7 @@ Measurement NPETComm::readSingleMeasurement(const int CHANNEL) {
     // Transform the binary response into a measurement array
     std::transform(vec.begin(), vec.begin() + MEASUREMENT_PACKET_SIZE, arr.begin(),
                    [](const char C) { return static_cast<uint8_t>(C); });
-    return decodeMeasurementSet(arr, getMeasurementMultiplier(fw_version));
+    return decodeMeasurementSet(arr, fw_version.getMultiplier());
 } // end of read_single_measurement function
 
 

@@ -20,8 +20,6 @@ enum class Channel : std::uint8_t { CH1 = 1, CH2 = 2 };
 
 std::string getMeasurementCmd(Channel CHANNEL, int NUM_OF_MEAS);
 
-__float128 getMeasurementMultiplier(int FW_VERSION);
-
 std::string float128ToString(__float128 VALUE);
 
 ///

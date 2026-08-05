@@ -42,6 +42,6 @@ TEST_P(SetFirmwareVersionTest, SetValidAndInvalidFirmwareVersions) {
     const auto [FIRMWARE_VERSION] = GetParam();
     EXPECT_NO_THROW({
         comm.setFWVer(FIRMWARE_VERSION);
-        EXPECT_EQ(comm.fw_version, FIRMWARE_VERSION);
+        EXPECT_EQ(comm.fw_version, FWVersion(FIRMWARE_VERSION));
         });
 }

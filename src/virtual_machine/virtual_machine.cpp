@@ -193,7 +193,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
             seconds++;
         }
         const Measurement MEASUREMENT{.meas_num = measurement_counter_, .intp = seconds, .fracp = fracp};
-        const auto MEASUREMENT_SET = encodeMeasurementSet(MEASUREMENT, getMeasurementMultiplier(3));
+        const auto MEASUREMENT_SET = encodeMeasurementSet(MEASUREMENT, FWVersion(FWVersion::VIRTUAL).getMultiplier());
         writeRawToSerial(MEASUREMENT_SET);
         if (i == number_of_measurements) {
             SPDLOG_INFO("Measurement stream completed: {} measurements sent", i);

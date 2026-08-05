@@ -126,7 +126,7 @@ std::optional<std::array<uint8_t, 13> > MeasReader::grabMeasFromReceiver() {
 /// /// Contains the number of measurements, display and save flags, and channel number
 /// @param time_const Time correction constant imported from NPET
 void MeasReader::dataProcessor(const MeasContext &meas_set, const Measurement &time_const) {
-    const __float128 MULTIPLIER = getMeasurementMultiplier(npet_.fw_version);
+    const __float128 MULTIPLIER = npet_.fw_version.getMultiplier();
     int meas_counter = 0; // Track total including overflows
     SPDLOG_DEBUG("Data processor thread started");
     SPDLOG_DEBUG("Data processor time const: {}", time_const.toString());

@@ -184,5 +184,5 @@ void ProgressBar::update(const int PROGRESS) {
     if (PERCENTAGE != prev_bucket_ && PERCENTAGE / change_trigger_ != prev_bucket_) {
         drawProgressBar(PERCENTAGE, bar_width_);
     }
-    prev_bucket_ = PERCENTAGE / change_trigger_;;
+    prev_bucket_ = PERCENTAGE / change_trigger_;
 }

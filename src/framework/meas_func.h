@@ -3,7 +3,7 @@
 #include <cstdint> // Needed for uint8_t
 #include <filesystem>
 #include <string>
-#include <quadmath.h> // NOLINT(clang-diagnostic-error)
+#include <quadmath.h>
 
 #include "helper_func.h"
 

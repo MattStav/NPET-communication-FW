@@ -20,7 +20,7 @@ using ::testing::MatchesRegex;
 
 // Matches Measurement::toString() / float128ToString()'s fixed 15-decimal-digit format, e.g. "0 1.234500000000000".
 constexpr auto MEASUREMENT_LINE_PATTERN =
-    R"(-*\d\d* -*\d\d*\.\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d)";
+        R"(-*\d\d* -*\d\d*\.\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d)";
 
 // All measurement reads decode using npet_.fw_version's multiplier, which must match the
 // multiplier the VM encoded with (VIRTUAL) or decoded values come out meaningless.
@@ -245,11 +245,13 @@ protected:
 };
 
 class BatchMeasurementSaveCountTest : public BatchMeasurementSaveTest,
-                                       public ::testing::WithParamInterface<int> {
+                                      public ::testing::WithParamInterface<int> {
 };
 
 TEST_P(BatchMeasurementSaveCountTest, SaveTrueWritesOneLinePerMeasurement) {
-    const MeasContext CTX{.num_of_meas = GetParam(), .monitor_fn = nullptr, .save_dir = save_dir, .channel = Channel::CH1};
+    const MeasContext CTX{
+        .num_of_meas = GetParam(), .monitor_fn = nullptr, .save_dir = save_dir, .channel = Channel::CH1
+    };
     client->readBatchMeasurements(CTX);
     EXPECT_EQ(savedFileCount(), 1U);
     const std::vector<std::string> LINES = readSavedLines();
@@ -375,4 +377,49 @@ TEST_F(MeasurementWorkflowFixture, EscKeyPressInterruptsInfiniteOperation) {
     // poll notices Esc rules out "infinite" having simply run to its (effectively unbounded) end.
     EXPECT_LT(collected.size(), 1000U);
     EXPECT_TRUE(client->isResponsive());
+}
+
+
+// --- Average fraction: getAverageFraction() averages readSingleMeasurement()'s fracp over N reads ---
+
+TEST_F(MeasurementWorkflowFixture, AverageFractionReturnsValueInUnitRange) {
+    // Only AVER_NUM is given; CHANNEL_NUM defaults to CH2, which ticks once a second, so this is
+    // kept to the minimum the implementation allows (assert(AVER_NUM > 2)) to keep the test fast.
+    const std::optional<__float128> AVG = client->getAverageFraction(2);
+    ASSERT_TRUE(AVG.has_value());
+    EXPECT_GE(static_cast<double>(*AVG), 0.0);
+    EXPECT_LT(static_cast<double>(*AVG), 1.0);
+}
+
+
+// Stand-in for NPET_comm_CLI.cpp's ProgressBar: any type with an update(int) method can be passed
+// to getAverageFraction()'s optional progress-tracker template parameter.
+struct ProgressRecorder {
+    std::vector<int> calls;
+
+    void update(const int PROGRESS) { calls.push_back(PROGRESS); }
+};
+
+TEST_F(MeasurementWorkflowFixture, AverageFractionReportsSequentialProgressToTracker) {
+    constexpr int AVER_NUM = 6;
+    ProgressRecorder tracker;
+    const std::optional<__float128> AVG = client->getAverageFraction(AVER_NUM, Channel::CH1, &tracker);
+    ASSERT_TRUE(AVG.has_value());
+    ASSERT_EQ(tracker.calls.size(), static_cast<size_t>(AVER_NUM));
+    for (int i = 0; i < AVER_NUM; ++i) {
+        EXPECT_EQ(tracker.calls[i], i + 1);
+    }
+}
+
+TEST_F(MeasurementWorkflowFixture, AverageFractionMatchesManuallyAveragedSingleMeasurements) {
+    constexpr int AVER_NUM = 10;
+    const std::optional<__float128> AVG = client->getAverageFraction(AVER_NUM, Channel::CH2);
+    ASSERT_TRUE(AVG.has_value());
+
+    __float128 reference_sum{};
+    for (int i = 0; i < AVER_NUM; ++i) {
+        reference_sum += client->readSingleMeasurement(Channel::CH2).fracp;
+    }
+    const auto REFERENCE_AVG = static_cast<double>(reference_sum / AVER_NUM);
+    EXPECT_NEAR(static_cast<double>(*AVG), REFERENCE_AVG, 0.2);
 }

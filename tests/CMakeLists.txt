@@ -45,6 +45,27 @@ target_link_libraries(NPET_comm_FW_vm_tests PRIVATE
 gtest_discover_tests(NPET_comm_FW_vm_tests)
 
 
+# Workflow tests: framework + virtual machine module, talking to each other over a real
+# com0com virtual null-modem COM port pair provisioned ahead of time
+file(GLOB_RECURSE NPET_WORKFLOW_TESTS_FILES "tests_framework_workflow/*.cpp")
+add_executable(NPET_comm_FW_workflow_tests
+        ${NPET_WORKFLOW_TESTS_FILES}
+        ${NPET_VM_MODULE_FILES}
+)
+target_include_directories(NPET_comm_FW_workflow_tests PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/virtual_machine
+)
+target_compile_definitions(NPET_comm_FW_workflow_tests PRIVATE
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_OFF
+)
+target_link_libraries(NPET_comm_FW_workflow_tests PRIVATE
+        NPET_comm_FW_framework_silent
+        GTest::gmock
+        GTest::gtest_main
+)
+gtest_discover_tests(NPET_comm_FW_workflow_tests)
+
+
 option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
 if(ENABLE_COVERAGE)
     function(enable_coverage target)
@@ -60,4 +81,5 @@ if(ENABLE_COVERAGE)
     enable_coverage(NPET_comm_FW_framework_tests)
     enable_coverage(NPET_comm_FW_framework_silent)
     enable_coverage(NPET_comm_FW_vm_tests)
+    enable_coverage(NPET_comm_FW_workflow_tests)
 endif()

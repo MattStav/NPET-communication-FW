@@ -32,6 +32,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install com0com
+        shell: pwsh
+        run: choco install com0com -y --no-progress
+
+      - name: Create com0com virtual COM port pair
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\com0com\setupc.exe" install - PortName=COM8 PortName=COM9
+
       - name: Set up MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -80,6 +89,7 @@ jobs:
           cmake --build build \
             --target NPET_comm_FW_framework_tests \
             --target NPET_comm_FW_vm_tests \
+            --target NPET_comm_framework_workflow_tests \
             --parallel
 
       - name: Test

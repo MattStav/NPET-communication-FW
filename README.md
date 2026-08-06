@@ -6,7 +6,6 @@
 ![CMake](https://img.shields.io/badge/build-CMake-064F8C?logo=cmake&logoColor=white)
 ![vcpkg](https://img.shields.io/badge/dependencies-vcpkg-0078D4)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20MSYS2-blue)
-![Python Bindings](https://img.shields.io/badge/python-bindings-3776AB?logo=python&logoColor=white)
 
 ---
 

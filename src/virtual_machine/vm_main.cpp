@@ -26,5 +26,6 @@ int launchVm(const VmConfig CONFIG) {
     SPDLOG_INFO("Mock tick period: {} ns", TICK_NS);
     SPDLOG_INFO("Mock is steady: {}", std::chrono::high_resolution_clock::is_steady);
     vm.deviceLoop();
+    vm.closeCommunication();
     return 0;
 } // end of launchVm function

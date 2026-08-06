@@ -37,3 +37,23 @@ TEST_F(MeasurementCounterTest, FirstMeasurementHasCounterOne) {
     const Measurement FIRST = client->readSingleMeasurement(1);
     EXPECT_EQ(FIRST.meas_num, 1);
 }
+
+
+class MeasurementStartTimeTest : public FrameworkWorkflowFixture {
+};
+
+/// Each measurement's elapsed time is measured against START_TIME, captured when the VM is
+/// constructed, so a measurement read right after startup should report 0 whole seconds elapsed.
+/// Channel 1 (10ms tick grid at 100Hz) is used rather than channel 2 (fixed 1s grid), since
+/// channel 2's very first tick always lands at exactly 1.0s, not 0.
+TEST_F(MeasurementStartTimeTest, FirstMeasurementStartsAtZeroSeconds) {
+    client->setFWVer(FWVersion::VIRTUAL);
+    const Measurement FIRST = client->readSingleMeasurement(1);
+    EXPECT_EQ(FIRST.intp, 0);
+
+    // Recheck after a real delay: elapsed time should have actually advanced against the same
+    // START_TIME, not stayed pinned at 0 or reset on the next read.
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    const Measurement SECOND = client->readSingleMeasurement(1);
+    EXPECT_GE(SECOND.intp, 2);
+}

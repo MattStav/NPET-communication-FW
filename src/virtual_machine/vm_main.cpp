@@ -19,7 +19,7 @@ int launchVm(const VmConfig CONFIG) {
     SPDLOG_INFO("Mock NPET device virtual machine starting ...");
     auto vm = VirtualMachine(CONFIG.ch1_frequency);
     SPDLOG_INFO("User specified COM{} ...", CONFIG.com_port);
-    vm.openCommunication(CONFIG.com_port - 1, 115200);
+    vm.openCommunication(CONFIG.com_port, 115200);
     SPDLOG_INFO("Mock NPET device virtual machine COM port open");
     using period = std::chrono::high_resolution_clock::period;
     constexpr double TICK_NS = static_cast<double>(period::num) * 1e9 / period::den;

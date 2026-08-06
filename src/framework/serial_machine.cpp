@@ -7,21 +7,20 @@ constexpr std::string_view COMM_TIMEOUT_ERR = "Communication timeout: Device did
 
 ///
 /// Open serial communication on the specified COM port.
-/// @param COM_PORT COM port number to open communication on (0-based index).
+/// @param COM_PORT COM port number to open communication on (e.g. 8 for COM8)
 /// @param BAUD_RATE Baud rate for the serial communication
 void SerialMachine::openCommunication(const int COM_PORT, const int BAUD_RATE) {
-    SPDLOG_INFO("Opening communication on COM{} ...", COM_PORT + 1);
+    SPDLOG_INFO("Opening communication on COM{} ...", COM_PORT);
     assert(COM_PORT > 0);
-    // +1 needed for MS Windows correction
-    const std::string PORT_NAME{std::to_string(COM_PORT + 1)};
+    const std::string PORT_NAME{std::to_string(COM_PORT)};
     // Construct the Windows-specific device path
     const std::string FULL_PORT_NAME = R"(\\.\COM)" + PORT_NAME;
     // Open a COM port communication
     port_ = boost::asio::serial_port(io_, FULL_PORT_NAME);
     port_.set_option(boost::asio::serial_port_base::baud_rate(BAUD_RATE));
-    SPDLOG_DEBUG("COM{} opened with {} baud rate ", COM_PORT + 1, BAUD_RATE);
+    SPDLOG_DEBUG("COM{} opened with {} baud rate ", COM_PORT, BAUD_RATE);
     assert(port_.is_open());
-    SPDLOG_INFO("Communication on COM{} opened successfully", COM_PORT + 1);
+    SPDLOG_INFO("Communication on COM{} opened successfully", COM_PORT);
 } // end of openCommunication function
 
 

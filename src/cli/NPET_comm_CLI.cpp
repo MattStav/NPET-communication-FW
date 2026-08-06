@@ -54,7 +54,7 @@ constexpr std::string_view RESET_COMPLETE = "NPET reset sequence finished";
 /// WARNING: This function does not check if the selected COM port is valid.
 /// @param AUTOSELECT If true, automatically select the COM port if only one is available.
 /// @throws runtime_error if no COM ports are found.
-/// @returns Selected COM port number (0-based index).
+/// @returns Selected COM port number (e.g. 8 for COM8).
 static int selectComPortCli(const bool AUTOSELECT) {
     SPDLOG_DEBUG("Selecting COM port with autoselect: {}", AUTOSELECT);
     int selected_cp{};
@@ -89,7 +89,6 @@ static int selectComPortCli(const bool AUTOSELECT) {
         const std::string COM_PORT_STR = Cli::prompt("Choose COM port number");
         std::stringstream(COM_PORT_STR) >> selected_cp;
     }
-    selected_cp--; // MS Windows correction
     SPDLOG_INFO("Selected CP num: {}", selected_cp);
     return selected_cp;
 } // end of select_COM_port function
@@ -111,8 +110,7 @@ void NPETCommCLI::openCommunicationCLI() {
         }
         SPDLOG_DEBUG("Attempt {} to open NPET communication, autoselect: {}", i + 1, autoselect);
         const int COM_PORT = selectComPortCli(autoselect);
-        // +1 needed for MS Windows correction
-        Cli::showInt("Opening the NPET communication on COM", COM_PORT + 1);
+        Cli::showInt("Opening the NPET communication on COM", COM_PORT);
         if (COM_PORT < 1) {
             SPDLOG_ERROR(INVALID_COM_PORT);
             Cli::err(std::string(INVALID_COM_PORT));

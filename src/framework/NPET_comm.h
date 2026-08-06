@@ -40,12 +40,12 @@ public:
         .num_of_meas = 5,
         .monitor_fn = nullptr,
         .save_dir = std::nullopt,
-        .channel = 1,
+        .channel = Channel::CH1,
     });
 
-    Measurement readSingleMeasurement(int CHANNEL);
+    Measurement readSingleMeasurement(Channel CHANNEL);
 
-    std::string readSingleMeasurementRaw(int CHANNEL);
+    std::string readSingleMeasurementRaw(Channel CHANNEL);
 
     // Time correction constant handling on NPET
     [[nodiscard]] bool exportTimeConstant(const Measurement &constant);

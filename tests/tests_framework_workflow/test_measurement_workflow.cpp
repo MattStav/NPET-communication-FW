@@ -39,7 +39,7 @@ protected:
 // --- Single measurement: both readSingleMeasurement() and readSingleMeasurementRaw() ---
 
 class SingleMeasurementChannelTest : public MeasurementWorkflowFixture,
-                                     public ::testing::WithParamInterface<int> {
+                                     public ::testing::WithParamInterface<Channel> {
 };
 
 TEST_P(SingleMeasurementChannelTest, ReadSingleMeasurementReturnsValidMeasurement) {
@@ -62,15 +62,15 @@ TEST_P(SingleMeasurementChannelTest, ReadSingleMeasurementRawReturnsFormattedNon
 INSTANTIATE_TEST_SUITE_P(
     Channels,
     SingleMeasurementChannelTest,
-    ::testing::Values(1, 2)
+    ::testing::Values(Channel::CH1, Channel::CH2)
 );
 
 // Each call to readSingleMeasurement() sends its own "e1" command and waits for the next tick, so
 // two subsequent reads observe two distinct points on channel 1's 10ms grid - their values (and
 // meas_num, which increments once per measurement on the VM) must not coincide.
 TEST_F(MeasurementWorkflowFixture, SubsequentSingleMeasurementsDiffer) {
-    const Measurement FIRST = client->readSingleMeasurement(1);
-    const Measurement SECOND = client->readSingleMeasurement(1);
+    const Measurement FIRST = client->readSingleMeasurement(Channel::CH1);
+    const Measurement SECOND = client->readSingleMeasurement(Channel::CH1);
     EXPECT_NE(FIRST.toString(), SECOND.toString());
 }
 
@@ -110,7 +110,7 @@ TEST_P(BatchMeasurementCountTest, MonitorReceivesExactlyRequestedCount) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
         .save_dir = std::nullopt,
-        .channel = 1,
+        .channel = Channel::CH1,
     };
     client->readBatchMeasurements(CTX);
     ASSERT_EQ(collected.size(), static_cast<size_t>(GetParam().num_of_meas));
@@ -135,7 +135,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 struct BatchMeasChannelParams {
     std::string name;
-    int channel;
+    Channel channel;
     int num_of_meas;
 };
 
@@ -162,8 +162,8 @@ INSTANTIATE_TEST_SUITE_P(
     BatchMeasurementChannelTest,
     ::testing::Values(
         // Channel 2 ticks once a second, so its count is kept small to keep the suite fast.
-        BatchMeasChannelParams{"Channel1", 1, 5},
-        BatchMeasChannelParams{"Channel2", 2, 1}
+        BatchMeasChannelParams{"Channel1", Channel::CH1, 5},
+        BatchMeasChannelParams{"Channel2", Channel::CH2, 1}
     ),
     [](const ::testing::TestParamInfo<BatchMeasChannelParams> &info) { return info.param.name; }
 );
@@ -181,7 +181,7 @@ TEST_F(MeasurementWorkflowFixture, Channel2IntpIncrementsByOnePerMeasurement) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
         .save_dir = std::nullopt,
-        .channel = 2,
+        .channel = Channel::CH2,
     };
     client->readBatchMeasurements(CTX);
     ASSERT_EQ(collected.size(), 10U);
@@ -249,7 +249,7 @@ class BatchMeasurementSaveCountTest : public BatchMeasurementSaveTest,
 };
 
 TEST_P(BatchMeasurementSaveCountTest, SaveTrueWritesOneLinePerMeasurement) {
-    const MeasContext CTX{.num_of_meas = GetParam(), .monitor_fn = nullptr, .save_dir = save_dir, .channel = 1};
+    const MeasContext CTX{.num_of_meas = GetParam(), .monitor_fn = nullptr, .save_dir = save_dir, .channel = Channel::CH1};
     client->readBatchMeasurements(CTX);
     EXPECT_EQ(savedFileCount(), 1U);
     const std::vector<std::string> LINES = readSavedLines();
@@ -266,7 +266,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 TEST_F(BatchMeasurementSaveTest, SaveFalseWritesNoFile) {
-    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save_dir = std::nullopt, .channel = 1};
+    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save_dir = std::nullopt, .channel = Channel::CH1};
     client->readBatchMeasurements(CTX);
     EXPECT_EQ(savedFileCount(), 0U);
 }
@@ -279,7 +279,7 @@ TEST_F(BatchMeasurementSaveTest, SaveAndMonitorFnTogetherBothReceiveAllMeasureme
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
         .save_dir = save_dir,
-        .channel = 1,
+        .channel = Channel::CH1,
     };
     client->readBatchMeasurements(CTX);
     EXPECT_EQ(collected.size(), 3U);
@@ -332,7 +332,7 @@ TEST_F(MeasurementWorkflowFixture, EscKeyPressInterruptsInfiniteOperation) {
             aborted_flag = reader.aborted.load();
         },
         .save_dir = std::nullopt,
-        .channel = 1,
+        .channel = Channel::CH1,
     };
 
     // readBatchMeasurements() blocks until the stream ends, so it needs its own thread while the

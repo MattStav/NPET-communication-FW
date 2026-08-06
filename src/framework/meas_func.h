@@ -12,11 +12,11 @@ constexpr std::string OUTPUT_DIR_NAME = "FW_outputs";
 // The number defines decimal precision for meas fractional part
 constexpr auto FMT = "%.15Qf";
 
-std::string outputFilePath(int CHANNEL, const std::filesystem::path &base_dir = USER_FILES);
+enum class Channel : std::uint8_t { CH1 = 1, CH2 = 2 };
+
+std::string outputFilePath(Channel CHANNEL, const std::filesystem::path &base_dir = USER_FILES);
 
 uint8_t xorChecksum(const std::array<std::uint8_t, 13> &set_to_check);
-
-enum class Channel : std::uint8_t { CH1 = 1, CH2 = 2 };
 
 std::string getMeasurementCmd(Channel CHANNEL, int NUM_OF_MEAS);
 

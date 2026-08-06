@@ -34,7 +34,7 @@ class MeasurementCounterTest : public FrameworkWorkflowFixture {
 /// so the first measurement read from a freshly initialized VM must carry meas_num == 1
 TEST_F(MeasurementCounterTest, FirstMeasurementHasCounterOne) {
     client->setFWVer(FWVersion::VIRTUAL); // must match the multiplier the VM encoded with
-    const Measurement FIRST = client->readSingleMeasurement(1);
+    const Measurement FIRST = client->readSingleMeasurement(Channel::CH1);
     EXPECT_EQ(FIRST.meas_num, 1);
 }
 
@@ -48,12 +48,12 @@ class MeasurementStartTimeTest : public FrameworkWorkflowFixture {
 /// channel 2's very first tick always lands at exactly 1.0s, not 0.
 TEST_F(MeasurementStartTimeTest, FirstMeasurementStartsAtZeroSeconds) {
     client->setFWVer(FWVersion::VIRTUAL);
-    const Measurement FIRST = client->readSingleMeasurement(1);
+    const Measurement FIRST = client->readSingleMeasurement(Channel::CH1);
     EXPECT_EQ(FIRST.intp, 0);
 
     // Recheck after a real delay: elapsed time should have actually advanced against the same
     // START_TIME, not stayed pinned at 0 or reset on the next read.
     std::this_thread::sleep_for(std::chrono::seconds(2));
-    const Measurement SECOND = client->readSingleMeasurement(1);
+    const Measurement SECOND = client->readSingleMeasurement(Channel::CH1);
     EXPECT_GE(SECOND.intp, 2);
 }

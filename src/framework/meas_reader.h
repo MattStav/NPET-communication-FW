@@ -16,13 +16,13 @@ struct MeasContext {
     std::function<void(MeasReader &, const MeasContext &, const Measurement &)> monitor_fn = nullptr;
     // Directory saved measurements are written into; nullopt means don't save.
     std::optional<std::filesystem::path> save_dir{};
-    int channel{1};
+    Channel channel{Channel::CH1};
 
     [[nodiscard]] std::string toString() const {
         return "meas_context{num_of_meas: " + std::to_string(num_of_meas) +
                ", monitor_fn: " + (monitor_fn ? "set" : "null") +
                ", save_dir: " + (save_dir ? save_dir->string() : "null") +
-               ", channel: " + std::to_string(channel) + "}";
+               ", channel: " + std::to_string(static_cast<int>(channel)) + "}";
     }
 };
 
@@ -43,7 +43,7 @@ class MeasReader {
 
     void dataProcessor(const MeasContext &meas_set, const Measurement &time_const);
 
-    void dataSaver(int CHANNEL_NUM, const std::filesystem::path &base_dir);
+    void dataSaver(Channel CHANNEL_NUM, const std::filesystem::path &base_dir);
 
     // Main function to read measurements from NPET, this is called in the constructor and starts the measurement sequence
     void main(const MeasContext &meas_set);
@@ -84,8 +84,11 @@ public:
     }
 
     MeasReader(const MeasReader &) = delete;
+
     MeasReader &operator=(const MeasReader &) = delete;
+
     MeasReader(MeasReader &&) = delete;
+
     MeasReader &operator=(MeasReader &&) = delete;
 
     // Destructor to end the measurement sequence

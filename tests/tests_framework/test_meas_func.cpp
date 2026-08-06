@@ -391,8 +391,8 @@ protected:
 
     // Helper – return a regex that matches the expected filename pattern
     // for a given channel: EPOCH<channel>_YYYYMMDD_HHMMSS.out
-    static std::string make_pattern(const int channel) {
-        return "EPOCH" + std::to_string(channel) +
+    static std::string make_pattern(const Channel channel) {
+        return "EPOCH" + std::to_string(static_cast<int>(channel)) +
                R"(_\d\d\d\d\d\d\d\d_\d\d\d\d\d\d\.out)";
     }
 };
@@ -400,46 +400,46 @@ protected:
 
 class FilenameFormatTest
         : public OutputFileNameTest,
-          public ::testing::WithParamInterface<int> {
+          public ::testing::WithParamInterface<Channel> {
 };
 
-INSTANTIATE_TEST_SUITE_P(ChannelVariants, FilenameFormatTest, ::testing::Values(1, 2));
+INSTANTIATE_TEST_SUITE_P(ChannelVariants, FilenameFormatTest, ::testing::Values(Channel::CH1, Channel::CH2));
 
 // The returned path must end with the correct filename pattern
 TEST_P(FilenameFormatTest, FilenameMatchesPattern) {
-    const int channel = GetParam();
+    const Channel channel = GetParam();
     const std::string result = outputFilePath(channel, base_dir);
     const std::string fname = basename(result);
     EXPECT_THAT(fname, MatchesRegex(make_pattern(channel)))
-            << "Unexpected filename for channel " << channel
+            << "Unexpected filename for channel " << static_cast<int>(channel)
             << ": " << fname;
 }
 
 // The file extension must always be ".out"
 TEST_P(FilenameFormatTest, ExtensionIsOut) {
-    const int channel = GetParam();
+    const Channel channel = GetParam();
     const fs::path result(outputFilePath(channel, base_dir));
     EXPECT_EQ(result.extension().string(), ".out")
-        << "Wrong extension for channel " << channel;
+        << "Wrong extension for channel " << static_cast<int>(channel);
 }
 
 // The stem must start with "EPOCH" followed by the channel number
 TEST_P(FilenameFormatTest, StemStartsWithEpochAndChannel) {
-    const int channel = GetParam();
+    const Channel channel = GetParam();
     const fs::path result(outputFilePath(channel, base_dir));
     const std::string stem = result.stem().string(); // e.g. "EPOCH7_20240101_120000"
-    const std::string expected_prefix = "EPOCH" + std::to_string(channel) + "_";
+    const std::string expected_prefix = "EPOCH" + std::to_string(static_cast<int>(channel)) + "_";
     EXPECT_EQ(stem.substr(0, expected_prefix.size()), expected_prefix)
-        << "Stem does not start with expected prefix for channel " << channel;
+        << "Stem does not start with expected prefix for channel " << static_cast<int>(channel);
 }
 
 // The timestamp embedded in the stem must be a valid YYYYMMDD_HHMMSS string
 TEST_P(FilenameFormatTest, EmbeddedTimestampIsValid) {
-    const int channel = GetParam();
+    const Channel channel = GetParam();
     const fs::path result(outputFilePath(channel, base_dir));
     const std::string stem = result.stem().string();
     // Strip "EPOCH<channel>_" prefix to isolate the timestamp
-    const std::string prefix = "EPOCH" + std::to_string(channel) + "_";
+    const std::string prefix = "EPOCH" + std::to_string(static_cast<int>(channel)) + "_";
     ASSERT_GE(stem.size(), prefix.size());
     const std::string ts = stem.substr(prefix.size()); // "YYYYMMDD_HHMMSS"
     ASSERT_EQ(ts.size(), 15u) << "Timestamp length mismatch: " << ts;
@@ -476,7 +476,7 @@ class DirectoryCreationTest : public OutputFileNameTest {
 TEST_F(DirectoryCreationTest, CreatesDirectoryWhenAbsent) {
     const fs::path output_dir = base_dir / OUTPUT_DIR_NAME;
     ASSERT_FALSE(fs::exists(output_dir)) << "Precondition: dir should not exist yet";
-    outputFilePath(1, base_dir);
+    outputFilePath(Channel::CH1, base_dir);
     EXPECT_TRUE(fs::exists(output_dir)) << "Directory was not created";
     EXPECT_TRUE(fs::is_directory(output_dir)) << "Path exists but is not a directory";
 }
@@ -485,14 +485,14 @@ TEST_F(DirectoryCreationTest, CreatesDirectoryWhenAbsent) {
 TEST_F(DirectoryCreationTest, DoesNotFailWhenDirectoryAlreadyExists) {
     fs::create_directories(base_dir);
     ASSERT_TRUE(fs::exists(base_dir));
-    EXPECT_NO_THROW(outputFilePath(1, base_dir));
+    EXPECT_NO_THROW(outputFilePath(Channel::CH1, base_dir));
 }
 
 // Multiple successive calls must not recreate / destroy the directory
 TEST_F(DirectoryCreationTest, DirectoryStillExistsAfterMultipleCalls) {
-    outputFilePath(1, base_dir);
-    outputFilePath(1, base_dir);
-    outputFilePath(2, base_dir);
+    outputFilePath(Channel::CH1, base_dir);
+    outputFilePath(Channel::CH1, base_dir);
+    outputFilePath(Channel::CH2, base_dir);
     EXPECT_TRUE(fs::is_directory(base_dir));
 }
 
@@ -504,7 +504,7 @@ TEST_F(DirectoryCreationTest, ExistingFilesInDirectoryArePreserved) {
         f << "keep me";
     }
     ASSERT_TRUE(fs::exists(sentinel));
-    outputFilePath(1, base_dir);
+    outputFilePath(Channel::CH1, base_dir);
     EXPECT_TRUE(fs::exists(sentinel)) << "Pre-existing file was removed";
 }
 
@@ -514,20 +514,20 @@ class ReturnValueTest : public OutputFileNameTest {
 
 // Returned path must include the output directory as its parent
 TEST_F(ReturnValueTest, ParentDirectoryMatchesOutputDir) {
-    const fs::path result(outputFilePath(1, base_dir));
+    const fs::path result(outputFilePath(Channel::CH1, base_dir));
     EXPECT_EQ(result.parent_path(), base_dir / OUTPUT_DIR_NAME)
         << "Parent path: " << result.parent_path();
 }
 
 // The returned string must be non-empty
 TEST_F(ReturnValueTest, ReturnValueIsNonEmpty) {
-    EXPECT_FALSE(outputFilePath(1, base_dir).empty());
+    EXPECT_FALSE(outputFilePath(Channel::CH1, base_dir).empty());
 }
 
 // The returned path must use the native directory separator (i.e., be a
 // well-formed path, not a bare filename)
 TEST_F(ReturnValueTest, ReturnValueContainsDirectorySeparator) {
-    const std::string result = outputFilePath(1, base_dir);
+    const std::string result = outputFilePath(Channel::CH1, base_dir);
     const bool has_sep =
             result.find('/') != std::string::npos ||
             result.find('\\') != std::string::npos;
@@ -535,13 +535,13 @@ TEST_F(ReturnValueTest, ReturnValueContainsDirectorySeparator) {
 }
 
 TEST_F(ReturnValueTest, PathContainsExpectedDirectoryAndFilename) {
-    const fs::path result(outputFilePath(1, base_dir));
+    const fs::path result(outputFilePath(Channel::CH1, base_dir));
     EXPECT_FALSE(result.filename().empty());
     EXPECT_EQ(result.parent_path().filename(), OUTPUT_DIR_NAME);
 }
 
 TEST_F(ReturnValueTest, DoesNotCreateFile) {
-    const fs::path result(outputFilePath(1, base_dir));
+    const fs::path result(outputFilePath(Channel::CH1, base_dir));
 
     EXPECT_FALSE(fs::exists(result));
     EXPECT_TRUE(fs::exists(base_dir));
@@ -554,17 +554,17 @@ class UniquenessTest : public OutputFileNameTest {
 // Two calls with different channels in the same second must return
 // different filenames
 TEST_F(UniquenessTest, DifferentChannelsProduceDifferentNames) {
-    const std::string a = outputFilePath(1, base_dir);
-    const std::string b = outputFilePath(2, base_dir);
+    const std::string a = outputFilePath(Channel::CH1, base_dir);
+    const std::string b = outputFilePath(Channel::CH2, base_dir);
     EXPECT_NE(a, b);
 }
 
 // Calls separated by at least one second must produce different names
 // for the same channel (timestamp uniqueness)
 TEST_F(UniquenessTest, SameChannelDifferentSecondsProduceDifferentNames) {
-    const std::string first = outputFilePath(1, base_dir);
+    const std::string first = outputFilePath(Channel::CH1, base_dir);
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    const std::string second = outputFilePath(1, base_dir);
+    const std::string second = outputFilePath(Channel::CH1, base_dir);
     EXPECT_NE(first, second)
         << "Expected different names after 1-second sleep";
 }
@@ -577,7 +577,7 @@ class TimestampProximityTest : public OutputFileNameTest {
 // the time at which the function was called.
 TEST_F(TimestampProximityTest, TimestampIsCloseToCallTime) {
     const std::time_t before = std::time(nullptr);
-    const std::string result = outputFilePath(1, base_dir);
+    const std::string result = outputFilePath(Channel::CH1, base_dir);
     const std::time_t after = std::time(nullptr);
     const fs::path p(result);
     const std::string stem = p.stem().string(); // EPOCH0_YYYYMMDD_HHMMSS

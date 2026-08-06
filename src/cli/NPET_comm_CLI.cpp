@@ -399,7 +399,7 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
         .num_of_meas = num_of_meas,
         .monitor_fn = monitor_fn,
         .save_dir = SAVE_FLAG ? std::optional{USER_FILES} : std::nullopt,
-        .channel = channel,
+        .channel = static_cast<Channel>(channel),
     };
     SPDLOG_DEBUG("Measurement context object: {}", MEAS_SETTINGS.toString());
     safeExec([&] { readBatchMeasurements(MEAS_SETTINGS); }, "read_batch_measurements");
@@ -444,8 +444,8 @@ void NPETCommCLI::setTimeConstantCLI() {
             SPDLOG_DEBUG("User selected time format definition for time correction constant");
             const int AVER_NUM = std::stoi(Cli::prompt("Number of averaging measurements", "16"));
             SPDLOG_DEBUG("User specified number of measurements for averaging: {}", AVER_NUM);
-            const int PPS_CHANNEL = std::stoi(Cli::prompt("What channel is the PPS connected to?", "2"));
-            SPDLOG_DEBUG("User specified PPS channel: {}", PPS_CHANNEL);
+            const Channel PPS_CHANNEL = static_cast<Channel>(std::stoi(Cli::prompt("What channel is the PPS connected to?", "2")));
+            SPDLOG_DEBUG("User specified PPS channel: {}", static_cast<int>(PPS_CHANNEL));
             Cli::echo("Beginning the measurement ...");
             new_const.fracp = measureAverageFraction(AVER_NUM, PPS_CHANNEL);
             if (new_const.fracp == -0.0) {
@@ -500,7 +500,7 @@ void NPETCommCLI::setTimeConstantCLI() {
     // Read sample measurements to see the results
     SPDLOG_DEBUG("Reading sample measurements to show the effect of the new time correction constant ...");
     safeExec([&] {
-                 readBatchMeasurements(MeasContext{.num_of_meas = 10, .monitor_fn = readerCliSync, .channel = 2});
+                 readBatchMeasurements(MeasContext{.num_of_meas = 10, .monitor_fn = readerCliSync, .channel = Channel::CH2});
              },
              "read_batch_measurements");
 } // end of set_time_constant_handler function
@@ -567,13 +567,13 @@ Measurement NPETCommCLI::rawTimeConstant() {
 /// @param AVER_NUM Number of measurements to average
 /// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2)
 /// @return The fractional part of the time correction constant
-__float128 NPETCommCLI::measureAverageFraction(const int AVER_NUM, const int CHANNEL_NUM) {
+__float128 NPETCommCLI::measureAverageFraction(const int AVER_NUM, const Channel CHANNEL_NUM) {
     SPDLOG_DEBUG(TIME_CONST_FRAC_MEAS);
     __float128 sum{};
-
+    // TODO: Make sure atleast 2 meas are defined
     Cli::echo(std::string(TIME_CONST_FRAC_MEAS));
     // For higher precision, take n measurements and compute the average fractional number of seconds
-    SPDLOG_DEBUG("Beginning fractional part measurement of {} averages from channel {}", AVER_NUM, CHANNEL_NUM);
+    SPDLOG_DEBUG("Beginning fractional part measurement of {} averages from channel {}", AVER_NUM, static_cast<int>(CHANNEL_NUM));
     auto bar = ProgressBar({.total = AVER_NUM});
     for (int i = AVER_NUM; i > 0; i--) {
         if (_kbhit() != 0) {
@@ -603,7 +603,7 @@ __float128 NPETCommCLI::measureAverageFraction(const int AVER_NUM, const int CHA
 /// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2). Only used if INT_LOGIC is
 ///        IntLogic::SYSTEM_TIME or IntLogic::NTP_SYNC.
 /// @return The integer part of the time correction constant
-int NPETCommCLI::calcInteger(const IntLogic INT_LOGIC, const int CHANNEL_NUM) {
+int NPETCommCLI::calcInteger(const IntLogic INT_LOGIC, const Channel CHANNEL_NUM) {
     SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}",
                  static_cast<int>(INT_LOGIC));
     int user_choice{};
@@ -666,7 +666,7 @@ int NPETCommCLI::calcInteger(const IntLogic INT_LOGIC, const int CHANNEL_NUM) {
             return 0;
     } // end of switch
     // Get the current NPET time
-    SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...", CHANNEL_NUM);
+    SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...", static_cast<int>(CHANNEL_NUM));
     const Measurement CURRENT_MEASUREMENT = safeExec([&] { return readSingleMeasurement(CHANNEL_NUM); },
                                                      "read_single_measurement");
     SPDLOG_DEBUG("Current measurement read: {}", CURRENT_MEASUREMENT.toString());

@@ -131,7 +131,7 @@ void MeasReader::dataProcessor(const MeasContext &meas_set, const Measurement &t
     SPDLOG_DEBUG("Data processor thread started");
     SPDLOG_DEBUG("Data processor time const: {}", time_const.toString());
     SPDLOG_DEBUG("Data processor measurement context : {} measurements, channel {} , monitoring {}, save dir {}",
-                 meas_set.num_of_meas, meas_set.channel, meas_set.monitor_fn ? "true" : "false",
+                 meas_set.num_of_meas, static_cast<int>(meas_set.channel), meas_set.monitor_fn ? "true" : "false",
                  meas_set.save_dir ? meas_set.save_dir->string() : "none");
     while (!aborted.load(std::memory_order_relaxed)) {
         // Grab the next measurement set from the receiver queue
@@ -189,7 +189,7 @@ std::optional<Measurement> MeasReader::grabMeasFromProcessor(std::queue<Measurem
 } // end of grab_measurement_from_processor function
 
 
-void MeasReader::dataSaver(const int CHANNEL_NUM, const std::filesystem::path &base_dir) {
+void MeasReader::dataSaver(const Channel CHANNEL_NUM, const std::filesystem::path &base_dir) {
     std::ofstream output_file;
     SPDLOG_DEBUG("Data saver thread started");
 
@@ -269,7 +269,7 @@ void MeasReader::main(const MeasContext &meas_set) {
     }); // end of key_watcher thread
     SPDLOG_DEBUG("All threads started");
     // Start the NPET measurements
-    npet_.writeToSerial(getMeasurementCmd(static_cast<Channel>(meas_set.channel), meas_set.num_of_meas));
+    npet_.writeToSerial(getMeasurementCmd(meas_set.channel, meas_set.num_of_meas));
     SPDLOG_DEBUG("Measurement command sent to NPET, waiting for threads to finish ...");
     // Join the workers first, to allow key_watcher loop to finish
     if (receiver.joinable()) {

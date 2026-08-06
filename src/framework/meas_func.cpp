@@ -30,9 +30,8 @@ std::string float128ToString(const __float128 VALUE) {
 /// @param CHANNEL NPET channel number (1 or 2)
 /// @param base_dir Base directory to save the output file, defaults to the current working directory
 /// @return Output file name
-std::string outputFilePath(const int CHANNEL, const std::filesystem::path &base_dir) {
-    assert(CHANNEL == 1 || CHANNEL == 2); // Check that the channel number is valid
-    SPDLOG_DEBUG("Generating output file name for channel {}", CHANNEL);
+std::string outputFilePath(const Channel CHANNEL, const std::filesystem::path &base_dir) {
+    SPDLOG_DEBUG("Generating output file name for channel {}", static_cast<int>(CHANNEL));
     // Get the current time
     const std::time_t NOW = std::time(nullptr);
     std::tm local_time{};
@@ -48,7 +47,7 @@ std::string outputFilePath(const int CHANNEL, const std::filesystem::path &base_
         std::filesystem::create_directories(OUTPUT_DIR);
     }
     // Construct the filename
-    const std::filesystem::path FILE = OUTPUT_DIR / ("EPOCH" + std::to_string(CHANNEL) + "_" + timestamp.data() + ".out");
+    const std::filesystem::path FILE = OUTPUT_DIR / ("EPOCH" + std::to_string(static_cast<int>(CHANNEL)) + "_" + timestamp.data() + ".out");
     SPDLOG_DEBUG("Output file name: {}", FILE.string());
     return FILE.string();
 } // end of output_file_name function

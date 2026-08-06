@@ -30,7 +30,7 @@ static void printIntro(const MeasContext &meas_set, const Measurement &time_cons
     } else {
         Cli::showInt("Reading measurement(s)", meas_set.num_of_meas);
     }
-    Cli::showInt("Using channel", meas_set.channel);
+    Cli::showInt("Using channel", static_cast<int>(meas_set.channel));
     Cli::echo("Press `Esc` to safely cancel the measurement at any time", fg::gray, style::bold);
 } // end of print_intro function
 

@@ -1,5 +1,6 @@
 #include "NPET_comm.h"
 
+#include <conio.h>
 #include <boost/asio.hpp>
 #include <string>
 #include <fstream>
@@ -40,7 +41,7 @@ bool NPETComm::isResponsive(const bool END_STREAM) {
 void NPETComm::setFWVer(const int NEW_FW_VERSION) {
     SPDLOG_DEBUG("Setting NPET firmware version to {}", NEW_FW_VERSION);
     assert((NEW_FW_VERSION == FWVersion::ORIGINAL || NEW_FW_VERSION == FWVersion::AD_REVISION ||
-            NEW_FW_VERSION == FWVersion::VIRTUAL) && "Invalid NPET firmware version");
+        NEW_FW_VERSION == FWVersion::VIRTUAL) && "Invalid NPET firmware version");
     fw_version = FWVersion(NEW_FW_VERSION);
     SPDLOG_INFO("NPET firmware successfully version set to {}", fw_version.getValue());
 } // end of set_NPET_FW_ver function
@@ -170,7 +171,6 @@ bool NPETComm::setMeasuredDataFormat(const int FORMAT) {
 void NPETComm::readBatchMeasurements(const MeasContext &meas_set) {
     SPDLOG_DEBUG("Reading batch measurements from NPET");
     assert(meas_set.num_of_meas > 0);
-    assert(meas_set.channel == 1 || meas_set.channel == 2);
     // Set the measured data format to binary
     // This program can only process the binary data format
     if (!setMeasuredDataFormat(0)) {
@@ -201,9 +201,8 @@ void NPETComm::readBatchMeasurements(const MeasContext &meas_set) {
 /// Read a single measurement from the specified channel.
 /// @param CHANNEL Channel to read from (1 or 2)
 /// @return Single measurement from the specified channel
-Measurement NPETComm::readSingleMeasurement(const int CHANNEL) {
+Measurement NPETComm::readSingleMeasurement(const Channel CHANNEL) {
     SPDLOG_DEBUG("Reading single measurement from NPET");
-    assert(CHANNEL == 1 || CHANNEL == 2);
     std::vector<char> vec{};
     std::array<uint8_t, MEASUREMENT_PACKET_SIZE> arr{};
 
@@ -213,7 +212,7 @@ Measurement NPETComm::readSingleMeasurement(const int CHANNEL) {
         SPDLOG_ERROR(DATA_FORMAT_ERR);
         throw std::runtime_error(std::string(DATA_FORMAT_ERR));
     }
-    writeToSerial(getMeasurementCmd(static_cast<Channel>(CHANNEL), 1));
+    writeToSerial(getMeasurementCmd(CHANNEL, 1));
     vec = readWithTimeout(ReadMode::FIXED_BYTES, std::chrono::milliseconds(5000), MEASUREMENT_PACKET_SIZE);
     SPDLOG_DEBUG("Single measurement received"); // Logging the data is pointless as it's unformatted
     // Transform the binary response into a measurement array
@@ -228,9 +227,8 @@ Measurement NPETComm::readSingleMeasurement(const int CHANNEL) {
 /// @param CHANNEL Channel to read from (1 or 2)
 /// @return Single measurement from the specified channel in raw string format, without termination.
 /// /// Empty string if no measurement was read.
-std::string NPETComm::readSingleMeasurementRaw(const int CHANNEL) {
+std::string NPETComm::readSingleMeasurementRaw(const Channel CHANNEL) {
     SPDLOG_DEBUG("Reading single raw measurement from NPET");
-    assert(CHANNEL == 1 || CHANNEL == 2);
     const Measurement MEAS = readSingleMeasurement(CHANNEL);
     if (MEAS.isEmpty()) {
         return "";

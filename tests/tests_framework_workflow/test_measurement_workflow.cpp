@@ -3,10 +3,12 @@
 #include <atomic>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
 #include <string>
 #include <vector>
+#include <windows.h>
 
 #include "meas_func.h"
 
@@ -284,4 +286,93 @@ TEST_F(BatchMeasurementSaveTest, SaveAndMonitorFnTogetherBothReceiveAllMeasureme
     EXPECT_EQ(readSavedLines().size(), 3U);
 }
 
-// TODO: test that Esc can interrupt
+// The keyboard watcher (see meas_reader.cpp's key_watcher thread) polls for Esc via _kbhit()/
+// _getch(), which read from this process's own console input buffer. WriteConsoleInputW lets a
+// test inject a synthetic key press into that same buffer, so the abort path can be exercised.
+static void injectEscKeyPress() {
+    INPUT_RECORD records[2]{};
+    for (INPUT_RECORD &rec: records) {
+        rec.EventType = KEY_EVENT;
+        rec.Event.KeyEvent.wRepeatCount = 1;
+        rec.Event.KeyEvent.wVirtualKeyCode = VK_ESCAPE;
+        rec.Event.KeyEvent.wVirtualScanCode = static_cast<WORD>(MapVirtualKeyW(VK_ESCAPE, MAPVK_VK_TO_VSC));
+        rec.Event.KeyEvent.uChar.AsciiChar = 27; // ESC
+    }
+    records[0].Event.KeyEvent.bKeyDown = TRUE;
+    records[1].Event.KeyEvent.bKeyDown = FALSE;
+
+    DWORD written = 0;
+    ASSERT_TRUE(WriteConsoleInputW(GetStdHandle(STD_INPUT_HANDLE), records, 2, &written));
+    ASSERT_EQ(written, 2U);
+}
+
+TEST_F(MeasurementWorkflowFixture, EscKeyPressInterruptsInfiniteOperation) {
+    DWORD console_mode = 0;
+    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &console_mode) == 0) {
+        GTEST_SKIP() << "No interactive console input attached to this process - injecting an Esc "
+                        "key press requires a real console";
+    }
+
+    std::promise<void> first_measurement_seen;
+    std::atomic<bool> promise_fulfilled{false};
+    std::atomic<bool> aborted_flag{false};
+    std::atomic<MeasReader *> reader_ptr{nullptr};
+    std::vector<Measurement> collected;
+
+    const MeasContext CTX{
+        .num_of_meas = INFINITE_OPERATION,
+        .monitor_fn = [&](MeasReader &reader, const MeasContext &, const Measurement &) {
+            reader_ptr.store(&reader, std::memory_order_relaxed);
+            while (const std::optional<Measurement> MEAS = reader.grabMeasFromProcessor(reader.for_monitor_q)) {
+                collected.push_back(*MEAS);
+                if (!promise_fulfilled.exchange(true)) {
+                    first_measurement_seen.set_value();
+                }
+            }
+            aborted_flag = reader.aborted.load();
+        },
+        .save_dir = std::nullopt,
+        .channel = 1,
+    };
+
+    // readBatchMeasurements() blocks until the stream ends, so it needs its own thread while the
+    // main thread waits for the stream to actually be flowing, then injects Esc mid-stream.
+    std::future<void> read_done = std::async(std::launch::async, [&] {
+        client->readBatchMeasurements(CTX);
+    });
+
+    // "infinite" truly never ends on its own, and read_done's destructor blocks until the async
+    // task completes - so if Esc injection doesn't land (e.g. an unusual console/CI environment),
+    // this test must still force the stream down itself, or it hangs the entire test binary rather
+    // than just failing this one test.
+    auto force_stop_if_still_running = [&] {
+        if (read_done.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+            if (MeasReader *reader = reader_ptr.load(std::memory_order_relaxed)) {
+                reader->stop_sign.store(true, std::memory_order_relaxed);
+            }
+        }
+    };
+
+    if (first_measurement_seen.get_future().wait_for(std::chrono::seconds(2)) != std::future_status::ready) {
+        force_stop_if_still_running();
+        read_done.wait();
+        FAIL() << "No measurement arrived before timing out - stream never started";
+    }
+
+    injectEscKeyPress();
+
+    // key_watcher only polls every 500ms (see meas_reader.cpp), so give it - and the subsequent
+    // thread shutdown - generous room before falling back to a direct stop.
+    if (read_done.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+        force_stop_if_still_running();
+        read_done.wait();
+        ADD_FAILURE() << "Esc key press was not picked up by the keyboard watcher within 5s";
+    }
+    read_done.get(); // rethrows if readBatchMeasurements() threw
+
+    EXPECT_TRUE(aborted_flag.load());
+    // Channel 1 ticks every 10ms; well under a second of extra streaming before the watcher's next
+    // poll notices Esc rules out "infinite" having simply run to its (effectively unbounded) end.
+    EXPECT_LT(collected.size(), 1000U);
+    EXPECT_TRUE(client->isResponsive());
+}

@@ -14,6 +14,10 @@ public:
     static constexpr int VIRTUAL = 3;
 
     FWVersion() = default;
+
+    ///
+    /// @param VERSION Firmware version to construct; must be one of ORIGINAL, AD_REVISION, or VIRTUAL.
+    /// @throws std::invalid_argument if VERSION is not a recognized firmware version.
     explicit FWVersion(int VERSION);
 
     // Get the raw numerical firmware version

@@ -6,6 +6,9 @@
 #include "meas_func.h"
 
 FWVersion::FWVersion(const int VERSION) : version_(VERSION) {
+    if (VERSION != ORIGINAL && VERSION != AD_REVISION && VERSION != VIRTUAL) {
+        throw std::invalid_argument("Unknown FW version");
+    }
 } // end of FWVersion constructor
 
 

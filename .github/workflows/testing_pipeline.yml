@@ -101,6 +101,7 @@ jobs:
             --root . \
             --object-directory build \
             --filter "src/.*" \
+            --exclude-throw-branches --exclude-unreachable-branches \
             --html-details coverage_html/index.html \
             --print-summary | tee coverage_summary.txt
 

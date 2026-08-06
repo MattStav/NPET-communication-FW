@@ -242,17 +242,26 @@ protected:
     }
 };
 
-// TODO: Parametrize the number of meas
-TEST_F(BatchMeasurementSaveTest, SaveTrueWritesOneLinePerMeasurement) {
-    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save_dir = save_dir, .channel = 1};
+class BatchMeasurementSaveCountTest : public BatchMeasurementSaveTest,
+                                       public ::testing::WithParamInterface<int> {
+};
+
+TEST_P(BatchMeasurementSaveCountTest, SaveTrueWritesOneLinePerMeasurement) {
+    const MeasContext CTX{.num_of_meas = GetParam(), .monitor_fn = nullptr, .save_dir = save_dir, .channel = 1};
     client->readBatchMeasurements(CTX);
     EXPECT_EQ(savedFileCount(), 1U);
     const std::vector<std::string> LINES = readSavedLines();
-    ASSERT_EQ(LINES.size(), 3U);
+    ASSERT_EQ(LINES.size(), static_cast<size_t>(GetParam()));
     for (const std::string &line: LINES) {
         EXPECT_THAT(line, MatchesRegex(MEASUREMENT_LINE_PATTERN));
     }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    MeasCounts,
+    BatchMeasurementSaveCountTest,
+    ::testing::Values(1, 3, 10)
+);
 
 TEST_F(BatchMeasurementSaveTest, SaveFalseWritesNoFile) {
     const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save_dir = std::nullopt, .channel = 1};

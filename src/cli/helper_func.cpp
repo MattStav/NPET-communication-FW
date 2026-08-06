@@ -50,7 +50,7 @@ int printLicenseInformation() {
 ///
 /// Reset NPET into default settings.
 /// @return Exit code 0
-int resetNpet() {
+int resetNpetStandalone() {
     SPDLOG_DEBUG("NPET reset initiated ...");
     Cli::echo("Resetting NPET to default settings", fg::blue, style::bold, true);
     NPETCommCLI npet_comm{};

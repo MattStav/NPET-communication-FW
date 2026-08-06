@@ -5,7 +5,7 @@
 
 int printManual();
 int printLicenseInformation();
-int resetNpet();
+int resetNpetStandalone();
 int launchDataProcessor();
 void settingsMenu(NPETCommCLI &npet_comm);
 int singleNPETMainMenu();

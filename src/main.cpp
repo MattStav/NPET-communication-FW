@@ -45,7 +45,7 @@ int main(const int argc, char *const*argv) {
     if (*MANUAL) {
         exit_code = printManual();
     } else if (*RESET) {
-        exit_code = resetNpet();
+        exit_code = resetNpetStandalone();
     } else if (*VM) {
         exit_code = launchVm({.com_port = vm_com_port, .ch1_frequency = vm_ch1_frequency});
     } else if (*DATA_PROCESSOR) {

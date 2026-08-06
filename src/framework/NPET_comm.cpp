@@ -360,7 +360,7 @@ std::optional<__float128> NPETComm::getAverageFractionImpl(const int AVER_NUM, C
                                                              const std::function<void(int)> &PROGRESS_FN) {
     __float128 sum{};
     // For higher precision, take n measurements and compute the average fractional number of seconds
-    assert(AVER_NUM > 2);
+    assert(AVER_NUM >= 2);
     SPDLOG_DEBUG("Beginning fractional part measurement of {} averages from channel {}", AVER_NUM,
                  static_cast<int>(CHANNEL_NUM));
     for (int i = AVER_NUM; i > 0; i--) {

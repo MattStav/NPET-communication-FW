@@ -36,6 +36,7 @@ constexpr std::string_view TIME_CONST_FAILED_TO_CLEAR = "Failed to clear the tim
 constexpr std::string_view TIME_CONST_FAILED_TO_EXPORT = "Failed to export the time constant to NPET";
 constexpr std::string_view TIME_CONST_CLEAR_OK = "Time correction constant cleared";
 constexpr std::string_view TIME_CONST_FRAC_MEAS_ERR = "Error occurred during fraction measurement";
+constexpr std::string_view TIME_CONST_FRAC_INVALID_MEAS_NUM = "Invalid number of averaging measurements";
 constexpr std::string_view TIME_CONST_FRAC_MEAS_INTERRUPT =
         "Fraction calibration interrupted by user. Fraction will be set to 0.00";
 constexpr std::string_view TIME_CONST_FRAC_MEAS = "Measuring average fractional part of the time correction constant";
@@ -442,20 +443,30 @@ void NPETCommCLI::setTimeConstantCLI() {
             break;
         case 2: {
             SPDLOG_DEBUG("User selected time format definition for time correction constant");
-            const int AVER_NUM = std::stoi(Cli::prompt("Number of averaging measurements", "16"));
+            const int AVER_NUM = std::stoi(Cli::prompt("Number of averaging measurements (>=2)", "16"));
+            if (AVER_NUM < 2) {
+                SPDLOG_ERROR(TIME_CONST_FRAC_INVALID_MEAS_NUM);
+                Cli::err(std::string(TIME_CONST_FRAC_INVALID_MEAS_NUM));
+                return;
+            }
             SPDLOG_DEBUG("User specified number of measurements for averaging: {}", AVER_NUM);
-            const Channel PPS_CHANNEL = static_cast<Channel>(std::stoi(Cli::prompt("What channel is the PPS connected to?", "2")));
+            const Channel PPS_CHANNEL = static_cast<Channel>(std::stoi(
+                Cli::prompt("What channel is the PPS connected to?", "2")));
             SPDLOG_DEBUG("User specified PPS channel: {}", static_cast<int>(PPS_CHANNEL));
-            Cli::echo("Beginning the measurement ...");
-            new_const.fracp = measureAverageFraction(AVER_NUM, PPS_CHANNEL);
-            if (new_const.fracp == -0.0) {
-                // Failed to take any measurements
+            SPDLOG_DEBUG(TIME_CONST_FRAC_MEAS);
+            Cli::echo(std::string(TIME_CONST_FRAC_MEAS));
+            auto bar = ProgressBar({.total = AVER_NUM});
+            const std::optional<__float128> AVE_FRAC = getAverageFraction(AVER_NUM, PPS_CHANNEL, &bar);
+            Cli::echo(""); // New line after progress bar
+            if (!AVE_FRAC.has_value()) {
                 SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_ERR);
                 Cli::err(std::string(TIME_CONST_FAILED_TO_SET));
                 SPDLOG_DEBUG("Breaking measurement stream ...");
                 (void) isResponsive(true); // Break measurement stream
                 return;
             }
+            // Use the negative average fractional part to compensate for the offset
+            new_const.fracp = -AVE_FRAC.value();
             SPDLOG_DEBUG("Measured average fractional part of the time correction constant: {}",
                          float128ToString(new_const.fracp));
             SPDLOG_DEBUG("Prompting user for integer part definition logic ...");
@@ -500,7 +511,9 @@ void NPETCommCLI::setTimeConstantCLI() {
     // Read sample measurements to see the results
     SPDLOG_DEBUG("Reading sample measurements to show the effect of the new time correction constant ...");
     safeExec([&] {
-                 readBatchMeasurements(MeasContext{.num_of_meas = 10, .monitor_fn = readerCliSync, .channel = Channel::CH2});
+                 readBatchMeasurements(MeasContext{
+                     .num_of_meas = 10, .monitor_fn = readerCliSync, .channel = Channel::CH2,
+                 });
              },
              "read_batch_measurements");
 } // end of set_time_constant_handler function
@@ -560,41 +573,6 @@ Measurement NPETCommCLI::rawTimeConstant() {
     SPDLOG_INFO("New time correction constant: {}", new_const.toString());
     return new_const;
 } // end of raw_time_constant_CLI function
-
-
-/// Measure the average fractional part of the time correction constant.
-/// User is prompted for the number of averages and the PPS channel to use.
-/// @param AVER_NUM Number of measurements to average
-/// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2)
-/// @return The fractional part of the time correction constant
-__float128 NPETCommCLI::measureAverageFraction(const int AVER_NUM, const Channel CHANNEL_NUM) {
-    SPDLOG_DEBUG(TIME_CONST_FRAC_MEAS);
-    __float128 sum{};
-    // TODO: Make sure atleast 2 meas are defined
-    Cli::echo(std::string(TIME_CONST_FRAC_MEAS));
-    // For higher precision, take n measurements and compute the average fractional number of seconds
-    SPDLOG_DEBUG("Beginning fractional part measurement of {} averages from channel {}", AVER_NUM, static_cast<int>(CHANNEL_NUM));
-    auto bar = ProgressBar({.total = AVER_NUM});
-    for (int i = AVER_NUM; i > 0; i--) {
-        if (_kbhit() != 0) {
-            SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_INTERRUPT);
-            Cli::err(std::string(TIME_CONST_FRAC_MEAS_INTERRUPT));
-            return 0.0;
-        }
-        const Measurement MEAS = safeExec([&] { return readSingleMeasurement(CHANNEL_NUM); },
-                                          "read_single_measurement");
-        sum += MEAS.fracp;
-        bar.update(AVER_NUM - i + 1);
-    } // end of for loop
-    SPDLOG_DEBUG("Finished taking measurements for fractional part. Sum of fractional parts: {}",
-                 float128ToString(sum));
-    Cli::echo(""); // New line after progress bar
-    // Return the negative average fractional part
-    // which will be used to compensate for the offset
-    const __float128 NEG_AVG_FRAC = -sum / AVER_NUM;
-    SPDLOG_INFO("Computed time correction constant fractional part: {}", float128ToString(NEG_AVG_FRAC));
-    return NEG_AVG_FRAC;
-} // end of measure_average_fraction_CLI function
 
 
 ///

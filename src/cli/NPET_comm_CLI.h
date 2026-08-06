@@ -15,8 +15,6 @@ class NPETCommCLI : public NPETComm {
 
     Measurement rawTimeConstant();
 
-    __float128 measureAverageFraction(int AVER_NUM, Channel CHANNEL_NUM);
-
     /// Logic used to define the integer part of the time correction constant.
     enum class IntLogic : std::uint8_t {
         MANUAL = 1,

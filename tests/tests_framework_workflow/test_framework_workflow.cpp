@@ -3,11 +3,11 @@
 #include <gtest/gtest.h>
 #include <string>
 
-// NPETComm tests below reuse the single live connection brought up by SetUpTestSuite (see
-// FrameworkWorkflowFixture) and are therefore order-dependent: GoogleTest runs TEST_F cases
-// within a fixture in source-declaration order, and each test below relies on the device state
-// left behind by the ones above it (e.g. the exported time constant). Keep that in mind before
-// reordering or interleaving new tests.
+// NPETComm tests below reuse the live connection brought up by SetUpTestSuite (see
+// FrameworkWorkflowFixture and its TEST_P-derived siblings further down): within one group,
+// GoogleTest runs tests in source-declaration order, and TearDownTestSuite() re-checks
+// isResponsive() right before closing, so a test that silently breaks the connection shows up as
+// a teardown failure on its own group instead of quietly poisoning some later, unrelated test.
 
 std::unique_ptr<VirtualMachine> FrameworkWorkflowFixture::vm;
 std::unique_ptr<std::jthread> FrameworkWorkflowFixture::vm_thread;
@@ -26,10 +26,15 @@ void FrameworkWorkflowFixture::SetUpTestSuite() {
 }
 
 ///
-/// Cancelling the VM's port unblocks its pending read inside deviceLoop() with an
+/// Checks the connection is still responsive before tearing it down, so a test that silently
+/// broke it fails loudly here rather than just letting the next group open a fresh connection
+/// over it. Cancelling the VM's port then unblocks its pending read inside deviceLoop() with an
 /// OperationCancelledError, which deviceLoop() treats as a clean shutdown signal (see
-/// virtual_machine.cpp); resetting vm_thread_ then joins once that return happens.
+/// virtual_machine.cpp); resetting vm_thread then joins once that return happens.
 void FrameworkWorkflowFixture::TearDownTestSuite() {
+    if (client && client->isOpen() && vm && vm->isOpen()) {
+        EXPECT_TRUE(client->isResponsive()) << "Connection was no longer responsive at teardown";
+    }
     if (client) {
         client->closeCommunication();
     }
@@ -42,8 +47,7 @@ void FrameworkWorkflowFixture::TearDownTestSuite() {
 }
 
 // Proves the setup itself: two virtual ports paired via com0com, a VirtualMachine listening on
-// one end, and a plain NPETComm client on the other, actually exchange bytes end to end. Further
-// workflow tests build on this same live connection.
+// one end, and a plain NPETComm client on the other, actually exchange bytes end to end.
 TEST_F(FrameworkWorkflowFixture, ClientIsResponsiveToVirtualMachine) {
     ASSERT_TRUE(client->isOpen());
     ASSERT_TRUE(vm->isOpen());
@@ -65,41 +69,12 @@ TEST_F(FrameworkWorkflowFixture, DetectFWVerSetsVirtualVersion) {
     EXPECT_EQ(client->fw_version, FWVersion(FWVersion::VIRTUAL));
 }
 
-TEST_F(FrameworkWorkflowFixture, SetFrequencySucceeds) {
-    EXPECT_TRUE(client->setFrequency(500));
-}
-
-TEST_F(FrameworkWorkflowFixture, GeneratePulsesSucceedsForFiniteCount) {
-    EXPECT_TRUE(client->generatePulses(5));
-}
-
-TEST_F(FrameworkWorkflowFixture, GeneratePulsesSucceedsForInfiniteCount) {
-    EXPECT_TRUE(client->generatePulses(-1));
-}
-
-TEST_F(FrameworkWorkflowFixture, GeneratePulsesSucceedsForStop) {
-    EXPECT_TRUE(client->generatePulses(0));
-}
-
 TEST_F(FrameworkWorkflowFixture, SetMeasuredDataFormatSucceedsForBinary) {
     EXPECT_TRUE(client->setMeasuredDataFormat(0));
 }
 
 TEST_F(FrameworkWorkflowFixture, SetMeasuredDataFormatSucceedsForAscii) {
     EXPECT_TRUE(client->setMeasuredDataFormat(1));
-}
-
-TEST_F(FrameworkWorkflowFixture, ExportedRawTimeConstantRoundTripsThroughImport) {
-    const std::string RAW_CONST = "5 0.500000000000000";
-    ASSERT_TRUE(client->exportTimeConstantRaw(RAW_CONST));
-    EXPECT_EQ(client->importTimeConstantRaw(), RAW_CONST);
-}
-
-// TODO: More test cases
-TEST_F(FrameworkWorkflowFixture, ExportTimeConstantSucceeds) {
-    const Measurement CONSTANT{.meas_num = -1, .intp = 42, .fracp = 0.25};
-    EXPECT_TRUE(client->exportTimeConstant(CONSTANT));
-    EXPECT_EQ(client->importTimeConstantRaw(), CONSTANT.toString());
 }
 
 // clearTimeConstant writes 28 spaces; the VM echoes them back verbatim on import, which
@@ -114,12 +89,90 @@ TEST_F(FrameworkWorkflowFixture, ClearTimeConstantResultsInEmptyImportedConstant
 }
 
 
-///
-///
-///
-///
-///
-/// THIS TEST MUST BE THE LAST
-TEST_F(FrameworkWorkflowFixture, IsResponsiveAtTheEnd) {
-    EXPECT_TRUE(client->isResponsive());
+class SetFrequencyTest : public FrameworkWorkflowFixture,
+                          public ::testing::WithParamInterface<FrequencyParams> {
+};
+
+TEST_P(SetFrequencyTest, SetFrequencySucceeds) {
+    EXPECT_TRUE(client->setFrequency(GetParam().frequency));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    Frequencies,
+    SetFrequencyTest,
+    ::testing::Values(
+        FrequencyParams{"Minimum", 1},
+        FrequencyParams{"Default", 100},
+        FrequencyParams{"Typical", 500},
+        FrequencyParams{"High", 5000}
+    ),
+    [](const ::testing::TestParamInfo<FrequencyParams> &info) { return info.param.name; }
+);
+
+
+class GeneratePulsesTest : public FrameworkWorkflowFixture,
+                            public ::testing::WithParamInterface<PulseCountParams> {
+};
+
+TEST_P(GeneratePulsesTest, GeneratePulsesSucceeds) {
+    EXPECT_TRUE(client->generatePulses(GetParam().num_of_pulses));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    PulseCounts,
+    GeneratePulsesTest,
+    ::testing::Values(
+        PulseCountParams{"Stop", 0},
+        PulseCountParams{"Few", 5},
+        PulseCountParams{"Many", 1000},
+        PulseCountParams{"Infinite", -1}
+    ),
+    [](const ::testing::TestParamInfo<PulseCountParams> &info) { return info.param.name; }
+);
+
+
+class ExportedRawTimeConstantTest : public FrameworkWorkflowFixture,
+                                     public ::testing::WithParamInterface<TimeConstantParams> {
+};
+
+TEST_P(ExportedRawTimeConstantTest, RoundTripsThroughImport) {
+    const std::string RAW_CONST = Measurement{.intp = GetParam().intp, .fracp = GetParam().fracp}.toString();
+    ASSERT_TRUE(client->exportTimeConstantRaw(RAW_CONST));
+    EXPECT_EQ(client->importTimeConstantRaw(), RAW_CONST);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    TimeConstants,
+    ExportedRawTimeConstantTest,
+    ::testing::Values(
+        TimeConstantParams{"HalfSecond", 5, 0.5},
+        TimeConstantParams{"LargeIntPart", 123456789, 0.125},
+        TimeConstantParams{"ArbitraryDecimalFraction", 1, 0.0666},
+        TimeConstantParams{"FullQuadPrecisionFraction", 1, strtoflt128("0.123456789123456", nullptr)}
+    ),
+    [](const ::testing::TestParamInfo<TimeConstantParams> &info) { return info.param.name; }
+);
+
+
+class ExportTimeConstantTest : public FrameworkWorkflowFixture,
+                                public ::testing::WithParamInterface<TimeConstantParams> {
+};
+
+// Same round-trip idea as ExportedRawTimeConstantTest, but through the Measurement-typed overload.
+TEST_P(ExportTimeConstantTest, RoundTripsThroughImport) {
+    const Measurement CONSTANT{.meas_num = -1, .intp = GetParam().intp, .fracp = GetParam().fracp};
+    EXPECT_TRUE(client->exportTimeConstant(CONSTANT));
+    EXPECT_EQ(client->importTimeConstantRaw(), CONSTANT.toString());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    TimeConstants,
+    ExportTimeConstantTest,
+    ::testing::Values(
+        TimeConstantParams{"QuarterSecond", 42, 0.25},
+        TimeConstantParams{"LargeIntPart", 1000000, 0.5},
+        TimeConstantParams{"EighthSecond", 3, 0.125},
+        TimeConstantParams{"FullQuadPrecisionFraction", 1, strtoflt128("0.123456789123456", nullptr)}
+    ),
+    [](const ::testing::TestParamInfo<TimeConstantParams> &info) { return info.param.name; }
+);

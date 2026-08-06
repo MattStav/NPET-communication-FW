@@ -32,9 +32,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install com0com
+      - name: Install com0com (signed build)
         shell: pwsh
-        run: choco install com0com -y --no-progress
+        timeout-minutes: 5
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zipUrl = 'http://downloads.sourceforge.net/project/com0com/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip'
+          $zipPath = Join-Path $env:TEMP 'com0com-signed.zip'
+          $extractPath = Join-Path $env:TEMP 'com0com-signed'
+
+          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+          Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+          $installer = Get-ChildItem -Path $extractPath -Filter 'Setup_com0com_v3.0.0.0_W7_x64_signed.exe' -Recurse | Select-Object -First 1
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
 
       - name: Create com0com virtual COM port pair
         shell: pwsh

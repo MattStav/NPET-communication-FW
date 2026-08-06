@@ -1,5 +1,3 @@
-#include "test_logging.h"
-
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <regex>

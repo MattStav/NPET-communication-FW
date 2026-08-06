@@ -23,6 +23,17 @@ TEST(Constants, PacketSizeValue) {
     EXPECT_EQ(MEASUREMENT_PACKET_SIZE, 13);
 }
 
+TEST_F(NPETCommFixture, DefaultConstructedFirmwareVersionIsZero) {
+    EXPECT_EQ(comm.fw_version.getValue(), 0);
+}
+
+// NPETComm inherits SerialMachine's closed-by-default state; the destructor
+// relies on isOpen() to decide whether to talk to the device, so this must
+// hold for the fixture (and every other test built on it) to be hermetic.
+TEST_F(NPETCommFixture, DefaultConstructedIsNotOpen) {
+    EXPECT_FALSE(comm.isOpen());
+}
+
 
 class SetFirmwareVersionTest : public NPETCommFixture,
                                public ::testing::WithParamInterface<FirmwareVersionTestParams> {

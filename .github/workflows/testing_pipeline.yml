@@ -37,15 +37,46 @@ jobs:
         timeout-minutes: 5
         run: |
           $ErrorActionPreference = 'Stop'
-          $zipUrl = 'http://downloads.sourceforge.net/project/com0com/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip'
-          $zipPath = Join-Path $env:TEMP 'com0com-signed.zip'
-          $extractPath = Join-Path $env:TEMP 'com0com-signed'
+          try {
+            $zipUrl = 'https://downloads.sourceforge.net/project/com0com/com0com/3.0.0.0/com0com-3.0.0.0-i386-and-x64-signed.zip'
+            $zipPath = Join-Path $env:TEMP 'com0com-signed.zip'
+            $extractPath = Join-Path $env:TEMP 'com0com-signed'
 
-          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
-          Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+            Write-Host "Downloading $zipUrl"
+            Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UserAgent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' -MaximumRedirection 5
 
-          $installer = Get-ChildItem -Path $extractPath -Filter 'Setup_com0com_v3.0.0.0_W7_x64_signed.exe' -Recurse | Select-Object -First 1
-          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+            $fileInfo = Get-Item $zipPath
+            Write-Host "Downloaded $($fileInfo.Length) bytes to $zipPath"
+
+            $magic = [System.IO.File]::ReadAllBytes($zipPath) | Select-Object -First 2
+            if ($magic[0] -ne 0x50 -or $magic[1] -ne 0x4B) {
+              Write-Host '--- First 500 bytes of downloaded file (not a valid zip) ---'
+              Get-Content -Path $zipPath -TotalCount 500 -Encoding utf8
+              throw "Downloaded file is not a valid zip (missing PK signature). Got $($fileInfo.Length) bytes."
+            }
+
+            Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force | Out-Null
+
+            $installer = Get-ChildItem -Path $extractPath -Filter 'Setup_com0com_v3.0.0.0_W7_x64_signed.exe' -Recurse | Select-Object -First 1
+            if (-not $installer) {
+              Write-Host "--- Extracted contents ---"
+              Get-ChildItem -Path $extractPath -Recurse | ForEach-Object { Write-Host $_.FullName }
+              throw 'Installer exe not found after extraction.'
+            }
+
+            Write-Host "Running installer: $($installer.FullName)"
+            $proc = Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait -PassThru
+            Write-Host "Installer exit code: $($proc.ExitCode)"
+            if ($proc.ExitCode -ne 0) {
+              throw "Installer exited with code $($proc.ExitCode)."
+            }
+          }
+          catch {
+            Write-Host '--- FULL ERROR DETAILS ---'
+            Write-Host $_.Exception.ToString()
+            $_ | Format-List * -Force | Out-String | Write-Host
+            throw
+          }
 
       - name: Create com0com virtual COM port pair
         shell: pwsh

@@ -351,3 +351,36 @@ std::string NPETComm::getStatus() {
     SPDLOG_DEBUG("Status received from NPET: '{}'", ret);
     return ret;
 } // end of get_status function
+
+
+///
+/// Get the average fractional part of the measurements.
+/// @param AVER_NUM Number of measurements to average
+/// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2)
+/// @return The average fractional part of the measurements
+std::optional<__float128> NPETComm::getAverageFraction(const int AVER_NUM, Channel CHANNEL_NUM) {
+    __float128 sum{};
+    // For higher precision, take n measurements and compute the average fractional number of seconds
+    assert(AVER_NUM > 2);
+    SPDLOG_DEBUG("Beginning fractional part measurement of {} averages from channel {}", AVER_NUM,
+                 static_cast<int>(CHANNEL_NUM));
+    for (int i = AVER_NUM; i > 0; i--) {
+        if (_kbhit() != 0) {
+            SPDLOG_ERROR("Fraction calibration interrupted by user");
+            return std::nullopt;
+        }
+        try {
+            const Measurement MEAS = readSingleMeasurement(CHANNEL_NUM);
+            sum += MEAS.fracp;
+        } catch (std::runtime_error const &e) {
+            SPDLOG_ERROR("Error occurred during fractional part measurement: {}", e.what());
+            return std::nullopt;
+        }
+        // bar.update(AVER_NUM - i + 1); #  TODO: Add this
+    } // end of for loop
+    SPDLOG_DEBUG("Finished taking measurements for fractional part. Sum of fractional parts: {}",
+                 float128ToString(sum));
+    const __float128 AVG_FRAC = sum / AVER_NUM;
+    SPDLOG_INFO("Computed measurement fractional part: {}", float128ToString(AVG_FRAC));
+    return AVG_FRAC;
+} // end of measure_average_fraction_CLI function

@@ -60,6 +60,8 @@ public:
 
     std::string getStatus();
 
+    std::optional<__float128> getAverageFraction(int AVER_NUM = 16, Channel CHANNEL_NUM = Channel::CH2);
+
     NPETComm() = default;
     NPETComm(const NPETComm &) = delete;
     NPETComm &operator=(const NPETComm &) = delete;

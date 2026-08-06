@@ -39,6 +39,7 @@ jobs:
       - name: Create com0com virtual COM port pair
         shell: pwsh
         working-directory: 'C:\Program Files (x86)\com0com'
+        timeout-minutes: 3
         run: |
           & ".\setupc.exe" install PortName=COM8 PortName=COM9
 

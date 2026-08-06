@@ -25,6 +25,25 @@ TEST_F(FrameworkWorkflowFixture, SetBaudRate) {
     EXPECT_EQ(current_baud.value(), 230400);
 }
 
+class CloseResetsBaudRateTest : public FrameworkWorkflowFixture {
+};
+
+// ~NPETComm() resets the device to the default 115200 baud rate before closing the port (see
+// NPET_comm.h), so a client that leaves the device at a non-default rate doesn't strand the next
+// thing that opens the port at some other speed.
+TEST_F(CloseResetsBaudRateTest, DestructorResetsBaudRateTo115200) {
+    ASSERT_TRUE(client->setBaudRate(230400));
+    boost::asio::serial_port_base::baud_rate vm_baud_before{};
+    vm->getPort().get_option(vm_baud_before);
+    ASSERT_EQ(vm_baud_before.value(), 230400);
+
+    client.reset(); // Triggers ~NPETComm()
+
+    boost::asio::serial_port_base::baud_rate vm_baud_after{};
+    vm->getPort().get_option(vm_baud_after);
+    EXPECT_EQ(vm_baud_after.value(), 115200);
+}
+
 // The VM answers "?" with "Firmware none - offline", which detectFWVer() recognizes as the
 // Virtual NPET firmware.
 TEST_F(FrameworkWorkflowFixture, DetectFWVerSetsVirtualVersion) {

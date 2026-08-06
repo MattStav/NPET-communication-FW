@@ -16,8 +16,9 @@
 namespace fs = std::filesystem;
 using ::testing::MatchesRegex;
 
-// Matches Measurement::toString() / float128ToString()'s fixed 15-decimal-digit format, e.g. "0 1.234500000000000"
-constexpr auto MEASUREMENT_LINE_PATTERN = R"(-?[0-9]+ -?[0-9]+\.[0-9]{15})";
+// Matches Measurement::toString() / float128ToString()'s fixed 15-decimal-digit format, e.g. "0 1.234500000000000".
+constexpr auto MEASUREMENT_LINE_PATTERN =
+    R"(-*\d\d* -*\d\d*\.\d\d\d\d\d\d\d\d\d\d\d\d\d\d\d)";
 
 // All measurement reads decode using npet_.fw_version's multiplier, which must match the
 // multiplier the VM encoded with (VIRTUAL) or decoded values come out meaningless.

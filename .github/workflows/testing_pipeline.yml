@@ -79,6 +79,7 @@ jobs:
         run: |
           cmake --build build \
             --target NPET_comm_FW_framework_tests \
+            --target NPET_comm_FW_vm_tests \
             --parallel
 
       - name: Test

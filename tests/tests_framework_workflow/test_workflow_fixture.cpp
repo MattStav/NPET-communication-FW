@@ -6,14 +6,23 @@ std::unique_ptr<NPETComm> FrameworkWorkflowFixture::client;
 
 ///
 /// Opens both ends of the com0com virtual null-modem pair and starts the VM's deviceLoop() on a
-/// background thread, once for the whole suite.
+/// background thread, once for the whole suite. Ports are opened before the device-loop thread is
+/// started so a missing/unpaired port fails here with nothing left to tear down.
 void FrameworkWorkflowFixture::SetUpTestSuite() {
     vm = std::make_unique<VirtualMachine>(100);
-    vm->openCommunication(VM_COM_PORT, BAUD_RATE);
-    vm_thread = std::make_unique<std::jthread>([] { vm->deviceLoop(); });
-
     client = std::make_unique<NPETComm>();
-    client->openCommunication(CLIENT_COM_PORT, BAUD_RATE);
+    try {
+        vm->openCommunication(VM_COM_PORT, BAUD_RATE);
+        client->openCommunication(CLIENT_COM_PORT, BAUD_RATE);
+    } catch (const std::exception &e) {
+        vm.reset();
+        client.reset();
+        GTEST_SKIP() << "Could not open COM" << VM_COM_PORT << "/COM" << CLIENT_COM_PORT << ": "
+                     << e.what() << ". This suite requires a com0com virtual null-modem pair on "
+                        "these ports (see .github/workflows/testing_pipeline.yml for setup) - "
+                        "skipping.";
+    }
+    vm_thread = std::make_unique<std::jthread>([] { vm->deviceLoop(); });
 }
 
 ///

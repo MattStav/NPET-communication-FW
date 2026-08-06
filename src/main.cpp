@@ -8,6 +8,7 @@
 #include "framework/logging.h"
 #include "cli/helper_func.h"
 #include "virtual_machine/vm_main.h"
+#include "workflows.h"
 
 #include <CLI/CLI.hpp>
 #include <spdlog/async.h>

@@ -47,8 +47,9 @@ gtest_discover_tests(NPET_comm_FW_vm_tests)
 
 # Workflow tests: framework + virtual machine module, talking to each other over a real
 # com0com virtual null-modem COM port pair provisioned ahead of time.
-# In ci requires a self-hosted runner with com0com installed
-option(BUILD_WORKFLOW_TESTS "Build workflow tests requiring com0com virtual COM ports" OFF)
+# Requires com0com to be installed; disable with -DBUILD_WORKFLOW_TESTS=OFF on
+# environments (e.g. CI) where that isn't available.
+option(BUILD_WORKFLOW_TESTS "Build workflow tests requiring com0com virtual COM ports" ON)
 if(BUILD_WORKFLOW_TESTS)
     file(GLOB_RECURSE NPET_WORKFLOW_TESTS_FILES "tests_framework_workflow/*.cpp")
     add_executable(NPET_comm_FW_workflow_tests
@@ -85,5 +86,7 @@ if(ENABLE_COVERAGE)
     enable_coverage(NPET_comm_FW_framework_tests)
     enable_coverage(NPET_comm_FW_framework_silent)
     enable_coverage(NPET_comm_FW_vm_tests)
-    enable_coverage(NPET_comm_FW_workflow_tests)
+    if(BUILD_WORKFLOW_TESTS)
+        enable_coverage(NPET_comm_FW_workflow_tests)
+    endif()
 endif()

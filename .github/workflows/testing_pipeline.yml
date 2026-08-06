@@ -72,13 +72,12 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_CXX_COMPILER=g++ \
-            -DENABLE_COVERAGE=ON
+            -DENABLE_COVERAGE=ON \
+            -DBUILD_WORKFLOW_TESTS=OFF
 
-      # TODO: Add other targets once available
-      # --target NPET_comm_framework_workflow_tests \
-      # cant be included because it requires com0com to be installed
-      # which is a kernel-mode driver and can't be installed on GitHub Actions runners
-      # i.e., requires a self-hosted runner
+      # Workflow tests require com0com, a kernel-mode driver that can't be installed on
+      # GitHub Actions runners (i.e., requires a self-hosted runner), so they're disabled
+      # above via -DBUILD_WORKFLOW_TESTS=OFF.
       - name: Build
         run: |
           cmake --build build \

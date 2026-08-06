@@ -1,5 +1,7 @@
 #ifndef NPET_COMMUNICATOR_H
 #define NPET_COMMUNICATOR_H
+#include <functional>
+#include <type_traits>
 #include <spdlog/spdlog.h>
 
 #include "meas_reader.h"
@@ -60,7 +62,18 @@ public:
 
     std::string getStatus();
 
-    std::optional<__float128> getAverageFraction(int AVER_NUM = 16, Channel CHANNEL_NUM = Channel::CH2);
+    // Progress is optionally reported by calling PROGRESS->update(int) with the number of measurements taken so far
+    template <typename ProgressT = void>
+    std::optional<__float128> getAverageFraction(const int AVER_NUM = 16, Channel CHANNEL_NUM = Channel::CH2,
+                                                   ProgressT *PROGRESS = nullptr) {
+        if constexpr (std::is_void_v<ProgressT>) {
+            return getAverageFractionImpl(AVER_NUM, CHANNEL_NUM, nullptr);
+        } else {
+            return getAverageFractionImpl(AVER_NUM, CHANNEL_NUM, [PROGRESS](const int PROGRESS_VAL) {
+                PROGRESS->update(PROGRESS_VAL);
+            });
+        }
+    }
 
     NPETComm() = default;
     NPETComm(const NPETComm &) = delete;
@@ -79,6 +92,10 @@ public:
             closeCommunication();
         }
     } // end of destructor
+
+private:
+    std::optional<__float128> getAverageFractionImpl(int AVER_NUM, Channel CHANNEL_NUM,
+                                                       const std::function<void(int)> &PROGRESS_FN);
 };
 
 

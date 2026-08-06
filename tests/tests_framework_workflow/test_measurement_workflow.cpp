@@ -1,6 +1,5 @@
 #include "test_workflow_fixture.h"
 
-#include <algorithm>
 #include <atomic>
 #include <filesystem>
 #include <fstream>
@@ -9,7 +8,6 @@
 #include <string>
 #include <vector>
 
-#include "helper_func.h"
 #include "meas_func.h"
 
 // Tests below exercise NPETComm's measurement-reading surface (both the single-shot and the
@@ -108,7 +106,7 @@ TEST_P(BatchMeasurementCountTest, MonitorReceivesExactlyRequestedCount) {
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
-        .save = false,
+        .save_dir = std::nullopt,
         .channel = 1,
     };
     client->readBatchMeasurements(CTX);
@@ -149,7 +147,7 @@ TEST_P(BatchMeasurementChannelTest, ReadsRequestedCountFromChannel) {
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
-        .save = false,
+        .save_dir = std::nullopt,
         .channel = GetParam().channel,
     };
     client->readBatchMeasurements(CTX);
@@ -179,7 +177,7 @@ TEST_F(MeasurementWorkflowFixture, Channel2IntpIncrementsByOnePerMeasurement) {
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
-        .save = false,
+        .save_dir = std::nullopt,
         .channel = 2,
     };
     client->readBatchMeasurements(CTX);
@@ -192,77 +190,73 @@ TEST_F(MeasurementWorkflowFixture, Channel2IntpIncrementsByOnePerMeasurement) {
 }
 
 
-// Snapshots FW_outputs before each test, then can report and delete whatever readBatchMeasurements
-// added, so save=true tests don't leave files behind in the user's real %APPDATA%\NPET directory
-// (there is no way to redirect MeasReader::dataSaver() to a temp dir - it always targets USER_FILES).
 class BatchMeasurementSaveTest : public MeasurementWorkflowFixture {
 protected:
-    fs::path output_dir = USER_FILES / OUTPUT_DIR_NAME;
-    std::vector<fs::path> files_before;
+    fs::path save_dir;
 
     void SetUp() override {
         MeasurementWorkflowFixture::SetUp();
+        const auto *info = ::testing::UnitTest::GetInstance()->current_test_info();
+        save_dir = fs::temp_directory_path() / "npet_workflow_test" / info->test_suite_name() / info->name();
         std::error_code ec;
-        if (fs::exists(output_dir, ec)) {
-            for (const auto &entry: fs::directory_iterator(output_dir, ec)) {
-                files_before.push_back(entry.path());
-            }
-        }
+        fs::remove_all(save_dir, ec);
     }
 
-    // Finds files added to output_dir since SetUp(), reads the first one's non-empty lines, then
-    // deletes every newly added file - all before returning, so cleanup happens regardless of what
-    // the caller's subsequent assertions do.
-    struct SaveOutcome {
-        size_t new_file_count{0};
-        std::vector<std::string> lines;
-    };
+    void TearDown() override {
+        std::error_code ec;
+        fs::remove_all(save_dir, ec);
+    }
 
-    [[nodiscard]] SaveOutcome captureAndCleanupNewFiles() const {
-        SaveOutcome outcome{};
+    // Every non-empty line written across all files under save_dir/FW_outputs.
+    [[nodiscard]] std::vector<std::string> readSavedLines() const {
+        std::vector<std::string> lines;
+        const fs::path output_dir = save_dir / OUTPUT_DIR_NAME;
         std::error_code ec;
         if (!fs::exists(output_dir, ec)) {
-            return outcome;
+            return lines;
         }
-        std::vector<fs::path> new_files;
         for (const auto &entry: fs::directory_iterator(output_dir, ec)) {
-            if (std::ranges::find(files_before, entry.path()) == files_before.end()) {
-                new_files.push_back(entry.path());
-            }
-        }
-        outcome.new_file_count = new_files.size();
-        if (!new_files.empty()) {
-            std::ifstream in(new_files.front());
+            std::ifstream in(entry.path());
             std::string line;
             while (std::getline(in, line)) {
                 if (!line.empty()) {
-                    outcome.lines.push_back(line);
+                    lines.push_back(line);
                 }
             }
         }
-        for (const auto &f: new_files) {
-            fs::remove(f, ec);
+        return lines;
+    }
+
+    [[nodiscard]] size_t savedFileCount() const {
+        const fs::path OUTPUT_DIR = save_dir / OUTPUT_DIR_NAME;
+        std::error_code ec;
+        if (!fs::exists(OUTPUT_DIR, ec)) {
+            return 0;
         }
-        return outcome;
+        size_t count = 0;
+        for (auto it = fs::directory_iterator(OUTPUT_DIR, ec); it != fs::directory_iterator(); ++it) {
+            ++count;
+        }
+        return count;
     }
 };
 
 // TODO: Parametrize the number of meas
 TEST_F(BatchMeasurementSaveTest, SaveTrueWritesOneLinePerMeasurement) {
-    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save = true, .channel = 1};
+    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save_dir = save_dir, .channel = 1};
     client->readBatchMeasurements(CTX);
-    const SaveOutcome OUTCOME = captureAndCleanupNewFiles();
-    ASSERT_EQ(OUTCOME.new_file_count, 1U);
-    ASSERT_EQ(OUTCOME.lines.size(), 3U);
-    for (const std::string &line: OUTCOME.lines) {
+    EXPECT_EQ(savedFileCount(), 1U);
+    const std::vector<std::string> LINES = readSavedLines();
+    ASSERT_EQ(LINES.size(), 3U);
+    for (const std::string &line: LINES) {
         EXPECT_THAT(line, MatchesRegex(MEASUREMENT_LINE_PATTERN));
     }
 }
 
 TEST_F(BatchMeasurementSaveTest, SaveFalseWritesNoFile) {
-    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save = false, .channel = 1};
+    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save_dir = std::nullopt, .channel = 1};
     client->readBatchMeasurements(CTX);
-    EXPECT_EQ(captureAndCleanupNewFiles().new_file_count, 0U);
+    EXPECT_EQ(savedFileCount(), 0U);
 }
 
 TEST_F(BatchMeasurementSaveTest, SaveAndMonitorFnTogetherBothReceiveAllMeasurements) {
@@ -272,14 +266,12 @@ TEST_F(BatchMeasurementSaveTest, SaveAndMonitorFnTogetherBothReceiveAllMeasureme
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
-        .save = true,
+        .save_dir = save_dir,
         .channel = 1,
     };
     client->readBatchMeasurements(CTX);
     EXPECT_EQ(collected.size(), 3U);
-    const SaveOutcome OUTCOME = captureAndCleanupNewFiles();
-    ASSERT_EQ(OUTCOME.new_file_count, 1U);
-    EXPECT_EQ(OUTCOME.lines.size(), 3U);
+    EXPECT_EQ(readSavedLines().size(), 3U);
 }
 
 // TODO: test that Esc can interrupt

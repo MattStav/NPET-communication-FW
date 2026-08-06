@@ -1,4 +1,4 @@
-#include "test_framework_workflow.h"
+#include "test_NPET_comm_workflow.h"
 
 #include <gtest/gtest.h>
 #include <string>

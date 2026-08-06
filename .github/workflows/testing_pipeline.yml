@@ -128,12 +128,15 @@ jobs:
             -DENABLE_COVERAGE=ON
 
       # TODO: Add other targets once available
+      # --target NPET_comm_framework_workflow_tests \
+      # cant be included because it requires com0com to be installed
+      # which is a kernel-mode driver and can't be installed on GitHub Actions runners
+      # i.e., requires a self-hosted runner
       - name: Build
         run: |
           cmake --build build \
             --target NPET_comm_FW_framework_tests \
             --target NPET_comm_FW_vm_tests \
-            --target NPET_comm_framework_workflow_tests \
             --parallel
 
       - name: Test

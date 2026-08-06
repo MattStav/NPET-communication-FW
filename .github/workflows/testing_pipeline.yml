@@ -38,8 +38,9 @@ jobs:
 
       - name: Create com0com virtual COM port pair
         shell: pwsh
+        working-directory: 'C:\Program Files (x86)\com0com'
         run: |
-          & "C:\Program Files (x86)\com0com\setupc.exe" install - PortName=COM8 PortName=COM9
+          & ".\setupc.exe" install PortName=COM8 PortName=COM9
 
       - name: Set up MSYS2
         uses: msys2/setup-msys2@v2

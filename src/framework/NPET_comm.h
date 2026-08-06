@@ -39,7 +39,7 @@ public:
     void readBatchMeasurements(const MeasContext &meas_set = MeasContext{
         .num_of_meas = 5,
         .monitor_fn = nullptr,
-        .save = false,
+        .save_dir = std::nullopt,
         .channel = 1,
     });
 

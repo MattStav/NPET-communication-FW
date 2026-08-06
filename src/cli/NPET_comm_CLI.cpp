@@ -398,7 +398,7 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
     const MeasContext MEAS_SETTINGS{
         .num_of_meas = num_of_meas,
         .monitor_fn = monitor_fn,
-        .save = SAVE_FLAG,
+        .save_dir = SAVE_FLAG ? std::optional{USER_FILES} : std::nullopt,
         .channel = channel,
     };
     SPDLOG_DEBUG("Measurement context object: {}", MEAS_SETTINGS.toString());

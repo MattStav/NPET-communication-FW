@@ -3,7 +3,9 @@
 #include <queue>
 #include <mutex>
 #include <atomic>
+#include <filesystem>
 #include <functional>
+#include <optional>
 
 #include "meas_func.h"
 
@@ -12,13 +14,14 @@ class MeasReader;
 struct MeasContext {
     int num_of_meas{5};
     std::function<void(MeasReader &, const MeasContext &, const Measurement &)> monitor_fn = nullptr;
-    bool save{false};
+    // Directory saved measurements are written into; nullopt means don't save.
+    std::optional<std::filesystem::path> save_dir{};
     int channel{1};
 
     [[nodiscard]] std::string toString() const {
         return "meas_context{num_of_meas: " + std::to_string(num_of_meas) +
                ", monitor_fn: " + (monitor_fn ? "set" : "null") +
-               ", save: " + (save ? "true" : "false") +
+               ", save_dir: " + (save_dir ? save_dir->string() : "null") +
                ", channel: " + std::to_string(channel) + "}";
     }
 };
@@ -40,7 +43,7 @@ class MeasReader {
 
     void dataProcessor(const MeasContext &meas_set, const Measurement &time_const);
 
-    void dataSaver(int CHANNEL_NUM);
+    void dataSaver(int CHANNEL_NUM, const std::filesystem::path &base_dir);
 
     // Main function to read measurements from NPET, this is called in the constructor and starts the measurement sequence
     void main(const MeasContext &meas_set);

@@ -130,8 +130,9 @@ void MeasReader::dataProcessor(const MeasContext &meas_set, const Measurement &t
     int meas_counter = 0; // Track total including overflows
     SPDLOG_DEBUG("Data processor thread started");
     SPDLOG_DEBUG("Data processor time const: {}", time_const.toString());
-    SPDLOG_DEBUG("Data processor measurement context : {} measurements, channel {} , monitoring {}, save {}",
-                 meas_set.num_of_meas, meas_set.channel, meas_set.monitor_fn ? "true" : "false", meas_set.save);
+    SPDLOG_DEBUG("Data processor measurement context : {} measurements, channel {} , monitoring {}, save dir {}",
+                 meas_set.num_of_meas, meas_set.channel, meas_set.monitor_fn ? "true" : "false",
+                 meas_set.save_dir ? meas_set.save_dir->string() : "none");
     while (!aborted.load(std::memory_order_relaxed)) {
         // Grab the next measurement set from the receiver queue
         auto measurement_res_raw = grabMeasFromReceiver();
@@ -188,16 +189,18 @@ std::optional<Measurement> MeasReader::grabMeasFromProcessor(std::queue<Measurem
 } // end of grab_measurement_from_processor function
 
 
-void MeasReader::dataSaver(const int CHANNEL_NUM) {
+void MeasReader::dataSaver(const int CHANNEL_NUM, const std::filesystem::path &base_dir) {
     std::ofstream output_file;
     SPDLOG_DEBUG("Data saver thread started");
 
     // Open the correct file depending on the channel
-    output_file.open(outputFilePath(CHANNEL_NUM));
+    const std::string OUTPUT_PATH = outputFilePath(CHANNEL_NUM, base_dir);
+    SPDLOG_DEBUG("Saving measurements to: {}", OUTPUT_PATH);
+    output_file.open(OUTPUT_PATH);
     if (!output_file.is_open()) {
         // If the file cannot be opened, stop the program and show an error message
         stop_sign.store(true, std::memory_order_relaxed);
-        SPDLOG_ERROR("failed to open output file: {}", output_file.getloc().name());
+        SPDLOG_ERROR("failed to open output file: {}", OUTPUT_PATH);
         throw std::runtime_error("failed to generate output file");
     }
     while (true) {
@@ -231,8 +234,8 @@ void MeasReader::main(const MeasContext &meas_set) {
     auto receiver = std::jthread(&MeasReader::dataReceiver, this);
     auto processor = std::jthread(&MeasReader::dataProcessor, this, meas_set, TIME_CONST);
     std::jthread saver;
-    if (meas_set.save) {
-        saver = std::jthread(&MeasReader::dataSaver, this, meas_set.channel);
+    if (meas_set.save_dir) {
+        saver = std::jthread(&MeasReader::dataSaver, this, meas_set.channel, *meas_set.save_dir);
     }
     std::jthread monitor;
     if (meas_set.monitor_fn) {

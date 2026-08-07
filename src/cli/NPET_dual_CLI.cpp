@@ -27,39 +27,29 @@ static bool confirmNPETSelection(NPETComm &npet, const std::string &designation)
 /// TODO
 void NPETDualCLI::openCommunicationCLI() {
     constexpr int MAX_ATTEMPTS = 3;
+    bool autoselect{true};
 
     SPDLOG_INFO("Opening START NPET communication with CLI, max attempts: {}", MAX_ATTEMPTS);
     for (int i = 0; i < MAX_ATTEMPTS; i++) {
-        SPDLOG_DEBUG("Attempt {} to open NPETs communication", i + 1);
+        // After 1 failed attempt, disable autoselect
+        if (i == 1) {
+            autoselect = false;
+        }
+        SPDLOG_DEBUG("Attempt {} to open NPET communication", i + 1);
         Cli::echo("Select the COM port number for the START NPET", fg::gray, style::bold);
-        const int COM_PORT = selectComPortCli(false);
-        Cli::showInt("Opening the NPET communication on COM", COM_PORT);
-        if (COM_PORT < 1) {
-            SPDLOG_ERROR(INVALID_COM_PORT);
-            Cli::err(std::string(INVALID_COM_PORT));
+        const int COM_PORT = selectComPortCli(autoselect);
+        if (!openCommSafe(start_, COM_PORT, NPET_START_NOT_RESPONDING)) {
             continue;
         }
-        try {
-            openCommunication(COM_PORT, DEFAULT_BAUD_RATE);
-        } catch (std::exception &e) {
-            SPDLOG_ERROR(FAILED_OPEN_COM_PORT, e.what());
-            Cli::err(std::format(FAILED_OPEN_COM_PORT, e.what()));
-            continue;
-        } // end of try-catch block
-        if (!safeExec([&] { return isResponsive(); }, "is_responsive")) {
-            Cli::echo("COM port opened successfully", fg::yellow);
-            SPDLOG_ERROR(NPET_NOT_RESPONDING);
-            Cli::err(std::string(NPET_NOT_RESPONDING));
-            getPort().close();
-            continue;
+        if (confirmNPETSelection(start_, "START")) {
+            SPDLOG_INFO("START NPET communication opened successfully");
+            break;
         }
-        // TODO: Add confirmation
-        // TODO: Add stop npet
-        SPDLOG_INFO("NPET communication opened successfully");
-        return;
+        // TODO: This does not really work
+        SPDLOG_ERROR(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS);
+        Cli::err(std::format(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS));
     } // end of for loop
-    SPDLOG_ERROR(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS);
-    Cli::err(std::format(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS));
+    // TODO: Add stop npet
 } // end of open_NPET_communication function
 
 ///

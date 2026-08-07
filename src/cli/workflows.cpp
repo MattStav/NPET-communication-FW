@@ -1,6 +1,5 @@
 #include "workflows.h"
 
-#include <git_tag.h>
 #include <spdlog/spdlog.h>
 
 #include "cli.h"

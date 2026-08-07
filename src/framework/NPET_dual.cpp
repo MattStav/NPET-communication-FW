@@ -14,13 +14,13 @@ void NPETDual::readBatchMeasurements(const DualMeasContext &meas_set) {
     // Call the measurement_reader on both NPETs, with Windows sleep disabled while it runs
     auto const START_CTX = MeasContext{
         .num_of_meas = meas_set.num_of_meas,
-        .monitor_fn = nullptr, // TODO: Implement combination monitor
+        .monitor_fn = nullptr, // TODO: Implement combination monitor and then add tests
         .save_dir = meas_set.save_dir,
         .channel = meas_set.start_channel,
     };
     auto const STOP_CTX = MeasContext{
         .num_of_meas = meas_set.num_of_meas,
-        .monitor_fn = nullptr, // TODO: Implement combination monitor
+        .monitor_fn = nullptr, // TODO: Implement combination monitor and then add tests
         .save_dir = meas_set.save_dir,
         .channel = meas_set.stop_channel,
     };

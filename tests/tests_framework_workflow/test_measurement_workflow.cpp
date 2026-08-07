@@ -109,7 +109,7 @@ TEST_P(BatchMeasurementCountTest, MonitorReceivesExactlyRequestedCount) {
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
-        .save_dir = std::nullopt,
+        .save_path = std::nullopt,
         .channel = Channel::CH1,
     };
     client->readBatchMeasurements(CTX);
@@ -150,7 +150,7 @@ TEST_P(BatchMeasurementChannelTest, ReadsRequestedCountFromChannel) {
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
-        .save_dir = std::nullopt,
+        .save_path = std::nullopt,
         .channel = GetParam().channel,
     };
     client->readBatchMeasurements(CTX);
@@ -180,7 +180,7 @@ TEST_F(MeasurementWorkflowFixture, Channel2IntpIncrementsByOnePerMeasurement) {
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
-        .save_dir = std::nullopt,
+        .save_path = std::nullopt,
         .channel = Channel::CH2,
     };
     client->readBatchMeasurements(CTX);
@@ -250,7 +250,8 @@ class BatchMeasurementSaveCountTest : public BatchMeasurementSaveTest,
 
 TEST_P(BatchMeasurementSaveCountTest, SaveTrueWritesOneLinePerMeasurement) {
     const MeasContext CTX{
-        .num_of_meas = GetParam(), .monitor_fn = nullptr, .save_dir = save_dir, .channel = Channel::CH1
+        .num_of_meas = GetParam(), .monitor_fn = nullptr,
+        .save_path = fs::path(outputFilePath(Channel::CH1, save_dir)), .channel = Channel::CH1
     };
     client->readBatchMeasurements(CTX);
     EXPECT_EQ(savedFileCount(), 1U);
@@ -268,7 +269,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 TEST_F(BatchMeasurementSaveTest, SaveFalseWritesNoFile) {
-    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save_dir = std::nullopt, .channel = Channel::CH1};
+    const MeasContext CTX{.num_of_meas = 3, .monitor_fn = nullptr, .save_path = std::nullopt, .channel = Channel::CH1};
     client->readBatchMeasurements(CTX);
     EXPECT_EQ(savedFileCount(), 0U);
 }
@@ -280,7 +281,7 @@ TEST_F(BatchMeasurementSaveTest, SaveAndMonitorFnTogetherBothReceiveAllMeasureme
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
-        .save_dir = save_dir,
+        .save_path = fs::path(outputFilePath(Channel::CH1, save_dir)),
         .channel = Channel::CH1,
     };
     client->readBatchMeasurements(CTX);
@@ -333,7 +334,7 @@ TEST_F(MeasurementWorkflowFixture, EscKeyPressInterruptsInfiniteOperation) {
             }
             aborted_flag = reader.aborted.load();
         },
-        .save_dir = std::nullopt,
+        .save_path = std::nullopt,
         .channel = Channel::CH1,
     };
 

@@ -1,5 +1,6 @@
 #include "test_dual_workflow_fixture.h"
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -87,6 +88,20 @@ protected:
         return lines;
     }
 
+    // Filenames (not full paths) of every file saved under save_dir/FW_outputs.
+    [[nodiscard]] std::vector<std::string> savedFileNames() const {
+        std::vector<std::string> names;
+        const fs::path OUTPUT_DIR = save_dir / OUTPUT_DIR_NAME;
+        std::error_code ec;
+        if (!fs::exists(OUTPUT_DIR, ec)) {
+            return names;
+        }
+        for (const auto &entry: fs::directory_iterator(OUTPUT_DIR, ec)) {
+            names.push_back(entry.path().filename().string());
+        }
+        return names;
+    }
+
     [[nodiscard]] size_t savedFileCount() const {
         const fs::path OUTPUT_DIR = save_dir / OUTPUT_DIR_NAME;
         std::error_code ec;
@@ -101,11 +116,9 @@ protected:
     }
 };
 
-// Output file names embed the channel number (see outputFilePath() in meas_func.cpp), so as long
-// as the two legs read from different channels their saved files can't collide even when written
-// within the same wall-clock second - unlike same-channel dual reads, which are not exercised
-// here since the filename would collide between the two legs.
-TEST_F(DualBatchMeasurementSaveTest, SaveWritesOneFilePerLeg) {
+// Output file names are prefixed "START_"/"STOP_" per leg (see NPET_dual.cpp), so the two legs'
+// saved files never collide even when reading from different channels.
+TEST_F(DualBatchMeasurementSaveTest, SaveWritesOneFilePerLegWhenChannelsDiffer) {
     const DualMeasContext CTX{
         .num_of_meas = 3,
         .monitor_fn = nullptr,
@@ -116,6 +129,25 @@ TEST_F(DualBatchMeasurementSaveTest, SaveWritesOneFilePerLeg) {
     readBatchMeasurements(CTX);
     EXPECT_EQ(savedFileCount(), 2U);
     EXPECT_EQ(readSavedLines().size(), 6U); // 3 measurements from each of the two legs
+}
+
+// Same scenario as above, but with both legs reading the same channel - without the START/STOP
+// prefix, both legs would resolve to the exact same "EPOCH1_<timestamp>.out" name (see
+// outputFilePath() in meas_func.cpp) and collide; the prefix keeps them distinct regardless.
+TEST_F(DualBatchMeasurementSaveTest, SaveWritesOneFilePerLegWhenChannelsMatch) {
+    const DualMeasContext CTX{
+        .num_of_meas = 3,
+        .monitor_fn = nullptr,
+        .save_dir = save_dir,
+        .start_channel = Channel::CH1,
+        .stop_channel = Channel::CH1,
+    };
+    readBatchMeasurements(CTX);
+    EXPECT_EQ(savedFileCount(), 2U);
+    EXPECT_EQ(readSavedLines().size(), 6U); // 3 measurements from each of the two legs
+    const std::vector<std::string> NAMES = savedFileNames();
+    EXPECT_EQ(std::ranges::count_if(NAMES, [](const std::string &n) { return n.starts_with("START_"); }), 1);
+    EXPECT_EQ(std::ranges::count_if(NAMES, [](const std::string &n) { return n.starts_with("STOP_"); }), 1);
 }
 
 TEST_F(DualBatchMeasurementSaveTest, NoSaveDirWritesNoFile) {

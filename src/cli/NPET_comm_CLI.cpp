@@ -79,7 +79,7 @@ void NPETCommCLI::openCommunicationCLI() {
             Cli::echo("COM port opened successfully", fg::yellow);
             SPDLOG_ERROR(NPET_NOT_RESPONDING);
             Cli::err(std::string(NPET_NOT_RESPONDING));
-            getPort().close();
+            closeCommunication();
             continue;
         }
         SPDLOG_INFO("NPET communication opened successfully");

@@ -44,6 +44,7 @@ public:
     // Open communication over serial COM port
     void openCommunication(int COM_PORT, int BAUD_RATE);
 
+    // TODO: Phase out the use of these getters
     [[nodiscard]] boost::asio::io_context &getIO() {
         return io_;
     }

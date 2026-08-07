@@ -8,6 +8,7 @@
 
 #include "cli.h"
 #include "logging.h"
+#include "NPET_comm_CLI.h"
 
 constexpr std::string_view MANUAL_URL = "https://github.com/MattStav/NPET-communication-FW/blob/master/MANUAL.md";
 constexpr std::string_view NO_DATA_ERR = "No results to process yet";

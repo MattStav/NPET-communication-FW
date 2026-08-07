@@ -7,6 +7,7 @@
 #include "framework/helper_func.h"
 #include "framework/logging.h"
 #include "cli/helper_func.h"
+#include "cli/cli.h"
 #include "virtual_machine/vm_main.h"
 #include "workflows.h"
 

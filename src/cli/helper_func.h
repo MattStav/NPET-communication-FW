@@ -2,7 +2,9 @@
 #define NPET_COMM_FW_HELPER_FUNC_H
 #include <vector>
 
-#include "NPET_comm_CLI.h"
+#include "NPET_comm.h"
+// Forward declaration
+class NPETCommCLI;
 
 constexpr int DEFAULT_BAUD_RATE = 115200;
 constexpr std::string_view INVALID_COM_PORT = "Invalid COM port number";

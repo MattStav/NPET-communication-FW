@@ -29,13 +29,13 @@ class SerialMachine {
     // Block until the pending read and timer operations have both completed,
     // cancelling whichever one is still outstanding once the other finishes.
     void waitForReadOrTimeout(boost::asio::steady_timer &timer,
-                               std::optional<boost::system::error_code> &read_result,
-                               std::optional<boost::system::error_code> &timer_result);
+                              std::optional<boost::system::error_code> &read_result,
+                              std::optional<boost::system::error_code> &timer_result);
 
     // Translate a completed read/timer result pair into the appropriate exception, if any.
     static void throwOnReadError(const std::optional<boost::system::error_code> &read_result,
-                                  const std::optional<boost::system::error_code> &timer_result,
-                                  std::chrono::milliseconds TIMEOUT);
+                                 const std::optional<boost::system::error_code> &timer_result,
+                                 std::chrono::milliseconds TIMEOUT);
 
 public:
     // Constructor
@@ -65,6 +65,8 @@ public:
         }
     }
 
+    void purgePort();
+
 protected:
     /**
      * @brief Read mode for the read_with_timeout function.
@@ -77,8 +79,8 @@ protected:
     std::string exchangeComm(const std::string &command);
 
     std::vector<char> readWithTimeout(ReadMode MODE = ReadMode::UNTIL_NEWLINE,
-                                        std::chrono::milliseconds TIMEOUT = std::chrono::milliseconds(2000),
-                                        std::size_t FIXED_BYTES = 1);
+                                      std::chrono::milliseconds TIMEOUT = std::chrono::milliseconds(2000),
+                                      std::size_t FIXED_BYTES = 1);
 
     void writeRawToSerial(std::span<const std::uint8_t> DATA);
 

@@ -71,6 +71,7 @@ void NPETDualCLI::openCommunicationCLI() {
     SPDLOG_INFO("Both NPETs communication opened successfully");
 } // end of open_NPET_communication function
 
+
 ///
 /// Checks if both NPET devices are connected to the specified COM ports and responsive.
 /// Several attempts are made with a delay between each attempt.
@@ -86,10 +87,10 @@ bool NPETDualCLI::bothResponsiveCLI() {
     for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         SPDLOG_DEBUG("Responsiveness check attempt: {}", attempt + 1);
         if (!start_res) {
-            start_res = safeExec([&] { return isStartResponsive(); }, "is_start_responsive");
+            start_res = safeExec([&] { return start_.isResponsive(); }, "is_start_responsive");
         }
         if (!stop_res) {
-            stop_res = safeExec([&] { return isStopResponsive(); }, "is_stop_responsive");
+            stop_res = safeExec([&] { return stop_.isResponsive(); }, "is_stop_responsive");
         }
         if (start_res && stop_res) {
             SPDLOG_DEBUG(NPET_DUAL_OK_RESPONDING);
@@ -101,16 +102,16 @@ bool NPETDualCLI::bothResponsiveCLI() {
         if (!start_res && !stop_res) {
             SPDLOG_ERROR(NPET_DUAL_NOT_RESPONDING);
             Cli::err(std::string(NPET_DUAL_NOT_RESPONDING));
-            purgeStartPort();
-            purgeStopPort();
+            start_.purgePort();
+            stop_.purgePort();
         } else if (!start_res) {
             SPDLOG_ERROR(NPET_START_NOT_RESPONDING);
             Cli::err(std::string(NPET_START_NOT_RESPONDING));
-            purgeStartPort();
+            start_.purgePort();
         } else {
             SPDLOG_ERROR(NPET_STOP_NOT_RESPONDING);
             Cli::err(std::string(NPET_STOP_NOT_RESPONDING));
-            purgeStopPort();
+            stop_.purgePort();
         }
         Sleep(RETRY_DELAY_MS);
     } // end of for loop

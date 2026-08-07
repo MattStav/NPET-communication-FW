@@ -355,6 +355,7 @@ std::string NPETComm::getStatus() {
 /// Get the average fractional part of the measurements.
 /// @param AVER_NUM Number of measurements to average
 /// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2)
+/// @param PROGRESS_FN Optional progress function to report the number of measurements taken so far
 /// @return The average fractional part of the measurements
 std::optional<__float128> NPETComm::getAverageFractionImpl(const int AVER_NUM, Channel CHANNEL_NUM,
                                                              const std::function<void(int)> &PROGRESS_FN) {

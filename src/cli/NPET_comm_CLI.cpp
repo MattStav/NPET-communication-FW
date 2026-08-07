@@ -330,15 +330,15 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
     SPDLOG_DEBUG("Monitoring function successfully assigned");
     const bool SAVE_FLAG = Cli::confirm("Save the measurements?", true);
     SPDLOG_DEBUG("User specified save measurements flag: {}", SAVE_FLAG);
+    const std::optional<std::filesystem::path> SAVE_PATH = SAVE_FLAG
+        ? std::optional{std::filesystem::path(outputFilePath(static_cast<Channel>(channel), USER_FILES))}
+        : std::nullopt;
+    SPDLOG_DEBUG("Measurements will be saved to: {}", SAVE_PATH ? SAVE_PATH->string() : "none");
     // Prepare measurement context object
     const MeasContext MEAS_SETTINGS{
         .num_of_meas = num_of_meas,
         .monitor_fn = monitor_fn,
-        .save_path = SAVE_FLAG
-                         ? std::optional{
-                             std::filesystem::path(outputFilePath(static_cast<Channel>(channel), USER_FILES))
-                         }
-                         : std::nullopt,
+        .save_path = SAVE_PATH,
         .channel = static_cast<Channel>(channel),
     };
     SPDLOG_DEBUG("Measurement context object: {}", MEAS_SETTINGS.toString());

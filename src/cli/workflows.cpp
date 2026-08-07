@@ -73,3 +73,8 @@ int singleNPETMainMenu() {
     SPDLOG_ERROR("NPET is not responsive, exiting program");
     return 1;
 } // end of the main function
+
+
+int dualNPETMainMenu() {
+    return 0;
+}

@@ -27,7 +27,8 @@ int main(const int argc, char *const*argv) {
     CLI::App app{std::string(APP_NAME)}; // CLI11 app object
     app.description("This program allows communication with the NPET device via command line interface.");
     app.set_version_flag("-v,--version", std::string(APP_NAME) + " (" + BUILD_CONFIG + ") " + GIT_TAG);
-    const auto *const RUN = app.add_subcommand("run", "Run the app [default]");
+    const auto *const SINGLE = app.add_subcommand("single", "Run the app for single NPET [default]");
+    const auto *const DUAL = app.add_subcommand("dual", "Run the app for dual NPET");
     const auto *const MANUAL = app.add_subcommand("manual", "Show manual");
     const auto *const RESET = app.add_subcommand("reset", "Reset the NPET");
     auto *const VM = app.add_subcommand("virtual", "Run virtual machine NPET which can be used to test the FW");
@@ -53,8 +54,11 @@ int main(const int argc, char *const*argv) {
         exit_code = launchDataProcessor();
     } else if (*LICENSE) {
         exit_code = printLicenseInformation();
-    } else if (*RUN || app.get_subcommands().empty()) {
+    } else if (*SINGLE || app.get_subcommands().empty()) {
         exit_code = singleNPETMainMenu();
+        Cli::confirmExit();
+    } else if (*DUAL) {
+        exit_code = dualNPETMainMenu();
         Cli::confirmExit();
     }
     spdlog::shutdown(); // Ensure all logs are flushed before exiting

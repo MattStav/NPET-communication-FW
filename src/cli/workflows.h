@@ -3,4 +3,6 @@
 
 int singleNPETMainMenu();
 
+int dualNPETMainMenu();
+
 #endif //NPET_COMM_FW_WORKFLOWS_H

@@ -38,7 +38,7 @@ TEST_F(DualFrameworkWorkflowFixture, ReadBatchMeasurementsRunsBothLegsConcurrent
         .monitor_fn = nullptr,
         .save_dir = std::nullopt,
         .start_channel = Channel::CH1,
-        .stop_channel = Channel::CH2,
+        .stop_channel = Channel::CH1,
     };
     const auto START_TIME = std::chrono::steady_clock::now();
     readBatchMeasurements(CTX);

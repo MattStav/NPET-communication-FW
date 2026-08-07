@@ -46,11 +46,13 @@ void DualFrameworkWorkflowFixture::TearDownTestSuite() {
 }
 
 ///
-/// Opens NPETDual's start_/stop_ legs onto the two VMs' client-side ports for this one test.
+/// Opens NPETDual's start_/stop_ legs onto the two VMs' client-side ports for this one test
 void DualFrameworkWorkflowFixture::SetUp() {
     try {
         start_.openCommunication(START_CLIENT_COM_PORT, BAUD_RATE);
         stop_.openCommunication(STOP_CLIENT_COM_PORT, BAUD_RATE);
+        start_.detectFWVer();
+        stop_.detectFWVer();
     } catch (const std::exception &e) {
         GTEST_SKIP() << "Could not open COM" << START_CLIENT_COM_PORT << "/COM" << STOP_CLIENT_COM_PORT
                      << " for this test: " << e.what();

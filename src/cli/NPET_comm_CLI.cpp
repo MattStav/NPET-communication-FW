@@ -96,9 +96,7 @@ bool NPETCommCLI::isResponsiveCLI() {
         }
         SPDLOG_ERROR(NPET_NOT_RESPONDING);
         Cli::err(std::string(NPET_NOT_RESPONDING));
-        SPDLOG_DEBUG("Cancelling pending comms and purging all buffers before retrying ...");
-        getPort().cancel();
-        PurgeComm(getPort().native_handle(), PURGE_RXCLEAR | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_TXABORT);
+        purgePort();
         Sleep(RETRY_DELAY_MS);
     } // end of for loop
     SPDLOG_ERROR("NPET is not responsive after {} attempts", MAX_ATTEMPTS);

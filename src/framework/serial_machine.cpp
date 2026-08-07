@@ -200,6 +200,7 @@ std::string SerialMachine::readFromSerial(const std::size_t MAX_BYTES) {
 /// Purge the COM Port.
 /// Close the port and purge all handles.
 void SerialMachine::purgePort() {
+    SPDLOG_DEBUG("Cancelling pending comms and purging all buffers ...");
     port_.cancel();
     PurgeComm(port_.native_handle(), PURGE_RXCLEAR | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_TXABORT);
 }

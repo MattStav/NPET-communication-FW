@@ -1,5 +1,6 @@
 #include "helper_func.h"
 
+#include <git_tag.h>
 #include <license_data.h>
 #include <manual_data.h>
 #include <spdlog/spdlog.h>
@@ -10,7 +11,19 @@
 constexpr std::string_view MANUAL_URL = "https://github.com/MattStav/NPET-communication-FW/blob/master/MANUAL.md";
 constexpr std::string_view NO_DATA_ERR = "No results to process yet";
 constexpr std::string_view DP_ERR = "NPET Data Processor ERROR: Command: {}; Code: {}";
+constexpr std::string_view APP_START_MSG = "NPET communication FW started: ";
 
+
+void printAppIntro() {
+    Cli::echo(std::string(APP_START_MSG), fg::blue, style::bold, false);
+    Cli::echo(BUILD_CONFIG " " GIT_TAG, fg::yellow);
+    SPDLOG_INFO("{} {} {}", APP_START_MSG, BUILD_CONFIG, GIT_TAG);
+    Cli::echo("If you have any questions please refer to the manual, which should be provided with the program.");
+    Cli::echo("If manual wasn't provided, you can access it from the main menu, "
+              "or it can be opened by calling this program from terminal with the 'manual' command.", fg::yellow);
+    std::cout << '\n'; // Empty line.
+    Cli::showStr("Log path", getLogPath().string()); // Already automatically included in logs
+}
 
 ///
 /// Print the manual into the console.

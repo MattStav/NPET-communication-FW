@@ -8,5 +8,6 @@ int printLicenseInformation();
 int resetNpetStandalone();
 int launchDataProcessor();
 void settingsMenu(NPETCommCLI &npet_comm);
+void printAppIntro();
 
 #endif //NPET_COMM_FW_HELPER_FUNC_H

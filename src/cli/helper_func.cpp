@@ -1,5 +1,6 @@
 #include "helper_func.h"
 
+#include <algorithm>
 #include <git_tag.h>
 #include <license_data.h>
 #include <manual_data.h>
@@ -103,11 +104,13 @@ int launchDataProcessor() {
 ///
 /// Lists available COM ports and prompts the user to select one.
 /// If autoselect is true and only one COM port is available, it will be selected automatically.
+/// Ports listed in EXCLUDED_PORTS are dropped from the selection before it is shown.
 /// WARNING: This function does not check if the selected COM port is valid.
 /// @param AUTOSELECT If true, automatically select the COM port if only one is available.
+/// @param EXCLUDED_PORTS COM port numbers to exclude from the selection (e.g. {5, 8}).
 /// @throws runtime_error if no COM ports are found.
 /// @returns Selected COM port number (e.g. 8 for COM8).
-int selectComPortCli(const bool AUTOSELECT) {
+int selectComPortCli(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS) {
     SPDLOG_DEBUG("Selecting COM port with autoselect: {}", AUTOSELECT);
     int selected_cp{};
     std::vector<std::string> com_ports{};
@@ -119,6 +122,11 @@ int selectComPortCli(const bool AUTOSELECT) {
         SPDLOG_ERROR(e.what());
         Cli::err(e.what());
     }
+    // Drop excluded ports from the selection
+    std::erase_if(com_ports, [&](const std::string &port) {
+        const int PORT_NUM = port.c_str()[port.size() - 3] - '0';
+        return std::ranges::find(EXCLUDED_PORTS, PORT_NUM) != EXCLUDED_PORTS.end();
+    });
     // End the program if there are none
     if (com_ports.empty()) {
         SPDLOG_ERROR(NO_PORTS);

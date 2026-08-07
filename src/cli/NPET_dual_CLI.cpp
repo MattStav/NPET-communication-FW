@@ -120,12 +120,12 @@ bool NPETDualCLI::bothResponsiveCLI() {
 } // end of is_NPET_connected_CLI function
 
 
-// TODO: docu
 ///
-/// CLI wrapper for the read_measurements function.
-/// Asks the user for the number of measurements, channel to read from, display, and save options
+/// CLI wrapper for the reading batch measurements from both NPETs.
+/// Asks the user for the number of measurements, channel to read from, display, and save options.
 void NPETDualCLI::readBatchMeasurementsCLI() {
     SPDLOG_DEBUG("Reading batch measurements ...");
+    // TODO: Finish the prompting
     // Prompt user for the number of measurements
     // const std::string MEAS_NUM_STR = Cli::prompt("Number of measurements (-1 for inf; 0 to cancel)", "0");
     // int num_of_meas = numValidation(MEAS_NUM_STR);

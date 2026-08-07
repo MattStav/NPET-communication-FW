@@ -96,9 +96,7 @@ int dualNPETMainMenu() {
                 continue;
             case 2: // Read measurements with a specific setting
                 SPDLOG_DEBUG("Main menu choice: Read measurements");
-                // TODO: Implement for dual NPET mode
-                throw std::runtime_error("Measurements not implemented for dual NPET mode");
-                // npet_dual.readBatchMeasurementsCLI();
+                npet_dual.readBatchMeasurementsCLI();
                 continue;
             case 3: // Print the manual
                 SPDLOG_DEBUG("Main menu choice: Print manual");

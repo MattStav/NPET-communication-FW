@@ -118,3 +118,77 @@ bool NPETDualCLI::bothResponsiveCLI() {
     SPDLOG_ERROR("NPETs are not responsive after {} attempts", MAX_ATTEMPTS);
     return false;
 } // end of is_NPET_connected_CLI function
+
+
+// TODO: docu
+///
+/// CLI wrapper for the read_measurements function.
+/// Asks the user for the number of measurements, channel to read from, display, and save options
+void NPETDualCLI::readBatchMeasurementsCLI() {
+    SPDLOG_DEBUG("Reading batch measurements ...");
+    // Prompt user for the number of measurements
+    // const std::string MEAS_NUM_STR = Cli::prompt("Number of measurements (-1 for inf; 0 to cancel)", "0");
+    // int num_of_meas = numValidation(MEAS_NUM_STR);
+    // if (num_of_meas == 0 || num_of_meas == INVALID_NUM_SENTINEL) {
+        // return;
+    // }
+    // if (num_of_meas == -1) {
+        // num_of_meas = INFINITE_OPERATION; // Magic number for infinite measurements
+    // }
+    // SPDLOG_DEBUG("User specified number of measurements to read: {}", num_of_meas);
+    // Prompt user for channel number
+    // const std::string CHANNEL_STR = Cli::prompt("Select channel to read from (1 or 2; 0 to cancel)", "1");
+    // int channel{};
+    // try {
+        // channel = std::stoi(CHANNEL_STR);
+        // if (channel == 0) {
+            // return;
+        // }
+        // if (channel < 0 || channel >= 3) {
+            // throw std::invalid_argument(std::string(CHANNEL_INVALID));
+        // }
+    // } catch (const std::invalid_argument &) {
+        // SPDLOG_ERROR(CHANNEL_INVALID);
+        // Cli::err(std::string(CHANNEL_INVALID));
+        // return;
+    // } // end of try-catch block
+    // SPDLOG_DEBUG("User specified channel number: {}", channel);
+    // Prompt user for the display and save options
+    // const std::string MONITOR_STR = Cli::prompt("Measurement monitoring (0 - None, 1 - Basic, 2 - Advanced, 3 - Sync)",
+                                                // "1");
+    // int monitor{};
+    // try {
+        // monitor = std::stoi(MONITOR_STR);
+    // } catch (const std::invalid_argument &) {
+        // SPDLOG_ERROR(MONITOR_FN_INVALID);
+        // Cli::err(std::string(MONITOR_FN_INVALID));
+        // return;
+    // } // end of try-catch block
+    // SPDLOG_DEBUG("User specified measurement monitoring: {}", monitor);
+    // std::function<void(MeasReader &, const MeasContext &, const Measurement &)>
+            // monitor_fn;
+    // switch (monitor) {
+        // case 1: monitor_fn = readerCliBasic;
+            // break;
+        // case 2: monitor_fn = readerCliAdvanced;
+            // break;
+        // case 3: monitor_fn = readerCliSync;
+            // break;
+        // default: monitor_fn = nullptr;
+            // break;
+    // }
+    // SPDLOG_DEBUG("Monitoring function successfully assigned");
+    // const bool SAVE_FLAG = Cli::confirm("Save the measurements?", true);
+    // SPDLOG_DEBUG("User specified save measurements flag: {}", SAVE_FLAG);
+    // Prepare measurement context object
+    // const MeasContext MEAS_SETTINGS{
+        // .num_of_meas = num_of_meas,
+        // .monitor_fn = monitor_fn,
+        // .save_dir = SAVE_FLAG ? std::optional{USER_FILES} : std::nullopt,
+        // .channel = static_cast<Channel>(channel),
+    // };
+    // SPDLOG_DEBUG("Measurement context object: {}", MEAS_SETTINGS.toString());
+    // safeExec([&] { readBatchMeasurements(MEAS_SETTINGS); }, "read_batch_measurements");
+    safeExec([&] { readBatchMeasurements(); }, "read_batch_measurements");
+    SPDLOG_INFO("Finished reading measurements");
+} // end of read_measurements_handler function

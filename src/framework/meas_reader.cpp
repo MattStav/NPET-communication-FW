@@ -36,10 +36,7 @@ void MeasReader::dataReceiver() {
                                     completed = true;
                                 });
         // Run until the async read completes
-        npet_.getIO().restart();
-        while (!completed && !stop_sign.load(std::memory_order_relaxed)) {
-            npet_.getIO().poll_one();
-        }
+        npet_.pollUntil([&] { return completed || stop_sign.load(std::memory_order_relaxed); });
         // If the operation was aborted by error or another thread, exit the loop
         if (ec == boost::asio::error::operation_aborted || stop_sign.load(std::memory_order_relaxed)) {
             SPDLOG_DEBUG("Data receiver thread stopping ...");

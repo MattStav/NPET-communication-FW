@@ -53,6 +53,15 @@ public:
         return port_;
     }
 
+    // Restart the io_context and poll it one handler at a time until PRED returns true.
+    template<typename Predicate>
+    void pollUntil(Predicate PRED) {
+        io_.restart();
+        while (!PRED()) {
+            io_.poll_one();
+        }
+    }
+
     void writeToSerial(const std::string &command);
 
     [[nodiscard]] bool isOpen() const {

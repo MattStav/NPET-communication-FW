@@ -224,9 +224,7 @@ void VirtualMachine::deviceLoop() {
             return; // signal_set was cancelled/destroyed
         }
         SPDLOG_INFO("Shutdown requested, stopping virtual machine ...");
-        if (isOpen()) {
-            getPort().cancel();
-        }
+        closeCommunication();
     });
 
     while (true) {

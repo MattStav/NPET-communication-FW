@@ -1,5 +1,8 @@
 #ifndef NPET_COMM_FW_NPET_DUAL_H
 #define NPET_COMM_FW_NPET_DUAL_H
+#include <latch>
+#include <thread>
+
 #include "NPET_comm.h"
 
 
@@ -27,6 +30,23 @@ protected:
     NPETComm stop_;
 
 public:
+    /// Predeclare a thread per callable, then release both at once off a common signal so
+    /// they start in lockstep rather than one running ahead while the other is still spinning up.
+    /// Blocks until both have finished.
+    template<typename FuncStart, typename FuncStop>
+    void executeBoth(FuncStart &&start_func, FuncStop &&stop_func) {
+        std::latch start_signal{1};
+        std::jthread start_thread([&] {
+            start_signal.wait();
+            std::forward<FuncStart>(start_func)();
+        });
+        std::jthread stop_thread([&] {
+            start_signal.wait();
+            std::forward<FuncStop>(stop_func)();
+        });
+        start_signal.count_down();
+    }
+
     // Read measurements from NPET
     void readBatchMeasurements(const DualMeasContext &meas_set = DualMeasContext{
         .num_of_meas = 5,

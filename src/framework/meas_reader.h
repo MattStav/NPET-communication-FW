@@ -96,4 +96,13 @@ public:
 }; // end of measurement_reader class
 
 
+///
+/// Start a measurement on NPET using the supplied measurement context.
+/// @param npet NPETComm instance to start the measurement on
+/// @param meas_set The measurement context containing the settings for the measurement
+inline void startMeasurement(NPETComm &npet, MeasContext const &meas_set) {
+    [[maybe_unused]] MeasReader const SESSION(npet, meas_set);
+}
+
+
 #endif //MEASUREMENT_READER_H

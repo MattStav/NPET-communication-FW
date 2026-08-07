@@ -12,9 +12,6 @@
 
 #include "meas_reader.h"
 
-constexpr std::string_view SLEEP_DISABLE_ERR = "Failed to disable Windows sleep while measurements are active";
-constexpr std::string_view SLEEP_ENABLE_ERR = "Failed to re-enable windows sleep settings";
-
 
 ///
 /// Checks if the NPET device is connected and responsive.
@@ -170,12 +167,8 @@ bool NPETComm::setMeasuredDataFormat(const int FORMAT) {
 void NPETComm::readBatchMeasurements(const MeasContext &meas_set) {
     SPDLOG_DEBUG("Reading batch measurements from NPET: {}", meas_set.toString());
     assert(meas_set.num_of_meas > 0);
-    // Set the measured data format to binary
     // This program can only process the binary data format
-    if (!setMeasuredDataFormat(0)) {
-        SPDLOG_ERROR(DATA_FORMAT_ERR);
-        throw std::runtime_error(std::string(DATA_FORMAT_ERR));
-    }
+    setMeasuredDataFormatToBinary(*this);
     // Release the GIL to allow other threads to run while reading measurements
 #ifdef PYBIND11_ENABLED
     pybind11::gil_scoped_release release;
@@ -185,8 +178,7 @@ void NPETComm::readBatchMeasurements(const MeasContext &meas_set) {
         SPDLOG_ERROR(SLEEP_DISABLE_ERR);
         throw std::runtime_error(std::string(SLEEP_DISABLE_ERR));
     }
-    // Call the measurement_reader
-    [[maybe_unused]] MeasReader const SESSION(*this, meas_set);
+    startMeasurement(*this, meas_set);
     // Re-enable system sleep after the critical function completes
     if (SetThreadExecutionState(ES_CONTINUOUS) == 0) {
         SPDLOG_ERROR(SLEEP_ENABLE_ERR);
@@ -357,7 +349,7 @@ std::string NPETComm::getStatus() {
 /// @param PROGRESS_FN Optional progress function to report the number of measurements taken so far
 /// @return The average fractional part of the measurements
 std::optional<__float128> NPETComm::getAverageFractionImpl(const int AVER_NUM, Channel CHANNEL_NUM,
-                                                             const std::function<void(int)> &PROGRESS_FN) {
+                                                           const std::function<void(int)> &PROGRESS_FN) {
     __float128 sum{};
     // For higher precision, take n measurements and compute the average fractional number of seconds
     assert(AVER_NUM >= 2);

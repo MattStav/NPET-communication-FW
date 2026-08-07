@@ -101,4 +101,16 @@ private:
 };
 
 
+///
+/// Set measurement data format to binary on an NPET
+/// @param npet NPETComm instance to set the measured data format
+inline void setMeasuredDataFormatToBinary(NPETComm &npet) {
+    SPDLOG_DEBUG("Setting measured data format to binary for NPET");
+    if (!npet.setMeasuredDataFormat(0)) {
+        SPDLOG_ERROR(DATA_FORMAT_ERR);
+        throw std::runtime_error(std::string(DATA_FORMAT_ERR));
+    }
+}
+
+
 #endif //NPET_COMMUNICATOR_H

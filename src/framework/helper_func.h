@@ -8,6 +8,9 @@
 #include <setupapi.h>
 #include <devguid.h> // HAS to be after windows.h
 
+static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
+static constexpr int INFINITE_OPERATION = 9999;
+
 ///
 /// Get Path to the directory where user data is to be stored.
 /// Do NOT change the name of the directory, it matches the value used in NPET_DP.
@@ -20,12 +23,13 @@ inline std::filesystem::path getUserFilesPath() noexcept {
             GetEnvironmentVariableW(L"APPDATA", appdata.data(), SIZE);
         }
         return !appdata.empty()
-            ? std::filesystem::path(appdata) / L"NPET"
-            : std::filesystem::path{L"NPET"};
+                   ? std::filesystem::path(appdata) / L"NPET"
+                   : std::filesystem::path{L"NPET"};
     } catch (...) {
         return std::filesystem::path{L"NPET"};
     }
 }
+
 inline const std::filesystem::path USER_FILES = getUserFilesPath();
 
 
@@ -45,10 +49,15 @@ struct ISetupDiApi {
     virtual BOOL destroyDeviceInfoList(HDEVINFO devInfo) = 0;
 
     ISetupDiApi() = default;
+
     virtual ~ISetupDiApi() = default;
+
     ISetupDiApi(const ISetupDiApi &) = delete;
+
     ISetupDiApi &operator=(const ISetupDiApi &) = delete;
+
     ISetupDiApi(ISetupDiApi &&) = delete;
+
     ISetupDiApi &operator=(ISetupDiApi &&) = delete;
 };
 
@@ -93,10 +102,15 @@ struct WinApiAdapter {
     virtual PVOID freeSid(PSID pSid) = 0;
 
     WinApiAdapter() = default;
+
     virtual ~WinApiAdapter() = default;
+
     WinApiAdapter(const WinApiAdapter &) = delete;
+
     WinApiAdapter &operator=(const WinApiAdapter &) = delete;
+
     WinApiAdapter(WinApiAdapter &&) = delete;
+
     WinApiAdapter &operator=(WinApiAdapter &&) = delete;
 };
 
@@ -111,7 +125,8 @@ struct RealWinApi : WinApiAdapter {
         PSID *pSid) override {
         return ::AllocateAndInitializeSid(pIdentifierAuthority, N_SUB_AUTHORITY_COUNT,
                                           DW_SUB_AUTHORITY0, DW_SUB_AUTHORITY1, DW_SUB_AUTHORITY2, DW_SUB_AUTHORITY3,
-                                          DW_SUB_AUTHORITY4, DW_SUB_AUTHORITY5, DW_SUB_AUTHORITY6, DW_SUB_AUTHORITY7, pSid);
+                                          DW_SUB_AUTHORITY4, DW_SUB_AUTHORITY5, DW_SUB_AUTHORITY6, DW_SUB_AUTHORITY7,
+                                          pSid);
     }
 
     BOOL checkTokenMembership(HANDLE TokenHandle, const PSID SID_TO_CHECK, PBOOL IsMember) override {

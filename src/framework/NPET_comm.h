@@ -9,8 +9,6 @@
 #include "fw_version.h"
 #include "serial_machine.h"
 
-static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
-static constexpr int INFINITE_OPERATION = 9999;
 
 class NPETComm : public SerialMachine {
 public:
@@ -63,9 +61,9 @@ public:
     std::string getStatus();
 
     // Progress is optionally reported by calling PROGRESS->update(int) with the number of measurements taken so far
-    template <typename ProgressT = void>
+    template<typename ProgressT = void>
     std::optional<__float128> getAverageFraction(const int AVER_NUM = 16, Channel CHANNEL_NUM = Channel::CH2,
-                                                   ProgressT *PROGRESS = nullptr) {
+                                                 ProgressT *PROGRESS = nullptr) {
         if constexpr (std::is_void_v<ProgressT>) {
             return getAverageFractionImpl(AVER_NUM, CHANNEL_NUM, nullptr);
         } else {
@@ -76,9 +74,13 @@ public:
     }
 
     NPETComm() = default;
+
     NPETComm(const NPETComm &) = delete;
+
     NPETComm &operator=(const NPETComm &) = delete;
+
     NPETComm(NPETComm &&) = delete;
+
     NPETComm &operator=(NPETComm &&) = delete;
 
     // Destructor
@@ -95,7 +97,7 @@ public:
 
 private:
     std::optional<__float128> getAverageFractionImpl(int AVER_NUM, Channel CHANNEL_NUM,
-                                                       const std::function<void(int)> &PROGRESS_FN);
+                                                     const std::function<void(int)> &PROGRESS_FN);
 };
 
 

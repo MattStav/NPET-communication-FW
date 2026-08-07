@@ -23,6 +23,43 @@ static bool confirmNPETSelection(NPETComm &npet, const std::string &designation)
 
 
 ///
+/// Run the COM Port selection, connection and validation in loop.
+/// The loop ends when NPET is correctly selected or max attempts are reached,
+/// in which case the function throws.
+/// @param npet The NPET reference.
+/// @param designation The NPET designation name (START/STOP)
+/// @param ERROR_MSG Error message to print if NPET is not responsive
+/// @param EXCLUDED_PORT COM Port to exclude from selection (default 0)
+static void openCommLoop(NPETComm &npet, const std::string &designation, const std::string_view ERROR_MSG,
+                         const int EXCLUDED_PORT = 0) {
+    constexpr int MAX_ATTEMPTS = 5;
+    bool autoselect{true};
+
+    SPDLOG_INFO("Opening {} NPET communication with CLI, max attempts: {}", designation, MAX_ATTEMPTS);
+    for (int i = 0; i < MAX_ATTEMPTS; i++) {
+        // After 2 failed attempt, disable autoselect
+        if (i == 2) {
+            autoselect = false;
+        }
+        SPDLOG_DEBUG("Attempt {} to open {} NPET communication", i + 1, designation);
+        Cli::echo("Select the COM port number for the " + designation + " NPET", fg::gray, style::bold);
+        if (const int COM_PORT = selectComPortCli(autoselect, std::vector<int>(EXCLUDED_PORT));
+            !openCommSafe(npet, COM_PORT, ERROR_MSG)) {
+            continue;
+        }
+        if (confirmNPETSelection(npet, designation)) {
+            SPDLOG_INFO("{} NPET communication opened successfully", designation);
+            return;
+        }
+        SPDLOG_ERROR(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS);
+        Cli::err(std::format(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS));
+        Cli::confirmExit();
+        throw std::runtime_error(std::format(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS));
+    } // end of for loop
+}
+
+
+///
 /// Open serial communication with both NPETs.
 /// TODO
 void NPETDualCLI::openCommunicationCLI() {

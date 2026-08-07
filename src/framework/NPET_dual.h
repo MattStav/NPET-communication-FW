@@ -4,6 +4,7 @@
 
 
 class NPETDual {
+protected:
     NPETComm start_;
     NPETComm stop_;
 

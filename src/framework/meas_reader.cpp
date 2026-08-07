@@ -125,9 +125,9 @@ void MeasReader::dataProcessor(const MeasContext &meas_set, const Measurement &t
     int meas_counter = 0; // Track total including overflows
     SPDLOG_DEBUG("Data processor thread started");
     SPDLOG_DEBUG("Data processor time const: {}", time_const.toString());
-    SPDLOG_DEBUG("Data processor measurement context : {} measurements, channel {} , monitoring {}, save dir {}",
+    SPDLOG_DEBUG("Data processor measurement context : {} measurements, channel {} , monitoring {}, save path {}",
                  meas_set.num_of_meas, static_cast<int>(meas_set.channel), meas_set.monitor_fn ? "true" : "false",
-                 meas_set.save_dir ? meas_set.save_dir->string() : "none");
+                 meas_set.save_path ? meas_set.save_path->string() : "none");
     while (!aborted.load(std::memory_order_relaxed)) {
         // Grab the next measurement set from the receiver queue
         auto measurement_res_raw = grabMeasFromReceiver();
@@ -184,18 +184,16 @@ std::optional<Measurement> MeasReader::grabMeasFromProcessor(std::queue<Measurem
 } // end of grab_measurement_from_processor function
 
 
-void MeasReader::dataSaver(const Channel CHANNEL_NUM, const std::filesystem::path &base_dir) {
+void MeasReader::dataSaver(const std::filesystem::path &save_path) {
     std::ofstream output_file;
     SPDLOG_DEBUG("Data saver thread started");
 
-    // Open the correct file depending on the channel
-    const std::string OUTPUT_PATH = outputFilePath(CHANNEL_NUM, base_dir);
-    SPDLOG_DEBUG("Saving measurements to: {}", OUTPUT_PATH);
-    output_file.open(OUTPUT_PATH);
+    SPDLOG_DEBUG("Saving measurements to: {}", save_path.string());
+    output_file.open(save_path);
     if (!output_file.is_open()) {
         // If the file cannot be opened, stop the program and show an error message
         stop_sign.store(true, std::memory_order_relaxed);
-        SPDLOG_ERROR("failed to open output file: {}", OUTPUT_PATH);
+        SPDLOG_ERROR("failed to open output file: {}", save_path.string());
         throw std::runtime_error("failed to generate output file");
     }
     while (true) {
@@ -229,8 +227,8 @@ void MeasReader::main(const MeasContext &meas_set) {
     auto receiver = std::jthread(&MeasReader::dataReceiver, this);
     auto processor = std::jthread(&MeasReader::dataProcessor, this, meas_set, TIME_CONST);
     std::jthread saver;
-    if (meas_set.save_dir) {
-        saver = std::jthread(&MeasReader::dataSaver, this, meas_set.channel, *meas_set.save_dir);
+    if (meas_set.save_path) {
+        saver = std::jthread(&MeasReader::dataSaver, this, *meas_set.save_path);
     }
     std::jthread monitor;
     if (meas_set.monitor_fn) {

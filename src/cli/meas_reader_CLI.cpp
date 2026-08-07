@@ -41,7 +41,7 @@ static void printIntro(const MeasContext &meas_set, const Measurement &time_cons
 /// @param meas_set Reference to the measurement context
 static void printOutro(MeasReader &reader, const MeasContext &meas_set) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    if (const size_t SAVER_INITIAL = reader.saverQSize(); meas_set.save_dir && SAVER_INITIAL > 0) {
+    if (const size_t SAVER_INITIAL = reader.saverQSize(); meas_set.save_path && SAVER_INITIAL > 0) {
         SPDLOG_DEBUG("There are unsaved measurements left, saving them now");
         Cli::echo("Saving data to file, do NOT close the application ...");
         SPDLOG_INFO("Number of measurements left to save: {}", SAVER_INITIAL);

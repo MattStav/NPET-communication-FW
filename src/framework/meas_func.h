@@ -14,7 +14,8 @@ constexpr auto FMT = "%.15Qf";
 
 enum class Channel : std::uint8_t { CH1 = 1, CH2 = 2 };
 
-std::string outputFilePath(Channel CHANNEL, const std::filesystem::path &base_dir = USER_FILES);
+std::string outputFilePath(Channel CHANNEL, const std::filesystem::path &base_dir = USER_FILES,
+                           const std::string &FILE_PREFIX = "");
 
 uint8_t xorChecksum(const std::array<std::uint8_t, 13> &set_to_check);
 

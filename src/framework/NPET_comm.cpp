@@ -12,7 +12,6 @@
 
 #include "meas_reader.h"
 
-constexpr std::string_view DATA_FORMAT_ERR = "Failed to set proper measured data format before reading measurements";
 constexpr std::string_view SLEEP_DISABLE_ERR = "Failed to disable Windows sleep while measurements are active";
 constexpr std::string_view SLEEP_ENABLE_ERR = "Failed to re-enable windows sleep settings";
 

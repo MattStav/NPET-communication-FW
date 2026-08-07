@@ -10,6 +10,7 @@
 
 static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
 static constexpr int INFINITE_OPERATION = 9999;
+constexpr std::string_view DATA_FORMAT_ERR = "Failed to set proper measured data format before reading measurements";
 
 ///
 /// Get Path to the directory where user data is to be stored.

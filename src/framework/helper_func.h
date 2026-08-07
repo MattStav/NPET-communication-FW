@@ -2,17 +2,44 @@
 #define HELPER_FUNC_H
 
 #include <filesystem>
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Windows.h>
 #include <setupapi.h>
 #include <devguid.h> // HAS to be after windows.h
+#include <spdlog/spdlog.h>
 
 static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
 static constexpr int INFINITE_OPERATION = 9999;
 constexpr std::string_view DATA_FORMAT_ERR = "Failed to set proper measured data format before reading measurements";
 constexpr std::string_view SLEEP_DISABLE_ERR = "Failed to disable Windows sleep while measurements are active";
 constexpr std::string_view SLEEP_ENABLE_ERR = "Failed to re-enable windows sleep settings";
+
+
+///
+/// Run the given callable with Windows system sleep (and display timeout) disabled for its duration.
+/// Sleep is always re-enabled afterwards, including when func throws.
+/// @param func Callable to invoke while sleep is disabled.
+/// @throws std::runtime_error if disabling or re-enabling sleep fails.
+template<typename Func>
+void runWithSleepDisabled(Func &&func) {
+    if (SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED) == 0) {
+        SPDLOG_ERROR(SLEEP_DISABLE_ERR);
+        throw std::runtime_error(std::string(SLEEP_DISABLE_ERR));
+    }
+    try {
+        std::forward<Func>(func)();
+    } catch (...) {
+        SetThreadExecutionState(ES_CONTINUOUS);
+        throw;
+    }
+    if (SetThreadExecutionState(ES_CONTINUOUS) == 0) {
+        SPDLOG_ERROR(SLEEP_ENABLE_ERR);
+        throw std::runtime_error(std::string(SLEEP_ENABLE_ERR));
+    }
+}
 
 ///
 /// Get Path to the directory where user data is to be stored.

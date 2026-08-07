@@ -173,17 +173,7 @@ void NPETComm::readBatchMeasurements(const MeasContext &meas_set) {
 #ifdef PYBIND11_ENABLED
     pybind11::gil_scoped_release release;
 #endif
-    // Disable system sleep while this thread runs (Windows specific)
-    if (SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED) == 0) {
-        SPDLOG_ERROR(SLEEP_DISABLE_ERR);
-        throw std::runtime_error(std::string(SLEEP_DISABLE_ERR));
-    }
-    startMeasurement(*this, meas_set);
-    // Re-enable system sleep after the critical function completes
-    if (SetThreadExecutionState(ES_CONTINUOUS) == 0) {
-        SPDLOG_ERROR(SLEEP_ENABLE_ERR);
-        throw std::runtime_error(std::string(SLEEP_ENABLE_ERR));
-    }
+    runWithSleepDisabled([&] { startMeasurement(*this, meas_set); });
     SPDLOG_INFO("Batch measurements reading completed");
 } // end of readBatchMeasurements function
 

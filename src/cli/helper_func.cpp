@@ -123,7 +123,7 @@ int selectComPortCli(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_POR
         SPDLOG_ERROR(e.what());
         Cli::err(e.what());
     }
-    // Drop excluded ports from the selection
+    // Drop excluded ports from the selection TODO: move to getComPorts
     std::erase_if(com_ports, [&](const std::string &port) {
         const int PORT_NUM = port.c_str()[port.size() - 3] - '0';
         return std::ranges::find(EXCLUDED_PORTS, PORT_NUM) != EXCLUDED_PORTS.end();

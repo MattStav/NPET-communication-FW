@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "cli.h"
+#include "safe_exec.h"
 
 constexpr std::string_view COMM_DUAL_INIT = "Initializing NPETDual communication framework";
 constexpr std::string_view COMM_DUAL_CLOSE = "Closing NPETDual communication framework";

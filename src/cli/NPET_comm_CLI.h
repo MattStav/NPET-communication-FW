@@ -5,6 +5,7 @@
 
 #include "NPET_comm.h"
 #include "cli.h"
+#include "safe_exec.h"
 
 constexpr std::string_view COMM_INIT = "Initializing NPET communication framework";
 constexpr std::string_view COMM_CLOSE = "Closing NPET communication framework";
@@ -23,30 +24,6 @@ class NPETCommCLI : public NPETComm {
     };
 
     int calcInteger(IntLogic INT_LOGIC, Channel CHANNEL_NUM);
-
-    /// Centralized error handler for CLI functions
-    /// @tparam Func Function type
-    /// @param func Function to execute
-    /// @param func_name Name of the function for error reporting
-    /// @return Result of the function or default value on error
-    template<typename Func>
-    auto safeExec(Func &&func, const std::string &func_name) {
-        SPDLOG_DEBUG("Executing {} with safety fallback ...", func_name);
-        try {
-            // Execute the func
-            return std::forward<Func>(func)();
-        } catch (const std::runtime_error &e) {
-            Cli::err("Error in " + func_name + ": " + e.what());
-            // Return default values based on the expected return type
-            using ReturnType = decltype(func());
-            if constexpr (std::is_same_v<ReturnType, void>) { return; }
-            if constexpr (std::is_same_v<ReturnType, bool>) { return false; }
-            if constexpr (std::is_integral_v<ReturnType>) { return static_cast<ReturnType>(0); }
-            // Return an invalid measurement
-            if constexpr (std::is_same_v<ReturnType, Measurement>) { return Measurement{.meas_num = -2}; }
-            return ReturnType{}; // Default constructor for other return types
-        }
-    }
 
 public:
     void openCommunicationCLI();

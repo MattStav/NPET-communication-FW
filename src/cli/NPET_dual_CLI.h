@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include "cli.h"
+#include "helper_func.h"
 #include "safe_exec.h"
 
 constexpr std::string_view COMM_DUAL_INIT = "Initializing NPETDual communication framework";
@@ -37,7 +38,7 @@ public:
     ~NPETDualCLI() {
         SPDLOG_INFO(COMM_DUAL_CLOSE);
         Cli::echo(std::string(COMM_DUAL_CLOSE), fg::blue, style::bold);
-        Cli::echo("Baud rate will be reset to 115200 and COM ports will be closed");
+        Cli::echo("Baud rate will be reset to " + std::to_string(DEFAULT_BAUD_RATE) + " and COM ports will be closed");
     } // end of destructor
 
     NPETDualCLI(const NPETDualCLI &) = delete;

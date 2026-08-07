@@ -5,6 +5,7 @@
 
 #include "NPET_comm.h"
 #include "cli.h"
+#include "helper_func.h"
 #include "safe_exec.h"
 
 constexpr std::string_view COMM_INIT = "Initializing NPET communication framework";
@@ -12,8 +13,6 @@ constexpr std::string_view COMM_CLOSE = "Closing NPET communication framework";
 
 
 class NPETCommCLI : public NPETComm {
-    const int DEFAULT_BAUD_RATE = 115200;
-
     Measurement rawTimeConstant();
 
     /// Logic used to define the integer part of the time correction constant.
@@ -57,15 +56,18 @@ public:
     } // end of constructor
 
     NPETCommCLI(const NPETCommCLI &) = delete;
+
     NPETCommCLI &operator=(const NPETCommCLI &) = delete;
+
     NPETCommCLI(NPETCommCLI &&) = delete;
+
     NPETCommCLI &operator=(NPETCommCLI &&) = delete;
 
     /// Destructor
     ~NPETCommCLI() {
         SPDLOG_INFO(COMM_CLOSE);
         Cli::echo(std::string(COMM_CLOSE), fg::blue, style::bold);
-        Cli::echo("Baud rate will be reset to 115200 and COM port will be closed");
+        Cli::echo("Baud rate will be reset to " + std::to_string(DEFAULT_BAUD_RATE) + " and COM port will be closed");
     } // end of destructor
 };
 

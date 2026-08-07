@@ -12,6 +12,8 @@ int resetNpetStandalone();
 
 int launchDataProcessor();
 
+int selectComPortCli(bool AUTOSELECT);
+
 void settingsMenu(NPETCommCLI &npet_comm);
 
 void printAppIntro();

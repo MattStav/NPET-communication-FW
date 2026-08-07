@@ -7,7 +7,6 @@
 #include "meas_reader_CLI.h"
 #include "ntp_sync.h"
 
-constexpr std::string_view NO_PORTS = "No available COM ports found";
 constexpr std::string_view INVALID_COM_PORT = "Invalid COM port number";
 constexpr std::string_view FAILED_OPEN_COM_PORT = "Failed to open the COM port: {}";
 constexpr std::string_view FAILED_OPEN_COM_PORT_MAX_ATTEMPT = "Failed to open NPET communication after {} attempts";
@@ -48,51 +47,6 @@ constexpr std::string_view TIME_CONST_ADJUST = "Adjusting the time correction co
 constexpr std::string_view SYSTEM_TIME_CURRENT = "Current system time is";
 constexpr std::string_view RESET_INITIATED = "Resetting NPET to default settings";
 constexpr std::string_view RESET_COMPLETE = "NPET reset sequence finished";
-
-///
-/// Lists available COM ports and prompts the user to select one.
-/// If autoselect is true and only one COM port is available, it will be selected automatically.
-/// WARNING: This function does not check if the selected COM port is valid.
-/// @param AUTOSELECT If true, automatically select the COM port if only one is available.
-/// @throws runtime_error if no COM ports are found.
-/// @returns Selected COM port number (e.g. 8 for COM8).
-static int selectComPortCli(const bool AUTOSELECT) {
-    SPDLOG_DEBUG("Selecting COM port with autoselect: {}", AUTOSELECT);
-    int selected_cp{};
-    std::vector<std::string> com_ports{};
-
-    // Get available com ports
-    try {
-        com_ports = getComPorts();
-    } catch (std::runtime_error &e) {
-        SPDLOG_ERROR(e.what());
-        Cli::err(e.what());
-    }
-    // End the program if there are none
-    if (com_ports.empty()) {
-        SPDLOG_ERROR(NO_PORTS);
-        Cli::err(std::string(std::string(NO_PORTS)) + "Make sure the NPET is connected and reset the program.");
-        Cli::confirmExit();
-        throw std::runtime_error("Error: No available COM ports found.");
-    }
-    // If there is only one COM port, select it automatically
-    if (AUTOSELECT && com_ports.size() == 1) {
-        SPDLOG_DEBUG("Autoselect enabled and only one COM port found: {}", com_ports.at(0));
-        // Extract only the COM port number
-        selected_cp = com_ports.at(0).c_str()[com_ports.at(0).size() - 3] - '0';
-    } else {
-        // Print available comports
-        Cli::echo("--- Available COM ports ---", fg::gray, style::underline);
-        for (const std::string &port: com_ports) {
-            Cli::echo(port);
-        }
-        // Choose the COM port
-        const std::string COM_PORT_STR = Cli::prompt("Choose COM port number");
-        std::stringstream(COM_PORT_STR) >> selected_cp;
-    }
-    SPDLOG_INFO("Selected CP num: {}", selected_cp);
-    return selected_cp;
-} // end of select_COM_port function
 
 
 ///

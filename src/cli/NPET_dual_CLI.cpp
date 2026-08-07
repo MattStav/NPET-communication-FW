@@ -114,3 +114,9 @@ bool NPETDualCLI::bothResponsiveCLI() {
     SPDLOG_ERROR("NPETs are not responsive after {} attempts", MAX_ATTEMPTS);
     return false;
 } // end of is_NPET_connected_CLI function
+
+
+void NPETDualCLI::detectFwVerCLI() {
+    // TODO: Implement for dual NPET mode
+    return;
+}

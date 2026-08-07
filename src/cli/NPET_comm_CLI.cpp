@@ -7,9 +7,6 @@
 #include "meas_reader_CLI.h"
 #include "ntp_sync.h"
 
-constexpr std::string_view INVALID_COM_PORT = "Invalid COM port number";
-constexpr std::string_view FAILED_OPEN_COM_PORT = "Failed to open the COM port: {}";
-constexpr std::string_view FAILED_OPEN_COM_PORT_MAX_ATTEMPT = "Failed to open NPET communication after {} attempts";
 constexpr std::string_view NPET_OK_RESPONDING = "NPET communication is OK";
 constexpr std::string_view NPET_NOT_RESPONDING = "NPET not responding!";
 constexpr std::string_view FW_CURRENT = "Current NPET firmware version";

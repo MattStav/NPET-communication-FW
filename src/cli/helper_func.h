@@ -5,6 +5,9 @@
 #include "NPET_comm_CLI.h"
 
 constexpr int DEFAULT_BAUD_RATE = 115200;
+constexpr std::string_view INVALID_COM_PORT = "Invalid COM port number";
+constexpr std::string_view FAILED_OPEN_COM_PORT = "Failed to open the COM port: {}";
+constexpr std::string_view FAILED_OPEN_COM_PORT_MAX_ATTEMPT = "Failed to open NPET communication after {} attempts";
 
 int printManual();
 

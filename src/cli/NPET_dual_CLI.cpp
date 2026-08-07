@@ -6,6 +6,47 @@ constexpr std::string_view NPET_DUAL_NOT_RESPONDING = "Both NPETs not responding
 constexpr std::string_view NPET_START_NOT_RESPONDING = "Start NPET not responding!";
 constexpr std::string_view NPET_STOP_NOT_RESPONDING = "Stop NPET not responding!";
 
+
+///
+/// Open serial communication with both NPETs.
+/// TODO
+void NPETDualCLI::openCommunicationCLI() {
+    constexpr int MAX_ATTEMPTS = 3;
+
+    SPDLOG_INFO("Opening START NPET communication with CLI, max attempts: {}", MAX_ATTEMPTS);
+    for (int i = 0; i < MAX_ATTEMPTS; i++) {
+        SPDLOG_DEBUG("Attempt {} to open NPETs communication", i + 1);
+        Cli::echo("Select the COM port number for the START NPET", fg::gray, style::bold);
+        const int COM_PORT = selectComPortCli(false);
+        Cli::showInt("Opening the NPET communication on COM", COM_PORT);
+        if (COM_PORT < 1) {
+            SPDLOG_ERROR(INVALID_COM_PORT);
+            Cli::err(std::string(INVALID_COM_PORT));
+            continue;
+        }
+        try {
+            openCommunication(COM_PORT, DEFAULT_BAUD_RATE);
+        } catch (std::exception &e) {
+            SPDLOG_ERROR(FAILED_OPEN_COM_PORT, e.what());
+            Cli::err(std::format(FAILED_OPEN_COM_PORT, e.what()));
+            continue;
+        } // end of try-catch block
+        if (!safeExec([&] { return isResponsive(); }, "is_responsive")) {
+            Cli::echo("COM port opened successfully", fg::yellow);
+            SPDLOG_ERROR(NPET_NOT_RESPONDING);
+            Cli::err(std::string(NPET_NOT_RESPONDING));
+            getPort().close();
+            continue;
+        }
+        // TODO: Add confirmation
+        // TODO: Add stop npet
+        SPDLOG_INFO("NPET communication opened successfully");
+        return;
+    } // end of for loop
+    SPDLOG_ERROR(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS);
+    Cli::err(std::format(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS));
+} // end of open_NPET_communication function
+
 ///
 /// Checks if both NPET devices are connected to the specified COM ports and responsive.
 /// Several attempts are made with a delay between each attempt.

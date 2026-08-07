@@ -14,9 +14,9 @@ constexpr std::string_view NPET_STOP_NOT_RESPONDING = "Stop NPET not responding!
 /// @return True if the NPET expected NPET is set to channel 2, False otherwise
 static bool confirmNPETSelection(NPETComm &npet, const std::string &designation) {
     SPDLOG_DEBUG("Confirming that the {} NPET was correctly selected", designation);
-    npet.readSingleMeasurement(Channel::CH2);
+    safeExec([&] { return npet.readSingleMeasurement(Channel::CH2); }, "confirm_npet_selection");
     const bool RET = Cli::confirm("Confirm that the " + designation + " NPET is currently set to channel 2?", true);
-    npet.readSingleMeasurement(Channel::CH1);
+    safeExec([&] { return npet.readSingleMeasurement(Channel::CH1); }, "confirm_npet_selection");
     SPDLOG_DEBUG("Confirmed that the {} was selected {}", designation, RET ? "CORRECTLY" : "WRONGLY");
     return RET;
 }

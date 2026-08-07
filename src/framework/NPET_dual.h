@@ -3,17 +3,9 @@
 #include "NPET_comm.h"
 
 
-struct StartComm {
-    NPETComm &value;
-};
-
-struct StopComm {
-    NPETComm &value;
-};
-
 class NPETDual {
-    NPETComm &start_;
-    NPETComm &stop_;
+    NPETComm start_;
+    NPETComm stop_;
 
 public:
     bool bothResponsive(bool END_STREAM = true);
@@ -44,9 +36,6 @@ public:
     Measurement importTimeConstant();
 
     std::string importTimeConstantRaw();
-
-    NPETDual(const StartComm START, const StopComm STOP) : start_(START.value), stop_(STOP.value) {
-    }
 };
 
 

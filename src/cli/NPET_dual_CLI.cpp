@@ -21,6 +21,37 @@ static bool confirmNPETSelection(NPETComm &npet, const std::string &designation)
     return RET;
 }
 
+
+///
+/// Open communication for the referenced NPET on the provided NPET.
+/// Errors are handled internally and False is returned if any errors are encountered.
+/// @param npet The NPETComm reference
+/// @param COM_PORT COM port number
+/// @param ERROR_MSG Error message in case of an error
+/// @return True if communication was successfully opened, False otherwise
+static bool openCommSafe(NPETComm &npet, const int COM_PORT, const std::string_view ERROR_MSG) {
+    Cli::showInt("Opening the NPET communication on COM", COM_PORT);
+    if (COM_PORT < 1) {
+        SPDLOG_ERROR(INVALID_COM_PORT);
+        Cli::err(std::string(INVALID_COM_PORT));
+        return false;
+    }
+    try {
+        npet.openCommunication(COM_PORT, DEFAULT_BAUD_RATE);
+    } catch (std::exception &e) {
+        SPDLOG_ERROR(FAILED_OPEN_COM_PORT, e.what());
+        Cli::err(std::format(FAILED_OPEN_COM_PORT, e.what()));
+        return false;
+    } // end of try-catch block
+    if (!safeExec([&] { return npet.isResponsive(); }, "is_responsive")) {
+        Cli::echo("COM port opened successfully", fg::yellow);
+        SPDLOG_ERROR(ERROR_MSG);
+        Cli::err(std::string(ERROR_MSG));
+        npet.closeCommunication();
+        return false;
+    }
+}
+
 ///
 /// Open serial communication with both NPETs.
 /// TODO

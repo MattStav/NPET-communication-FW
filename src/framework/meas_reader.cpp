@@ -40,10 +40,8 @@ void MeasReader::dataReceiver() {
         // If the operation was aborted by error or another thread, exit the loop
         if (ec == boost::asio::error::operation_aborted || stop_sign.load(std::memory_order_relaxed)) {
             SPDLOG_DEBUG("Data receiver thread stopping ...");
-            // Cancel pending operation BEFORE exiting
-            npet_.getPort().cancel();
-            // Wait for the cancellation to complete
-            npet_.getIO().run();
+            // Cancel pending operation BEFORE exiting and wait for the cancellation to complete
+            npet_.cancelPendingOperation();
             break;
         }
         if (!ec) {

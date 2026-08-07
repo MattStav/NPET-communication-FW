@@ -202,8 +202,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
         next_tick += PERIOD;
     } // end of while loop
     // Stop listening for the stop command; harmless if it already completed
-    getPort().cancel();
-    getIO().poll();
+    cancelPendingOperation(false);
     if (stop_requested) {
         SPDLOG_INFO("Stop command received mid-stream, ending measurement sequence early");
         writeToSerial("c1");

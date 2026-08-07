@@ -64,6 +64,18 @@ public:
 
     void writeToSerial(const std::string &command);
 
+    // Cancel any pending operation on the port. If BLOCK is true, wait until the
+    // cancellation has been processed by the io_context; otherwise only process
+    // whatever handlers are already ready without waiting.
+    void cancelPendingOperation(const bool BLOCK = true) {
+        port_.cancel();
+        if (BLOCK) {
+            io_.run();
+        } else {
+            io_.poll();
+        }
+    }
+
     [[nodiscard]] bool isOpen() const {
         return port_.is_open();
     }

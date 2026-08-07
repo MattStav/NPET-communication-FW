@@ -169,7 +169,7 @@ bool NPETComm::setMeasuredDataFormat(const int FORMAT) {
 /// @param meas_set Measurement context struct
 /// /// Contains the number of measurements, display and save flags, and channel number
 void NPETComm::readBatchMeasurements(const MeasContext &meas_set) {
-    SPDLOG_DEBUG("Reading batch measurements from NPET");
+    SPDLOG_DEBUG("Reading batch measurements from NPET: {}", meas_set.toString());
     assert(meas_set.num_of_meas > 0);
     // Set the measured data format to binary
     // This program can only process the binary data format

@@ -4,13 +4,13 @@
 
 #include "cli.h"
 #include "helper_func.h"
-#include "safe_exec.h"
+#include "NPET_dual.h"
 
 constexpr std::string_view COMM_DUAL_INIT = "Initializing NPETDual communication framework";
 constexpr std::string_view COMM_DUAL_CLOSE = "Closing NPETDual communication framework";
 
 
-class NPETDualCLI {
+class NPETDualCLI : public NPETDual {
 public:
     void openCommunicationCLI();
 

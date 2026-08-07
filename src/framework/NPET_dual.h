@@ -8,7 +8,13 @@ class NPETDual {
     NPETComm stop_;
 
 public:
-    bool bothResponsive(bool END_STREAM = true);
+    bool isStartResponsive(bool END_STREAM = true);
+
+    bool isStopResponsive(bool END_STREAM = true);
+
+    void purgeStartPort();
+
+    void purgeStopPort();
 
     // Functions to select NPET firmware version and save it into fw_version attribute
     void setFWVer(int NEW_FW_VERSION);

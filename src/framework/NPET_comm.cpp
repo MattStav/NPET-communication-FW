@@ -122,13 +122,13 @@ bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
     assert(NEW_BAUD_RATE > 0);
     // Cancel any pending operations before changing the baud rate
     SPDLOG_DEBUG("Cancelling pending operations");
-    getPort().cancel();
+    cancelPendingOperation();
     // THIS FUNCTION CANNOT USE SEND_COMMAND FROM THIS MODULE!!!
     const std::string CMD = "w" + std::to_string(NEW_BAUD_RATE);
     writeToSerial(CMD);
     // Read response to clear the buffer
     readFromSerial();
-    getPort().set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
+    setBaudRateSerial(NEW_BAUD_RATE);
     const bool SUCCESS = isResponsive();
     if (SUCCESS) {
         SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE);

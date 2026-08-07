@@ -8,6 +8,7 @@
 #include <vector>
 #include <boost/asio.hpp>
 #include <stdexcept>
+#include <spdlog/spdlog.h>
 
 class CommTimeoutError final : public std::runtime_error {
 public:
@@ -120,6 +121,11 @@ protected:
     void writeRawToSerial(std::span<const std::uint8_t> DATA);
 
     std::string readFromSerial(std::size_t MAX_BYTES = 128);
+
+    void setBaudRateSerial(const int NEW_BAUD_RATE) {
+        port_.set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
+        SPDLOG_INFO("Baud rate changed to {}", NEW_BAUD_RATE);
+    }
 };
 
 

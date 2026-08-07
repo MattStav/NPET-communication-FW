@@ -105,8 +105,7 @@ std::string VirtualMachine::getResponse(const std::string &command) {
 /// @param NEW_BAUD_RATE New baud rate to set
 void VirtualMachine::changeBaudRate(const int NEW_BAUD_RATE) {
     try {
-        getPort().set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
-        SPDLOG_INFO("Baud rate changed to {}", NEW_BAUD_RATE);
+        setBaudRateSerial(NEW_BAUD_RATE);
     } catch (const std::exception &e) {
         SPDLOG_ERROR("Couldn't change the baud rate: {}", e.what());
     }

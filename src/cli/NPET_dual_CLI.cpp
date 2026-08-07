@@ -47,10 +47,13 @@ static int openCommLoop(NPETComm &npet, const std::string &designation, const st
         if (!openCommSafe(npet, COM_PORT, ERROR_MSG)) {
             continue;
         }
-        if (confirmNPETSelection(npet, designation)) {
-            SPDLOG_INFO("{} NPET communication opened successfully", designation);
-            return COM_PORT;
+        npet.detectFWVer();
+        if (!confirmNPETSelection(npet, designation)) {
+            npet.closeCommunication();
+            continue;
         }
+        SPDLOG_INFO("{} NPET communication opened successfully", designation);
+        return COM_PORT;
     } // end of for loop
     SPDLOG_ERROR(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS);
     Cli::err(std::format(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS));
@@ -114,9 +117,3 @@ bool NPETDualCLI::bothResponsiveCLI() {
     SPDLOG_ERROR("NPETs are not responsive after {} attempts", MAX_ATTEMPTS);
     return false;
 } // end of is_NPET_connected_CLI function
-
-
-void NPETDualCLI::detectFwVerCLI() {
-    // TODO: Implement for dual NPET mode
-    return;
-}

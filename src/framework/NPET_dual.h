@@ -20,8 +20,6 @@ public:
     // Functions to select NPET firmware version and save it into fw_version attribute
     void setFWVer(int NEW_FW_VERSION);
 
-    void detectFWVer();
-
     // Set the baud rate on the NPET device
     [[nodiscard]] bool setBaudRate(int NEW_BAUD_RATE = 115200);
 

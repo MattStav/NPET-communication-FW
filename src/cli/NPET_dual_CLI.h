@@ -17,8 +17,6 @@ public:
 
     [[nodiscard]] bool bothResponsiveCLI();
 
-    void detectFwVerCLI();
-
     void readBatchMeasurementsCLI();
 
     void setTimeConstantCLI();
@@ -33,7 +31,6 @@ public:
         SPDLOG_INFO(COMM_DUAL_INIT);
         Cli::echo(std::string(COMM_DUAL_INIT), fg::blue, style::bold);
         openCommunicationCLI();
-        detectFwVerCLI();
     } // end of constructor
 
     ~NPETDualCLI() {

@@ -204,3 +204,12 @@ void SerialMachine::purgePort() {
     port_.cancel();
     PurgeComm(port_.native_handle(), PURGE_RXCLEAR | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_TXABORT);
 }
+
+
+///
+/// @return Current baud rate of the serial port
+int SerialMachine::getBaudRate() {
+    boost::asio::serial_port_base::baud_rate current_baud{};
+    getPort().get_option(current_baud);
+    return static_cast<int>(current_baud.value());
+}

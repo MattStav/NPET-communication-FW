@@ -230,11 +230,9 @@ void NPETCommCLI::setBaudRateCLI() {
         "576000",
     };
     SPDLOG_DEBUG("Possible new baud rates: {}", BAUD_RATE_OPTIONS);
-    // Get current baud rate
-    boost::asio::serial_port_base::baud_rate current_baud{};
-    getPort().get_option(current_baud);
-    SPDLOG_DEBUG("{}: {}", BAUD_RATE_CURRENT, current_baud.value());
-    Cli::showInt(std::string(BAUD_RATE_CURRENT), static_cast<int>(current_baud.value()));
+    const int CURRENT_BAUD = getBaudRate();
+    SPDLOG_DEBUG("{}: {}", BAUD_RATE_CURRENT, CURRENT_BAUD);
+    Cli::showInt(std::string(BAUD_RATE_CURRENT), CURRENT_BAUD);
     switch (Cli::menu("New baud rate", BAUD_RATE_OPTIONS, false)) {
         case 1:
             new_baud_rate = 115200;
@@ -331,8 +329,12 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
     const bool SAVE_FLAG = Cli::confirm("Save the measurements?", true);
     SPDLOG_DEBUG("User specified save measurements flag: {}", SAVE_FLAG);
     const std::optional<std::filesystem::path> SAVE_PATH = SAVE_FLAG
-        ? std::optional{std::filesystem::path(outputFilePath(static_cast<Channel>(channel), USER_FILES))}
-        : std::nullopt;
+                                                               ? std::optional{
+                                                                   std::filesystem::path(
+                                                                       outputFilePath(
+                                                                           static_cast<Channel>(channel), USER_FILES))
+                                                               }
+                                                               : std::nullopt;
     SPDLOG_DEBUG("Measurements will be saved to: {}", SAVE_PATH ? SAVE_PATH->string() : "none");
     // Prepare measurement context object
     const MeasContext MEAS_SETTINGS{

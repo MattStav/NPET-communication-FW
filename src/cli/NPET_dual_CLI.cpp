@@ -6,6 +6,20 @@ constexpr std::string_view NPET_DUAL_NOT_RESPONDING = "Both NPETs not responding
 constexpr std::string_view NPET_START_NOT_RESPONDING = "Start NPET not responding!";
 constexpr std::string_view NPET_STOP_NOT_RESPONDING = "Stop NPET not responding!";
 
+///
+/// Take the NPET the user has selected as START/STOP,
+/// set it to channel 2 and have user confirm that the expected NPET is truly in channel 2.
+/// @param npet The NPETComm reference
+/// @param designation The designation of the NPET (e.g., "START" or "STOP")
+/// @return True if the NPET expected NPET is set to channel 2, False otherwise
+static bool confirmNPETSelection(NPETComm &npet, const std::string &designation) {
+    SPDLOG_DEBUG("Confirming that the {} NPET was correctly selected", designation);
+    npet.readSingleMeasurement(Channel::CH2);
+    const bool RET = Cli::confirm("Confirm that the " + designation + " NPET is currently set to channel 2?", true);
+    npet.readSingleMeasurement(Channel::CH1);
+    SPDLOG_DEBUG("Confirmed that the {} was selected {}", designation, RET ? "CORRECTLY" : "WRONGLY");
+    return RET;
+}
 
 ///
 /// Open serial communication with both NPETs.

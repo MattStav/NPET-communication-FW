@@ -1,11 +1,11 @@
 #include "NPET_dual.h"
 
 
-bool NPETDual::isStartResponsive(bool END_STREAM) {
+bool NPETDual::isStartResponsive(const bool END_STREAM) {
     return start_.isResponsive(END_STREAM);
 }
 
-bool NPETDual::isStopResponsive(bool END_STREAM) {
+bool NPETDual::isStopResponsive(const bool END_STREAM) {
     return stop_.isResponsive(END_STREAM);
 }
 

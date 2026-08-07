@@ -63,23 +63,7 @@ void NPETCommCLI::openCommunicationCLI() {
         SPDLOG_DEBUG("Attempt {} to open NPET communication, autoselect: {}", i + 1, autoselect);
         const int COM_PORT = selectComPortCli(autoselect);
         Cli::showInt("Opening the NPET communication on COM", COM_PORT);
-        if (COM_PORT < 1) {
-            SPDLOG_ERROR(INVALID_COM_PORT);
-            Cli::err(std::string(INVALID_COM_PORT));
-            continue;
-        }
-        try {
-            openCommunication(COM_PORT, DEFAULT_BAUD_RATE);
-        } catch (std::exception &e) {
-            SPDLOG_ERROR(FAILED_OPEN_COM_PORT, e.what());
-            Cli::err(std::format(FAILED_OPEN_COM_PORT, e.what()));
-            continue;
-        } // end of try-catch block
-        if (!safeExec([&] { return isResponsive(); }, "is_responsive")) {
-            Cli::echo("COM port opened successfully", fg::yellow);
-            SPDLOG_ERROR(NPET_NOT_RESPONDING);
-            Cli::err(std::string(NPET_NOT_RESPONDING));
-            closeCommunication();
+        if (!openCommSafe(*this, COM_PORT, NPET_NOT_RESPONDING)) {
             continue;
         }
         SPDLOG_INFO("NPET communication opened successfully");

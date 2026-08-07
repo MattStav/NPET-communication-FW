@@ -19,6 +19,8 @@ int launchDataProcessor();
 
 int selectComPortCli(bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS = {});
 
+bool openCommSafe(NPETComm &npet, int COM_PORT, std::string_view ERROR_MSG);
+
 void settingsMenu(NPETCommCLI &npet_comm);
 
 void printAppIntro();

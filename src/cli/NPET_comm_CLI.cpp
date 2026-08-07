@@ -71,6 +71,8 @@ void NPETCommCLI::openCommunicationCLI() {
     } // end of for loop
     SPDLOG_ERROR(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS);
     Cli::err(std::format(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS));
+    Cli::confirmExit();
+    throw std::runtime_error(std::format(FAILED_OPEN_COM_PORT_MAX_ATTEMPT, MAX_ATTEMPTS));
 } // end of open_NPET_communication function
 
 

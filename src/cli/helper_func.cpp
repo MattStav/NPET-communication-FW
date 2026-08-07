@@ -1,6 +1,5 @@
 #include "helper_func.h"
 
-#include <algorithm>
 #include <git_tag.h>
 #include <license_data.h>
 #include <manual_data.h>
@@ -116,18 +115,13 @@ int selectComPortCli(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_POR
     int selected_cp{};
     std::vector<std::string> com_ports{};
 
-    // Get available com ports
+    // Get available com ports, dropping any that are excluded
     try {
-        com_ports = getComPorts();
+        com_ports = getComPorts(getWin32Api(), EXCLUDED_PORTS);
     } catch (std::runtime_error &e) {
         SPDLOG_ERROR(e.what());
         Cli::err(e.what());
     }
-    // Drop excluded ports from the selection TODO: move to getComPorts
-    std::erase_if(com_ports, [&](const std::string &port) {
-        const int PORT_NUM = port.c_str()[port.size() - 3] - '0';
-        return std::ranges::find(EXCLUDED_PORTS, PORT_NUM) != EXCLUDED_PORTS.end();
-    });
     // End the program if there are none
     if (com_ports.empty()) {
         SPDLOG_ERROR(NO_PORTS);
@@ -139,7 +133,7 @@ int selectComPortCli(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_POR
     if (AUTOSELECT && com_ports.size() == 1) {
         SPDLOG_DEBUG("Autoselect enabled and only one COM port found: {}", com_ports.at(0));
         // Extract only the COM port number
-        selected_cp = com_ports.at(0).c_str()[com_ports.at(0).size() - 3] - '0';
+        selected_cp = extractComPortNumber(com_ports.at(0));
     } else {
         // Print available comports
         Cli::echo("--- Available COM ports ---", fg::gray, style::underline);

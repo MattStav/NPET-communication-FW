@@ -4,6 +4,7 @@
 #include <cstring>
 #include <filesystem>
 #include <cstdlib>
+#include <stdexcept>
 
 
 using ::testing::_;
@@ -159,6 +160,176 @@ TEST_F(GetComPortsTest, CleanupAlwaysCalledOnSuccess) {
             .WillOnce(Return(TRUE));
 
     getComPorts(api); // should not throw
+}
+
+/// No excluded ports supplied → all ports are kept
+TEST_F(GetComPortsTest, KeepsAllPortsWhenNoneExcluded) {
+    EXPECT_CALL(api, getClassDevs(_, _, _, _)).WillOnce(Return(K_FAKE_HANDLE)); {
+        InSequence seq;
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 0, _)).WillOnce(Return(TRUE));
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 1, _)).WillOnce(Return(FALSE));
+    }
+    EXPECT_CALL(api, getDeviceRegistryProperty(K_FAKE_HANDLE, _, SPDRP_FRIENDLYNAME, _, _, _, _))
+            .WillOnce(DoAll(
+                [](HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE buf, DWORD, PDWORD) {
+                    const char *name = "USB Serial Port (COM3)";
+                    memcpy(buf, name, strlen(name) + 1);
+                },
+                Return(TRUE)));
+    expectCleanup();
+
+    const auto PORTS = getComPorts(api, {});
+
+    ASSERT_EQ(PORTS.size(), 1U);
+    EXPECT_EQ(PORTS.at(0), "USB Serial Port (COM3)");
+}
+
+/// A port whose number is in excludedPorts is dropped from the result
+TEST_F(GetComPortsTest, DropsExcludedPort) {
+    EXPECT_CALL(api, getClassDevs(_, _, _, _)).WillOnce(Return(K_FAKE_HANDLE)); {
+        InSequence seq;
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 0, _)).WillOnce(Return(TRUE));
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 1, _)).WillOnce(Return(TRUE));
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 2, _)).WillOnce(Return(FALSE));
+    }
+    EXPECT_CALL(api, getDeviceRegistryProperty(K_FAKE_HANDLE, _, SPDRP_FRIENDLYNAME, _, _, _, _))
+            .WillOnce(DoAll(
+                [](HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE buf, DWORD, PDWORD) {
+                    const char *name = "USB Serial Port (COM1)";
+                    memcpy(buf, name, strlen(name) + 1);
+                },
+                Return(TRUE)))
+            .WillOnce(DoAll(
+                [](HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE buf, DWORD, PDWORD) {
+                    const char *name = "Bluetooth Serial Port (COM7)";
+                    memcpy(buf, name, strlen(name) + 1);
+                },
+                Return(TRUE)));
+    expectCleanup();
+
+    const auto PORTS = getComPorts(api, {7});
+
+    ASSERT_EQ(PORTS.size(), 1U);
+    EXPECT_EQ(PORTS.at(0), "USB Serial Port (COM1)");
+}
+
+/// Exclusion also works for double-digit port numbers
+TEST_F(GetComPortsTest, DropsExcludedDoubleDigitPort) {
+    EXPECT_CALL(api, getClassDevs(_, _, _, _)).WillOnce(Return(K_FAKE_HANDLE)); {
+        InSequence seq;
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 0, _)).WillOnce(Return(TRUE));
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 1, _)).WillOnce(Return(TRUE));
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 2, _)).WillOnce(Return(FALSE));
+    }
+    EXPECT_CALL(api, getDeviceRegistryProperty(K_FAKE_HANDLE, _, SPDRP_FRIENDLYNAME, _, _, _, _))
+            .WillOnce(DoAll(
+                [](HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE buf, DWORD, PDWORD) {
+                    const char *name = "USB Serial Port (COM9)";
+                    memcpy(buf, name, strlen(name) + 1);
+                },
+                Return(TRUE)))
+            .WillOnce(DoAll(
+                [](HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE buf, DWORD, PDWORD) {
+                    const char *name = "USB Serial Port (COM12)";
+                    memcpy(buf, name, strlen(name) + 1);
+                },
+                Return(TRUE)));
+    expectCleanup();
+
+    const auto PORTS = getComPorts(api, {12});
+
+    ASSERT_EQ(PORTS.size(), 1U);
+    EXPECT_EQ(PORTS.at(0), "USB Serial Port (COM9)");
+}
+
+/// Every port is excluded → an empty vector is returned, not an error
+TEST_F(GetComPortsTest, DropsAllPortsWhenAllExcluded) {
+    EXPECT_CALL(api, getClassDevs(_, _, _, _)).WillOnce(Return(K_FAKE_HANDLE)); {
+        InSequence seq;
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 0, _)).WillOnce(Return(TRUE));
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 1, _)).WillOnce(Return(FALSE));
+    }
+    EXPECT_CALL(api, getDeviceRegistryProperty(K_FAKE_HANDLE, _, SPDRP_FRIENDLYNAME, _, _, _, _))
+            .WillOnce(DoAll(
+                [](HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE buf, DWORD, PDWORD) {
+                    const char *name = "USB Serial Port (COM5)";
+                    memcpy(buf, name, strlen(name) + 1);
+                },
+                Return(TRUE)));
+    expectCleanup();
+
+    const auto PORTS = getComPorts(api, {5});
+
+    EXPECT_TRUE(PORTS.empty());
+}
+
+/// Excluding a port number that isn't present is a no-op
+TEST_F(GetComPortsTest, ExcludingAbsentPortNumberIsNoop) {
+    EXPECT_CALL(api, getClassDevs(_, _, _, _)).WillOnce(Return(K_FAKE_HANDLE)); {
+        InSequence seq;
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 0, _)).WillOnce(Return(TRUE));
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 1, _)).WillOnce(Return(FALSE));
+    }
+    EXPECT_CALL(api, getDeviceRegistryProperty(K_FAKE_HANDLE, _, SPDRP_FRIENDLYNAME, _, _, _, _))
+            .WillOnce(DoAll(
+                [](HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE buf, DWORD, PDWORD) {
+                    const char *name = "USB Serial Port (COM2)";
+                    memcpy(buf, name, strlen(name) + 1);
+                },
+                Return(TRUE)));
+    expectCleanup();
+
+    const auto PORTS = getComPorts(api, {9});
+
+    ASSERT_EQ(PORTS.size(), 1U);
+    EXPECT_EQ(PORTS.at(0), "USB Serial Port (COM2)");
+}
+
+/// A port whose friendly name doesn't contain "COM" (e.g. a parallel port sharing this
+/// device class) can't match any exclusion and is kept rather than throwing.
+TEST_F(GetComPortsTest, KeepsUnparsablePortNameRatherThanThrowing) {
+    EXPECT_CALL(api, getClassDevs(_, _, _, _)).WillOnce(Return(K_FAKE_HANDLE)); {
+        InSequence seq;
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 0, _)).WillOnce(Return(TRUE));
+        EXPECT_CALL(api, enumDeviceInfo(K_FAKE_HANDLE, 1, _)).WillOnce(Return(FALSE));
+    }
+    EXPECT_CALL(api, getDeviceRegistryProperty(K_FAKE_HANDLE, _, SPDRP_FRIENDLYNAME, _, _, _, _))
+            .WillOnce(DoAll(
+                [](HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE buf, DWORD, PDWORD) {
+                    const char *name = "Printer Port (LPT1)";
+                    memcpy(buf, name, strlen(name) + 1);
+                },
+                Return(TRUE)));
+    expectCleanup();
+
+    const auto PORTS = getComPorts(api, {1});
+
+    ASSERT_EQ(PORTS.size(), 1U);
+    EXPECT_EQ(PORTS.at(0), "Printer Port (LPT1)");
+}
+
+TEST(ExtractComPortNumberTest, ExtractsSingleDigit) {
+    EXPECT_EQ(extractComPortNumber("USB Serial Port (COM8)"), 8);
+}
+
+TEST(ExtractComPortNumberTest, ExtractsDoubleDigit) {
+    EXPECT_EQ(extractComPortNumber("USB Serial Port (COM12)"), 12);
+}
+
+TEST(ExtractComPortNumberTest, ExtractsFromLongerFriendlyName) {
+    EXPECT_EQ(extractComPortNumber("Silicon Labs CP210x USB to UART Bridge (COM103)"), 103);
+}
+
+TEST(ExtractComPortNumberTest, ExtractsZero) {
+    EXPECT_EQ(extractComPortNumber("Communications Port (COM0)"), 0);
+}
+
+TEST(ExtractComPortNumberTest, ThrowsWhenNameHasNoComSubstring) {
+    EXPECT_THROW(extractComPortNumber("Printer Port (LPT1)"), std::invalid_argument);
+}
+
+TEST(ExtractComPortNumberTest, ThrowsWhenComHasNoTrailingDigits) {
+    EXPECT_THROW(extractComPortNumber("Some COM Device"), std::invalid_argument);
 }
 
 static BYTE g_fake_sid_storage = 0;

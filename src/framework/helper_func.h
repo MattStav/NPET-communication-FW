@@ -148,7 +148,11 @@ inline RealWinApi &getRealWinApi() {
     return instance;
 }
 
-std::vector<std::string> getComPorts(ISetupDiApi &api = getWin32Api());
+std::vector<std::string> getComPorts(ISetupDiApi &api = getWin32Api(), const std::vector<int> &excludedPorts = {});
+
+/// Extract the numeric COM port number from a friendly device name (e.g. "USB Serial Port (COM8)" -> 8).
+/// @throws std::invalid_argument if the name does not contain a "COM<digits>" sequence.
+int extractComPortNumber(const std::string &port);
 
 bool isUserAdmin(WinApiAdapter &api = getRealWinApi());
 

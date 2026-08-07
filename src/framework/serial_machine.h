@@ -4,6 +4,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <thread>
 #include <vector>
 #include <boost/asio.hpp>
 #include <stdexcept>
@@ -53,12 +54,25 @@ public:
         return port_;
     }
 
-    // Restart the io_context and poll it one handler at a time until PRED returns true.
+    // Poll the io_context one handler at a time until PRED returns true.
+    // @param RESTART Whether to restart the io_context before polling. Only valid when the io_context is
+    //                 already stopped, i.e. there's no async operation left outstanding from a previous call
+    //                 (the common case: PRED watches for the completion of an op posted right before this
+    //                 call). Pass false when polling for an op that was posted further back and must stay
+    //                 outstanding across multiple pollUntil calls (e.g. waiting on a clock in between).
+    // @param THROTTLE Sleep duration between polls, to avoid busy-spinning a CPU core while waiting. Leave
+    //                  at 0 on latency/throughput-sensitive paths (e.g. streaming data off the wire).
     template<typename Predicate>
-    void pollUntil(Predicate PRED) {
-        io_.restart();
+    void pollUntil(Predicate PRED, const bool RESTART = true,
+                   const std::chrono::milliseconds THROTTLE = std::chrono::milliseconds(0)) {
+        if (RESTART) {
+            io_.restart();
+        }
         while (!PRED()) {
             io_.poll_one();
+            if (THROTTLE.count() > 0) {
+                std::this_thread::sleep_for(THROTTLE);
+            }
         }
     }
 

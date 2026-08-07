@@ -166,11 +166,10 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
     const auto TICKS_ELAPSED = (std::chrono::high_resolution_clock::now() - START_TIME) / PERIOD; // NOLINT(readability-redundant-parentheses)
     auto next_tick = START_TIME + (TICKS_ELAPSED + 1) * PERIOD;
     while (true) {
-        // Wait for the next fixed tick since start_time, while still polling for the stop command to arrive
-        while (!stop_requested && std::chrono::high_resolution_clock::now() < next_tick) {
-            getIO().poll_one();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+        // Wait for the next fixed tick since start_time, while still polling for the stop command to arrive.
+        // Don't restart the io_context here: the stop-command read stays outstanding across ticks.
+        pollUntil([&] { return stop_requested || std::chrono::high_resolution_clock::now() >= next_tick; },
+                  false, std::chrono::milliseconds(1));
         if (stop_requested) {
             SPDLOG_WARN("Stop command received, ending measurement sequence early");
             break;

@@ -10,6 +10,39 @@
 
 
 ///
+/// Settings menu
+/// @param npet_comm NPET_comm_CLI object
+static void singleNPETSettingsMenu(NPETCommCLI &npet_comm) {
+    SPDLOG_DEBUG("Settings menu initiated ...");
+    const std::vector<std::string> SETTINGS_MENU_ITEMS = {
+        "Communication baud rate",
+        "Time correction constant",
+        "NPET FW version",
+        "Reset NPET settings",
+        "Return to main menu",
+    };
+    switch (Cli::menu("Settings", SETTINGS_MENU_ITEMS)) {
+        case 1: // Change baud rate
+            SPDLOG_DEBUG("Settings menu choice: Baud rate");
+            npet_comm.setBaudRateCLI();
+            return;
+        case 2: // Set time constant on NPET
+            SPDLOG_DEBUG("Settings menu choice: Time constant");
+            npet_comm.setTimeConstantCLI();
+            return;
+        case 3: // Set FW version
+            SPDLOG_DEBUG("Settings menu choice: FW version");
+            npet_comm.setFwVerCLI();
+            return;
+        case 4: // Reset NPET
+            SPDLOG_DEBUG("Settings menu choice: Reset NPET");
+            npet_comm.resetCLI();
+        default: ;
+    } // end of switch
+} // end of menu_settings function
+
+
+///
 /// Main CLI function
 int singleNPETMainMenu() {
     initLogging();
@@ -36,7 +69,7 @@ int singleNPETMainMenu() {
         switch (Cli::menu("Main menu", MAIN_MENU_ITEMS)) {
             case 1: // Settings menu
                 SPDLOG_DEBUG("Main menu choice: Settings");
-                settingsMenu(npet_comm);
+                singleNPETSettingsMenu(npet_comm);
                 continue;
             case 2: // Generate n pulses
                 SPDLOG_DEBUG("Main menu choice: Generate pulses");

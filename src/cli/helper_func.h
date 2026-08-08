@@ -29,8 +29,6 @@ int numValidation(const std::string &num_to_validate, bool ALLOW_NEGATIVE_ONE = 
 
 std::optional<Channel> promptChannel(int DEFAULT_CHANNEL, std::string_view PROMPT_MSG = "channel to read from");
 
-void settingsMenu(NPETCommCLI &npet_comm);
-
 void printAppIntro();
 
 #endif //NPET_COMM_FW_HELPER_FUNC_H

@@ -183,7 +183,8 @@ void NPETDualCLI::readBatchMeasurementsCLI() {
     // return;
     // } // end of try-catch block
     // SPDLOG_DEBUG("User specified measurement monitoring: {}", monitor);
-    std::function<void(MeasReader &, const MeasContext &, const Measurement &)>
+    std::function<void(DualMeasReader &, const DualMeasContext &, const Measurement &start_time_const,
+                       const Measurement &stop_time_const)>
             monitor_fn;
     switch (monitor) {
         // case 1: monitor_fn = readerCliBasic;

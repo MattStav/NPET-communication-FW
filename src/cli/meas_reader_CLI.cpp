@@ -261,6 +261,7 @@ static void printDualIntro(const DualMeasContext &meas_set, const Measurement &s
     Cli::echo(std::string(DUAL_MEAS_START), fg::green);
     if (start_time_const.isEmpty() || !start_time_const.isValid() ||
         stop_time_const.isEmpty() || !stop_time_const.isValid()) {
+        // TODO: Specify which const is missing
         SPDLOG_ERROR(MISSING_CONST);
         Cli::err(std::string(MISSING_CONST));
     }
@@ -280,6 +281,9 @@ static void printDualIntro(const DualMeasContext &meas_set, const Measurement &s
 static void printDualOutro() {
     SPDLOG_DEBUG(DUAL_MEAS_END);
     Cli::echo(std::string(DUAL_MEAS_END), fg::green);
+    // TODO: Add waiting for saver thread
+    // TODO: Add information about corrupted measurements
+    // TODO: Add information about unmatched measurements
 } // end of print_dual_outro function
 
 

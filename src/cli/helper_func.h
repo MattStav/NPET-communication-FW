@@ -15,9 +15,12 @@ constexpr std::string_view INVALID_NUM = "Invalid input. Number out of allowed r
 constexpr std::string_view PULSE_GEN_STOP_FAIL = "Failed to stop pulse generation";
 constexpr std::string_view FREQ_RESET_FAIL = "Failed to reset the pulse generation frequency";
 constexpr std::string_view BAUD_RATE_RESET_FAIL = "Failed to reset baud rate to default";
+constexpr std::string_view BAUD_RATE_ALREADY_SET = "New baud rate is the same as the current one";
 constexpr std::string_view DATA_FORMAT_RESET_FAIL = "Failed to reset the data format";
 constexpr std::string_view TIME_CONST_FAILED_TO_CLEAR = "Failed to clear the time correction constant saved in NPET";
-constexpr std::string_view BAUD_RATE_ALREADY_SET = "New baud rate is the same as the current one";
+constexpr std::string_view TIME_CONST_FAILED_TO_SET = "Failed to define raw time constant: {}";
+constexpr std::string_view TIME_CONST_FRAC_INVALID_MEAS_NUM = "Invalid number of averaging measurements";
+constexpr std::string_view TIME_CONST_CLEAR_OK = "Time correction constant cleared";
 
 int printManual();
 

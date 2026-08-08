@@ -109,13 +109,11 @@ static void dualNPETSettingsMenu(NPETDualCLI &npet_dual) {
             SPDLOG_DEBUG("Settings menu choice: Baud rate");
             npet_dual.setBaudRateCLI();
             return;
-        case 2: // Set time constant on NPET
-            SPDLOG_DEBUG("Settings menu choice: Time constant");
-            // TODO: Implement for dual NPET mode
-            throw std::runtime_error("Not implemented for dual NPET mode");
-            // npet_dual.setTimeConstantCLI();
+        case 2: // Synchronize time constants
+            SPDLOG_DEBUG("Settings menu choice: Synchronize time constants");
+            npet_dual.syncNPETsCLI();
             return;
-        case 3:
+        case 3: // Switch START/STOP designation
             SPDLOG_DEBUG("Settings menu choice: Switch START/STOP designation");
             npet_dual.switchStartStopCLI();
             return;

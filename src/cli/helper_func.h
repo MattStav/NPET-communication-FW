@@ -22,6 +22,10 @@ constexpr std::string_view TIME_CONST_FAILED_TO_SET = "Failed to define raw time
 constexpr std::string_view TIME_CONST_FRAC_INVALID_MEAS_NUM = "Invalid number of averaging measurements";
 constexpr std::string_view TIME_CONST_CLEAR_OK = "Time correction constant cleared";
 constexpr std::string_view MONITOR_FN_INVALID = "Invalid monitor function";
+constexpr std::string_view TIME_CONST_FRAC_MEAS = "Measuring average fractional part of the time correction constant";
+constexpr std::string_view TIME_CONST_FRAC_MEAS_ERR = "Error occurred during fraction measurement";
+constexpr std::string_view TIME_CONST_INVALID = "Time correction constant invalid";
+constexpr std::string_view TIME_CONST_FAILED_TO_EXPORT = "Failed to export the time constant to NPET";
 
 int printManual();
 

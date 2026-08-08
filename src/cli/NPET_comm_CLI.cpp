@@ -14,12 +14,6 @@ constexpr std::string_view FREQ_ERR = "Couldn't set the frequency";
 constexpr std::string_view FREQ_SET = "Pulse generation frequency set to [Hz]";
 constexpr std::string_view PULSE_GEN_OK = "Pulse generation successful";
 constexpr std::string_view PULSE_GEN_ERR = "Pulse generation failed";
-constexpr std::string_view TIME_CONST_FAILED_TO_EXPORT = "Failed to export the time constant to NPET";
-constexpr std::string_view TIME_CONST_FRAC_MEAS_ERR = "Error occurred during fraction measurement";
-constexpr std::string_view TIME_CONST_FRAC_MEAS_INTERRUPT =
-        "Fraction calibration interrupted by user. Fraction will be set to 0.00";
-constexpr std::string_view TIME_CONST_FRAC_MEAS = "Measuring average fractional part of the time correction constant";
-constexpr std::string_view TIME_CONST_INVALID = "Time correction constant invalid";
 constexpr std::string_view TIME_CONST_SET = "New time correction constant set to";
 constexpr std::string_view TIME_CONST_SET_FRAC_PART = "Invalid input - Fraction must be in the range (0, 1)";
 constexpr std::string_view TIME_CONST_CURRENT = "Current time constant value";

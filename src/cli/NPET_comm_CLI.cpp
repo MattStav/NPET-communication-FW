@@ -18,7 +18,6 @@ constexpr std::string_view FREQ_RESET_FAIL = "Failed to reset the pulse generati
 constexpr std::string_view PULSE_GEN_OK = "Pulse generation successful";
 constexpr std::string_view PULSE_GEN_ERR = "Pulse generation failed";
 constexpr std::string_view PULSE_GEN_STOP_FAIL = "Failed to stop pulse generation";
-constexpr std::string_view BAUD_RATE_CURRENT = "Current baud rate";
 constexpr std::string_view BAUD_RATE_OK = "Baud rate set to";
 constexpr std::string_view BAUD_RATE_ERR = "Failed to set baud rate";
 constexpr std::string_view BAUD_RATE_RESET_FAIL = "Failed to reset baud rate to default";
@@ -193,38 +192,17 @@ void NPETCommCLI::generatePulsesCLI() {
 /// ClI wrapper for the set_baud_rate function.
 void NPETCommCLI::setBaudRateCLI() {
     SPDLOG_DEBUG("Setting baud rate ...");
-    int new_baud_rate{};
-    const std::vector<std::string> BAUD_RATE_OPTIONS = {
-        "115200",
-        "230400",
-        "576000",
-    };
-    SPDLOG_DEBUG("Possible new baud rates: {}", BAUD_RATE_OPTIONS);
     const int CURRENT_BAUD = getBaudRate();
-    SPDLOG_DEBUG("{}: {}", BAUD_RATE_CURRENT, CURRENT_BAUD);
-    Cli::showInt(std::string(BAUD_RATE_CURRENT), CURRENT_BAUD);
-    switch (Cli::menu("New baud rate", BAUD_RATE_OPTIONS, false)) {
-        case 1:
-            new_baud_rate = 115200;
-            break;
-        case 2:
-            new_baud_rate = 230400;
-            break;
-        case 3:
-            new_baud_rate = 576000;
-            break;
-        default:
-            return;
-    }
+    const int NEW_BAUD_RATE = promptBaudRate(CURRENT_BAUD);
     try {
         SPDLOG_WARN("INITIATING BAUD RATE CHANGE!");
         Cli::echo("YOU ARE ABOUT TO CHANGE THE COMMUNICATION BAUD RATE.", fg::yellow, style::bold);
         Cli::echo("DO NOT DISCONNECT THE DEVICE OR CLOSE THE PROGRAM!", fg::yellow, style::bold);
         Cli::echo("IF THIS PROCESS FAILS, RESTART THE DEVICE AND LAUNCH THIS PROGRAM ANEW.", fg::yellow, style::bold);
         Sleep(1000); // Wait for 1 second to let the user read the warning
-        if (setBaudRate(new_baud_rate)) {
-            SPDLOG_DEBUG("{}: {}", BAUD_RATE_OK, new_baud_rate);
-            Cli::showInt(std::string(BAUD_RATE_OK), new_baud_rate);
+        if (setBaudRate(NEW_BAUD_RATE)) {
+            SPDLOG_DEBUG("{}: {}", BAUD_RATE_OK, NEW_BAUD_RATE);
+            Cli::showInt(std::string(BAUD_RATE_OK), NEW_BAUD_RATE);
         } else {
             SPDLOG_ERROR(BAUD_RATE_ERR);
             Cli::err(std::string(BAUD_RATE_ERR));

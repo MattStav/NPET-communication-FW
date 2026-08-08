@@ -103,6 +103,8 @@ public:
 
     void purgePort();
 
+    int getBaudRate();
+
 protected:
     /**
      * @brief Read mode for the read_with_timeout function.
@@ -121,8 +123,6 @@ protected:
     void writeRawToSerial(std::span<const std::uint8_t> DATA);
 
     std::string readFromSerial(std::size_t MAX_BYTES = 128);
-
-    int getBaudRate();
 
     void setBaudRateSerial(const int NEW_BAUD_RATE) {
         port_.set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));

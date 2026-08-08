@@ -4,6 +4,7 @@
 #include <license_data.h>
 #include <manual_data.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.
 
 #include "cli.h"
 #include "logging.h"
@@ -15,6 +16,7 @@ constexpr std::string_view DP_ERR = "NPET Data Processor ERROR: Command: {}; Cod
 constexpr std::string_view APP_START_MSG = "NPET communication FW started: ";
 constexpr std::string_view NO_PORTS = "No available COM ports found";
 constexpr std::string_view CHANNEL_INVALID = "Invalid channel number";
+constexpr std::string_view BAUD_RATE_CURRENT = "Current baud rate";
 
 
 void printAppIntro() {
@@ -229,3 +231,29 @@ std::optional<Channel> promptChannel(const int DEFAULT_CHANNEL, const std::strin
     }
     return static_cast<Channel>(channel);
 } // end of promptChannel function
+
+
+///
+/// Prompt the user to select a baud rate.
+/// @param CURRENT_BAUD_RATE The current baud rate of the NPET communication.
+/// @return Selected baud rate
+int promptBaudRate(const int CURRENT_BAUD_RATE) {
+    const std::vector<std::string> BAUD_RATE_OPTIONS = {
+        "115200",
+        "230400",
+        "576000",
+    };
+    SPDLOG_DEBUG("Possible new baud rates: {}", BAUD_RATE_OPTIONS);
+    SPDLOG_DEBUG("{}: {}", BAUD_RATE_CURRENT, CURRENT_BAUD_RATE);
+    Cli::showInt(std::string(BAUD_RATE_CURRENT), CURRENT_BAUD_RATE);
+    switch (Cli::menu("New baud rate", BAUD_RATE_OPTIONS, false)) {
+        case 1:
+            return 115200;
+        case 2:
+            return 230400;
+        case 3:
+            return 576000;
+        default:
+            return CURRENT_BAUD_RATE;
+    }
+} // end of promptBaudRate function

@@ -1,5 +1,7 @@
 #include "NPET_dual_CLI.h"
 
+#include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.
+
 
 constexpr std::string_view NPET_DUAL_OK_RESPONDING = "NPETs communication is OK";
 constexpr std::string_view NPET_DUAL_NOT_RESPONDING = "Both NPETs not responding!";
@@ -242,6 +244,111 @@ void NPETDualCLI::setBaudRateCLI() {
     Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "STOP"));
     setBaudRateSafe(stopComm(), NEW_BAUD_RATE);
     SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE);
+}
+
+
+///
+/// Synchronize the two NPETs.
+void NPETDualCLI::syncNPETsCLI() {
+    SPDLOG_DEBUG("Setting time correction constant ...");
+    const std::vector<std::string> DEFINITION_OPTIONS = {
+        "Adjust single raw constant",
+        "Mutual synchronization",
+        "Clear time constants",
+        "Cancel",
+    };
+    SPDLOG_DEBUG("Possible new time correction constant definitions: {}", DEFINITION_OPTIONS);
+    switch (Cli::menu("Time correction constant definition", DEFINITION_OPTIONS, false)) {
+        case 1:
+            SPDLOG_DEBUG("User selected adjusting raw raw time correction constant for single NPET");
+            try {
+                // TODO: Add
+            } catch (std::exception &e) {
+                SPDLOG_ERROR(TIME_CONST_FAILED_TO_SET, e.what());
+                Cli::err(std::format(TIME_CONST_FAILED_TO_SET.data(), e.what()));
+                return;
+            }
+            break;
+        case 2: {
+            // TODO: Add
+            // SPDLOG_DEBUG("User selected time correction constant synchronization");
+            // const int AVER_NUM = std::stoi(Cli::prompt("Number of averaging measurements (>=2)", "16"));
+            // if (AVER_NUM < 2) {
+            //     SPDLOG_ERROR(TIME_CONST_FRAC_INVALID_MEAS_NUM);
+            //     Cli::err(std::string(TIME_CONST_FRAC_INVALID_MEAS_NUM));
+            //     return;
+            // }
+            // SPDLOG_DEBUG("User specified number of measurements for averaging: {}", AVER_NUM);
+            // const auto PPS_CHANNEL = promptChannel(2, "the PPS channel");
+            // if (!PPS_CHANNEL.has_value()) {
+            //     return;
+            // }
+            // SPDLOG_DEBUG("User specified PPS channel: {}", static_cast<int>(PPS_CHANNEL.value()));
+            // SPDLOG_DEBUG(TIME_CONST_FRAC_MEAS);
+            // Cli::echo(std::string(TIME_CONST_FRAC_MEAS));
+            // auto bar = ProgressBar({.total = AVER_NUM});
+            // const std::optional<__float128> AVE_FRAC = getAverageFraction(AVER_NUM, PPS_CHANNEL.value(), &bar);
+            // Cli::echo(""); // New line after progress bar
+            // if (!AVE_FRAC.has_value()) {
+            //     SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_ERR);
+            //     Cli::err(std::string(TIME_CONST_FAILED_TO_SET));
+            //     SPDLOG_DEBUG("Breaking measurement stream ...");
+            //     (void) isResponsive(true); // Break measurement stream
+            //     return;
+            // }
+            // // Use the negative average fractional part to compensate for the offset
+            // new_const.fracp = -AVE_FRAC.value();
+            // SPDLOG_DEBUG("Measured average fractional part of the time correction constant: {}",
+            //              float128ToString(new_const.fracp));
+            // SPDLOG_DEBUG("Prompting user for integer part definition logic ...");
+            // SPDLOG_DEBUG("Possible integer part definition logic options: {}", INT_OPTIONS);
+            // const int INT_CHOICE = Cli::menu("Integer part setting logic", INT_OPTIONS, false);
+            // SPDLOG_DEBUG("User selected integer part definition logic: {}", INT_CHOICE);
+            // if (INT_CHOICE == 4) {
+            //     return;
+            // }
+            // new_const.intp = calcInteger(static_cast<IntLogic>(INT_CHOICE), PPS_CHANNEL.value());
+            // SPDLOG_DEBUG("Calculated integer part of the time correction constant: {}", new_const.intp);
+            break;
+        }
+        case 3:
+            SPDLOG_DEBUG("User selected to clear both the time correction constant");
+            if (!safeExec([&] { return one_.clearTimeConstant(); }, "clear_time_constant") ||
+                !safeExec([&] { return two_.clearTimeConstant(); }, "clear_time_constant")) {
+                SPDLOG_ERROR(TIME_CONST_FAILED_TO_CLEAR);
+                Cli::err(std::string(TIME_CONST_FAILED_TO_CLEAR));
+            } else {
+                SPDLOG_INFO(TIME_CONST_CLEAR_OK);
+                Cli::echo(std::string(TIME_CONST_CLEAR_OK), fg::green);
+            }
+            return;
+        default:
+            SPDLOG_DEBUG("User selected to cancel the time correction constant setting");
+            return;
+    } // end-of-switch
+    // TODO: implement
+    // Measurement num -1 marks the time correction constant
+    // If we don't have a valid time correction constant here, then exit
+    // if (new_const.meas_num != -1) {
+    //     SPDLOG_ERROR(TIME_CONST_INVALID);
+    //     Cli::err((std::string(TIME_CONST_INVALID)));
+    //     return;
+    // }
+    // if (!safeExec([&] { return exportTimeConstant(new_const); }, "export_time_constant")) {
+    //     SPDLOG_ERROR(TIME_CONST_FAILED_TO_EXPORT);
+    //     Cli::err((std::string(TIME_CONST_FAILED_TO_EXPORT)));
+    //     return;
+    // }
+    // SPDLOG_INFO("{}: {}", TIME_CONST_SET, new_const.toString());
+    // Cli::showStr(std::string(TIME_CONST_SET), new_const.toString());
+    // // Read sample measurements to see the results
+    // SPDLOG_DEBUG("Reading sample measurements to show the effect of the new time correction constant ...");
+    // safeExec([&] {
+    //              readBatchMeasurements(MeasContext{
+    //                  .num_of_meas = 10, .monitor_fn = readerCliSync, .channel = Channel::CH2,
+    //              });
+    //          },
+    //          "read_batch_measurements");
 }
 
 

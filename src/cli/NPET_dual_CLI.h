@@ -23,7 +23,7 @@ public:
 
     void setBaudRateCLI();
 
-    void setTimeConstantCLI();
+    void syncNPETsCLI();
 
     void setFwVerCLI();
 

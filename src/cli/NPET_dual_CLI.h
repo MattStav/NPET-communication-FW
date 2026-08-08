@@ -21,6 +21,8 @@ public:
 
     void switchStartStopCLI();
 
+    void setBaudRateCLI();
+
     void setTimeConstantCLI();
 
     void resetCLI();

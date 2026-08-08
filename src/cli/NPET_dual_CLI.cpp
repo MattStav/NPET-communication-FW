@@ -7,6 +7,7 @@ constexpr std::string_view NPET_START_NOT_RESPONDING = "Start NPET not respondin
 constexpr std::string_view NPET_STOP_NOT_RESPONDING = "Stop NPET not responding!";
 constexpr std::string_view NPET_DESIGNATION_SWITCH_INIT = "Switching NPET START/STOP designation ...";
 constexpr std::string_view NPET_DESIGNATION_SWITCH_DONE = "NPET START/STOP designation switched successfully";
+constexpr std::string_view NPET_SETTING_BAUD_RATE = "Now setting baud rate for the {} NPET";
 
 ///
 /// Take the NPET the user has selected as START/STOP,
@@ -200,4 +201,23 @@ void NPETDualCLI::switchStartStopCLI() {
     switchStartStop();
     Cli::echo(std::string(NPET_DESIGNATION_SWITCH_DONE), fg::green);
     SPDLOG_INFO(NPET_DESIGNATION_SWITCH_DONE);
+}
+
+
+///
+/// CLI wrapper for setting baud rate on both NPETs
+void NPETDualCLI::setBaudRateCLI() {
+    SPDLOG_DEBUG("Setting baud rate on both NPETs ...");
+    const int CURRENT_BAUD_ONE = one_.getBaudRate();
+    const int CURRENT_BAUD_TWO = one_.getBaudRate();
+    assert(CURRENT_BAUD_ONE == CURRENT_BAUD_TWO);
+    const int NEW_BAUD_RATE = promptBaudRate(CURRENT_BAUD_ONE);
+    SPDLOG_DEBUG("User specified new baud rate: {}", NEW_BAUD_RATE);
+    SPDLOG_DEBUG(NPET_SETTING_BAUD_RATE, "START");
+    Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "START"));
+    setBaudRateSafe(startComm(), NEW_BAUD_RATE);
+    SPDLOG_DEBUG(NPET_SETTING_BAUD_RATE, "STOP");
+    Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "STOP"));
+    setBaudRateSafe(stopComm(), NEW_BAUD_RATE);
+    SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE);
 }

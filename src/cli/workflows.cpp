@@ -113,9 +113,7 @@ static void dualNPETSettingsMenu(NPETDualCLI &npet_dual) {
     switch (Cli::menu("Settings", SETTINGS_MENU_ITEMS)) {
         case 1: // Change baud rate
             SPDLOG_DEBUG("Settings menu choice: Baud rate");
-            // TODO: Implement for dual NPET mode
-            throw std::runtime_error("Not implemented for dual NPET mode");
-            // npet_dual.setBaudRateCLI();
+            npet_dual.setBaudRateCLI();
             return;
         case 2: // Set time constant on NPET
             SPDLOG_DEBUG("Settings menu choice: Time constant");

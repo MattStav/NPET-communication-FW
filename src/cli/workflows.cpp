@@ -11,7 +11,7 @@
 
 ///
 /// Settings menu
-/// @param npet_comm NPET_comm_CLI object
+/// @param npet_comm NPETCommCLI object
 static void singleNPETSettingsMenu(NPETCommCLI &npet_comm) {
     SPDLOG_DEBUG("Settings menu initiated ...");
     const std::vector<std::string> SETTINGS_MENU_ITEMS = {
@@ -42,8 +42,6 @@ static void singleNPETSettingsMenu(NPETCommCLI &npet_comm) {
 } // end of menu_settings function
 
 
-///
-/// Main CLI function
 int singleNPETMainMenu() {
     initLogging();
     SPDLOG_INFO("Launching main menu CLI - Single NPET mode");
@@ -99,6 +97,53 @@ int singleNPETMainMenu() {
 } // end of the main function
 
 
+///
+/// Settings menu
+/// @param npet_dual NPETDualCLI object
+static void dualNPETSettingsMenu(NPETDualCLI &npet_dual) {
+    SPDLOG_DEBUG("Settings menu initiated ...");
+    const std::vector<std::string> SETTINGS_MENU_ITEMS = {
+        "Communication baud rate",
+        "Time correction constants",
+        "NPETs FW version",
+        "Switch START/STOP designation",
+        "Reset NPETs settings",
+        "Return to main menu",
+    };
+    switch (Cli::menu("Settings", SETTINGS_MENU_ITEMS)) {
+        case 1: // Change baud rate
+            SPDLOG_DEBUG("Settings menu choice: Baud rate");
+            // TODO: Implement for dual NPET mode
+            throw std::runtime_error("Not implemented for dual NPET mode");
+            // npet_dual.setBaudRateCLI();
+            return;
+        case 2: // Set time constant on NPET
+            SPDLOG_DEBUG("Settings menu choice: Time constant");
+            // TODO: Implement for dual NPET mode
+            throw std::runtime_error("Not implemented for dual NPET mode");
+            // npet_dual.setTimeConstantCLI();
+            return;
+        case 3:
+            SPDLOG_DEBUG("Settings menu choice: Switch START/STOP designation");
+            // TODO: Implement for dual NPET mode
+            throw std::runtime_error("Not implemented for dual NPET mode");
+            // npet_dual.switchStartStopCLI();
+        case 4: // Set FW version
+            SPDLOG_DEBUG("Settings menu choice: FW version");
+            // TODO: Implement for dual NPET mode
+            throw std::runtime_error("Not implemented for dual NPET mode");
+            // npet_dual.setFwVerCLI();
+            return;
+        case 5: // Reset NPET
+            SPDLOG_DEBUG("Settings menu choice: Reset NPET");
+            // TODO: Implement for dual NPET mode
+            throw std::runtime_error("Not implemented for dual NPET mode");
+            // npet_dual.resetCLI();
+        default: ;
+    } // end of switch
+} // end of menu_settings function
+
+
 int dualNPETMainMenu() {
     initLogging();
     SPDLOG_INFO("Launching main menu CLI - Dual NPET mode");
@@ -123,9 +168,7 @@ int dualNPETMainMenu() {
         switch (Cli::menu("Main menu", MAIN_MENU_ITEMS)) {
             case 1: // Settings menu
                 SPDLOG_DEBUG("Main menu choice: Settings");
-                // TODO: Implement settings menu for dual NPET mode
-                throw std::runtime_error("Settings menu not implemented for dual NPET mode");
-                // settingsMenu(npet_comm);
+                dualNPETSettingsMenu(npet_dual);
                 continue;
             case 2: // Read measurements with a specific setting
                 SPDLOG_DEBUG("Main menu choice: Read measurements");

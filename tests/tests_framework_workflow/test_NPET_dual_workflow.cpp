@@ -60,6 +60,43 @@ TEST_F(DualFrameworkWorkflowFixture, ReadBatchMeasurementsRunsBothLegsConcurrent
     EXPECT_TRUE(two_.isResponsive());
 }
 
+// DualMeasContext::monitor_fn is run on its own thread by readBatchMeasurements() (see
+// NPET_dual.cpp), draining DualMeasReader::grabMeasurement() until both legs are done. Both legs
+// read the same channel with the same num_of_meas, so every measurement produced by one leg's
+// virtual machine has a same-meas_num counterpart from the other's (see
+// VirtualMachine::deviceLoop() incrementing measurement_counter_ from 0) - all 5 pairs should
+// come through matched.
+TEST_F(DualFrameworkWorkflowFixture, MonitorFnReceivesAllCombinedMatchingMeasurements) {
+    std::vector<DualMeasurement> received;
+    std::optional<Measurement> seen_start_time_const;
+    std::optional<Measurement> seen_stop_time_const;
+    const DualMeasContext CTX{
+        .num_of_meas = 5,
+        .monitor_fn = [&](DualMeasReader &dual_reader, const DualMeasContext &,
+                          const Measurement &start_time_const, const Measurement &stop_time_const) {
+            seen_start_time_const = start_time_const;
+            seen_stop_time_const = stop_time_const;
+            while (const auto MEAS = dual_reader.grabMeasurement()) {
+                received.push_back(*MEAS);
+            }
+        },
+        .save_dir = std::nullopt,
+        .start_channel = Channel::CH1,
+        .stop_channel = Channel::CH1,
+    };
+    readBatchMeasurements(CTX);
+    ASSERT_EQ(received.size(), 5U);
+    for (const auto &pair: received) {
+        EXPECT_EQ(pair.meas_start.meas_num, pair.meas_stop.meas_num)
+            << "combined pair does not share a meas_num - matching logic paired the wrong measurements";
+    }
+    // Both legs' time constants must be known before the monitor starts running (see NPET_dual.cpp)
+    ASSERT_TRUE(seen_start_time_const.has_value());
+    ASSERT_TRUE(seen_stop_time_const.has_value());
+    EXPECT_EQ(seen_start_time_const->meas_num, -1);
+    EXPECT_EQ(seen_stop_time_const->meas_num, -1);
+}
+
 class DualBatchMeasurementSaveTest : public DualFrameworkWorkflowFixture {
 protected:
     fs::path save_dir;

@@ -133,7 +133,8 @@ TEST_P(DualMeasContextToString, ReturnsExpectedString) {
         .num_of_meas = p.num_of_meas,
         .monitor_fn = p.has_monitor
                           ? decltype(DualMeasContext::monitor_fn){
-                                [](MeasReader &, const MeasContext &, const Measurement &) {
+                                [](DualMeasReader &, const DualMeasContext &, const Measurement &,
+                                   const Measurement &) {
                                 }
                             }
                           : nullptr,

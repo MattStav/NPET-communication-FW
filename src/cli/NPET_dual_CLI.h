@@ -25,6 +25,8 @@ public:
 
     void setTimeConstantCLI();
 
+    void setFwVerCLI();
+
     void resetCLI();
 
     ///

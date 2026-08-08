@@ -128,6 +128,21 @@ bool NPETDualCLI::bothResponsiveCLI() {
 
 
 ///
+/// CLI wrapper to set the NPET firmware version for both NPETs.
+void NPETDualCLI::setFwVerCLI() {
+    Cli::echo("Select the START NPET firmware version");
+    const FWVersion NEW_FW = promptFWVersion(startComm().fw_version);
+    SPDLOG_DEBUG("Setting START NPET firmware version to: {}", NEW_FW.getDescription());
+    safeExec([&] { startComm().setFWVer(NEW_FW); }, "set_FW_ver");
+    Cli::echo("");
+    Cli::echo("Select the STOP NPET firmware version");
+    const FWVersion NEW_FW_TWO = promptFWVersion(stopComm().fw_version);
+    SPDLOG_DEBUG("Setting STOP NPET firmware version to: {}", NEW_FW_TWO.getDescription());
+    safeExec([&] { stopComm().setFWVer(NEW_FW_TWO); }, "set_FW_ver");
+}
+
+
+///
 /// CLI wrapper for the reading batch measurements from both NPETs.
 /// Asks the user for the number of measurements, channel to read from, display, and save options.
 void NPETDualCLI::readBatchMeasurementsCLI() {

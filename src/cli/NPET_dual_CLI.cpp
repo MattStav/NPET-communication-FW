@@ -5,6 +5,8 @@ constexpr std::string_view NPET_DUAL_OK_RESPONDING = "NPETs communication is OK"
 constexpr std::string_view NPET_DUAL_NOT_RESPONDING = "Both NPETs not responding!";
 constexpr std::string_view NPET_START_NOT_RESPONDING = "Start NPET not responding!";
 constexpr std::string_view NPET_STOP_NOT_RESPONDING = "Stop NPET not responding!";
+constexpr std::string_view NPET_DESIGNATION_SWITCH_INIT = "Switching NPET START/STOP designation ...";
+constexpr std::string_view NPET_DESIGNATION_SWITCH_DONE = "NPET START/STOP designation switched successfully";
 
 ///
 /// Take the NPET the user has selected as START/STOP,
@@ -151,25 +153,25 @@ void NPETDualCLI::readBatchMeasurementsCLI() {
     // Prompt user for the display and save options
     // TODO: Add monitoring
     // const std::string MONITOR_STR = Cli::prompt("Measurement monitoring (0 - None, 1 - Basic, 2 - Advanced, 3 - Sync)",
-                                                // "1");
+    // "1");
     int monitor{};
     // try {
-        // monitor = std::stoi(MONITOR_STR);
+    // monitor = std::stoi(MONITOR_STR);
     // } catch (const std::invalid_argument &) {
-        // SPDLOG_ERROR(MONITOR_FN_INVALID);
-        // Cli::err(std::string(MONITOR_FN_INVALID));
-        // return;
+    // SPDLOG_ERROR(MONITOR_FN_INVALID);
+    // Cli::err(std::string(MONITOR_FN_INVALID));
+    // return;
     // } // end of try-catch block
     // SPDLOG_DEBUG("User specified measurement monitoring: {}", monitor);
     std::function<void(MeasReader &, const MeasContext &, const Measurement &)>
             monitor_fn;
     switch (monitor) {
         // case 1: monitor_fn = readerCliBasic;
-            // break;
+        // break;
         // case 2: monitor_fn = readerCliAdvanced;
-            // break;
+        // break;
         // case 3: monitor_fn = readerCliSync;
-            // break;
+        // break;
         default: monitor_fn = nullptr;
             break;
     }
@@ -188,3 +190,14 @@ void NPETDualCLI::readBatchMeasurementsCLI() {
     safeExec([&] { readBatchMeasurements(MEAS_SETTINGS); }, "read_batch_measurements");
     SPDLOG_INFO("Finished reading measurements");
 } // end of read_measurements_handler function
+
+
+///
+/// Switch the NPET START/STOP designation.
+void NPETDualCLI::switchStartStopCLI() {
+    SPDLOG_DEBUG(NPET_DESIGNATION_SWITCH_INIT);
+    Cli::echo(std::string(NPET_DESIGNATION_SWITCH_INIT));
+    switchStartStop();
+    Cli::echo(std::string(NPET_DESIGNATION_SWITCH_DONE), fg::green);
+    SPDLOG_INFO(NPET_DESIGNATION_SWITCH_DONE);
+}

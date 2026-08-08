@@ -123,16 +123,15 @@ static void dualNPETSettingsMenu(NPETDualCLI &npet_dual) {
             throw std::runtime_error("Not implemented for dual NPET mode");
             // npet_dual.setTimeConstantCLI();
             return;
-        case 3:
-            SPDLOG_DEBUG("Settings menu choice: Switch START/STOP designation");
-            // TODO: Implement for dual NPET mode
-            throw std::runtime_error("Not implemented for dual NPET mode");
-            // npet_dual.switchStartStopCLI();
-        case 4: // Set FW version
+        case 3: // Set FW version
             SPDLOG_DEBUG("Settings menu choice: FW version");
             // TODO: Implement for dual NPET mode
             throw std::runtime_error("Not implemented for dual NPET mode");
             // npet_dual.setFwVerCLI();
+            return;
+        case 4:
+            SPDLOG_DEBUG("Settings menu choice: Switch START/STOP designation");
+            npet_dual.switchStartStopCLI();
             return;
         case 5: // Reset NPET
             SPDLOG_DEBUG("Settings menu choice: Reset NPET");

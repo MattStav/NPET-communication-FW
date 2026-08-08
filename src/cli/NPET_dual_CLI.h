@@ -19,6 +19,8 @@ public:
 
     void readBatchMeasurementsCLI();
 
+    void switchStartStopCLI();
+
     void setTimeConstantCLI();
 
     void resetCLI();

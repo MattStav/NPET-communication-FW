@@ -27,6 +27,12 @@ constexpr std::string_view TIME_CONST_FRAC_MEAS_ERR = "Error occurred during fra
 constexpr std::string_view TIME_CONST_INVALID = "Time correction constant invalid";
 constexpr std::string_view TIME_CONST_FAILED_TO_EXPORT = "Failed to export the time constant to NPET";
 
+enum class ConstIntSelectionLogic : std::uint8_t {
+    MANUAL = 1,
+    SYSTEM_TIME = 2,
+    NTP_SYNC = 3,
+};
+
 int printManual();
 
 int printLicenseInformation();
@@ -35,9 +41,13 @@ int resetNpetStandalone();
 
 int launchDataProcessor();
 
+void printAppIntro();
+
 int selectComPortCli(bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS = {});
 
 bool openCommSafe(NPETComm &npet, int COM_PORT, std::string_view ERROR_MSG);
+
+void resetNPETSafe(NPETComm &npet, std::string_view designation = "");
 
 int numValidation(const std::string &num_to_validate, bool ALLOW_NEGATIVE_ONE = true);
 
@@ -47,10 +57,8 @@ int promptBaudRate(INT CURRENT_BAUD_RATE);
 
 void setBaudRateSafe(NPETComm &npet, int NEW_BAUD_RATE);
 
-void resetNPETSafe(NPETComm &npet, std::string_view designation = "");
-
 FWVersion promptFWVersion(FWVersion CURRENT_FW_VERSION);
 
-void printAppIntro();
+int promptTimeConstSeconds(ConstIntSelectionLogic SEL);
 
 #endif //NPET_COMM_FW_HELPER_FUNC_H

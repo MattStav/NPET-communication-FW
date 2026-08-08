@@ -15,15 +15,6 @@ constexpr std::string_view COMM_CLOSE = "Closing NPET communication framework";
 class NPETCommCLI : public NPETComm {
     Measurement rawTimeConstant();
 
-    /// Logic used to define the integer part of the time correction constant.
-    enum class IntLogic : std::uint8_t {
-        MANUAL = 1,
-        SYSTEM_TIME = 2,
-        NTP_SYNC = 3,
-    };
-
-    int calcInteger(IntLogic INT_LOGIC, Channel CHANNEL_NUM);
-
 public:
     void openCommunicationCLI();
 

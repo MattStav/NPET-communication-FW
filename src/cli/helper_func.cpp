@@ -9,6 +9,7 @@
 #include "cli.h"
 #include "logging.h"
 #include "NPET_comm_CLI.h"
+#include "ntp_sync.h"
 
 constexpr std::string_view MANUAL_URL = "https://github.com/MattStav/NPET-communication-FW/blob/master/MANUAL.md";
 constexpr std::string_view NO_DATA_ERR = "No results to process yet";
@@ -21,6 +22,7 @@ constexpr std::string_view BAUD_RATE_OK = "Baud rate set to";
 constexpr std::string_view BAUD_RATE_ERR = "Failed to set baud rate";
 constexpr std::string_view FW_CURRENT = "Current NPET firmware version";
 constexpr std::string_view FW_INVALID = "Invalid choice, firmware version not changed";
+constexpr std::string_view SYSTEM_TIME_CURRENT = "Current system time is";
 
 
 void printAppIntro() {
@@ -344,4 +346,70 @@ FWVersion promptFWVersion(const FWVersion CURRENT_FW_VERSION) {
         SPDLOG_ERROR(FW_INVALID);
         Cli::err(std::string(FW_INVALID));
     }
+}
+
+
+///
+/// Prompt the user to define the integer part of the time correction constant
+/// @param SEL Time correction constant int part selection logic
+/// @return Time correction constant in seconds
+int promptTimeConstSeconds(const ConstIntSelectionLogic SEL) {
+    int user_choice{};
+    int clock_seconds{};
+
+    switch (SEL) {
+        case ConstIntSelectionLogic::MANUAL:
+            SPDLOG_DEBUG("Logic: Define manually, user will be prompted to enter the target time ...");
+            // User defined integer part
+            Cli::echo("Enter time of the next 1 Hz measurement in hh:mm:ss format");
+            Cli::echo(
+                "You will be asked to confirm the values after inputting ss, the calibration will begin once you've confirmed.",
+                fg::yellow);
+            user_choice = std::stoi(Cli::prompt("Hours", "0"));
+            clock_seconds = 3600 * user_choice;
+            user_choice = std::stoi(Cli::prompt("Minutes", "0"));
+            clock_seconds += 60 * user_choice;
+            user_choice = std::stoi(Cli::prompt("Seconds", "0"));
+            clock_seconds += user_choice;
+            SPDLOG_DEBUG("User specified target time in seconds since midnight: {}", clock_seconds);
+            Cli::showInt("Defined clock seconds", clock_seconds);
+            SPDLOG_DEBUG("Awaiting final user confirmation for the calibration time");
+            if (const bool CONFIRM = Cli::confirm(
+                "Confirm by pressing `Enter` when the designated time is about to happen",
+                true
+            ); !CONFIRM) {
+                // Cancel the calibration
+                SPDLOG_ERROR("User cancelled the time correction constant integer part calibration");
+                return 0;
+            }
+            SPDLOG_DEBUG("Final confirmation received");
+            return clock_seconds;
+        case ConstIntSelectionLogic::NTP_SYNC:
+            SPDLOG_DEBUG("Logic: Synchronize system time with NTP server ...");
+            // Query an NTP server for the current time
+            if (!ensureAccurateSystemTime()) {
+                Cli::err("Failed to synchronize system time with NTP server");
+            }
+        // Intentional fallthrough to case IntLogic::SYSTEM_TIME
+        case ConstIntSelectionLogic::SYSTEM_TIME: {
+            SPDLOG_DEBUG("Logic: Use system time ...");
+            // Get the current system time
+            Cli::echo("Calculating time correction integer constant from system time");
+            const std::time_t NOW = std::time(nullptr);
+            std::tm local_time{};
+            localtime_s(&local_time, &NOW);
+            std::ostringstream oss;
+            oss << std::put_time(&local_time, "%H:%M:%S");
+            SPDLOG_DEBUG("{}: {}", SYSTEM_TIME_CURRENT, oss.str());
+            Cli::showStr(std::string(SYSTEM_TIME_CURRENT), oss.str());
+            // Calculate seconds since midnight
+            clock_seconds = (local_time.tm_hour * 3600) + (local_time.tm_min * 60) + local_time.tm_sec;
+            SPDLOG_DEBUG("Calculated seconds since midnight: {}", clock_seconds);
+            return clock_seconds;
+        }
+        default:
+            SPDLOG_ERROR(INVALID_NUM);
+            Cli::err(std::string(INVALID_NUM));
+            return 0;
+    } // end of switch
 }

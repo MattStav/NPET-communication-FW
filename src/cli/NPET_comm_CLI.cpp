@@ -18,7 +18,6 @@ constexpr std::string_view TIME_CONST_SET = "New time correction constant set to
 constexpr std::string_view TIME_CONST_SET_FRAC_PART = "Invalid input - Fraction must be in the range (0, 1)";
 constexpr std::string_view TIME_CONST_CURRENT = "Current time constant value";
 constexpr std::string_view TIME_CONST_ADJUST = "Adjusting the time correction constant by [s]";
-constexpr std::string_view SYSTEM_TIME_CURRENT = "Current system time is";
 constexpr std::string_view RESET_INITIATED = "Resetting NPET to default settings";
 constexpr std::string_view RESET_COMPLETE = "NPET reset sequence finished";
 
@@ -308,7 +307,16 @@ void NPETCommCLI::setTimeConstantCLI() {
             if (INT_CHOICE == 4) {
                 return;
             }
-            new_const.intp = calcInteger(static_cast<IntLogic>(INT_CHOICE), PPS_CHANNEL.value());
+            SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}", INT_CHOICE);
+            const int CLOCK_TIME = promptTimeConstSeconds(static_cast<ConstIntSelectionLogic>(INT_CHOICE));
+            // Get the current NPET time
+            SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
+                         static_cast<int>(PPS_CHANNEL.value()));
+            const Measurement CURRENT_MEASUREMENT = safeExec([&] { return readSingleMeasurement(PPS_CHANNEL.value()); },
+                                                             "read_single_measurement");
+            SPDLOG_DEBUG("Current measurement read: {}", CURRENT_MEASUREMENT.toString());
+            // Integer part of the time correction constant is the difference between the clock time and the measured time
+            new_const.intp = CLOCK_TIME - CURRENT_MEASUREMENT.intp;
             SPDLOG_DEBUG("Calculated integer part of the time correction constant: {}", new_const.intp);
             break;
         }
@@ -405,86 +413,6 @@ Measurement NPETCommCLI::rawTimeConstant() {
     SPDLOG_INFO("New time correction constant: {}", new_const.toString());
     return new_const;
 } // end of raw_time_constant_CLI function
-
-
-///
-/// Define the integer part of the time correction constant.
-/// @param INT_LOGIC Either ask the user to define the integer part of the time constant or grab system time
-/// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2). Only used if INT_LOGIC is
-///        IntLogic::SYSTEM_TIME or IntLogic::NTP_SYNC.
-/// @return The integer part of the time correction constant
-int NPETCommCLI::calcInteger(const IntLogic INT_LOGIC, const Channel CHANNEL_NUM) {
-    SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}",
-                 static_cast<int>(INT_LOGIC));
-    int user_choice{};
-    int clock_seconds{};
-
-    switch (INT_LOGIC) {
-        case IntLogic::MANUAL:
-            SPDLOG_DEBUG("Logic: Define manually, user will be prompted to enter the target time ...");
-            // User defined integer part
-            Cli::echo("Enter time of the next 1 Hz measurement in hh:mm:ss format");
-            Cli::echo(
-                "You will be asked to confirm the values after inputting ss, the calibration will begin once you've confirmed.",
-                fg::yellow);
-            user_choice = std::stoi(Cli::prompt("Hours", "0"));
-            clock_seconds = 3600 * user_choice;
-            user_choice = std::stoi(Cli::prompt("Minutes", "0"));
-            clock_seconds += 60 * user_choice;
-            user_choice = std::stoi(Cli::prompt("Seconds", "0"));
-            clock_seconds += user_choice;
-            SPDLOG_DEBUG("User specified target time in seconds since midnight: {}", clock_seconds);
-            Cli::showInt("Defined clock seconds", clock_seconds);
-            SPDLOG_DEBUG("Awaiting final user confirmation for the calibration time");
-            if (const bool CONFIRM = Cli::confirm(
-                "Confirm by pressing `Enter` when the designated time is about to happen",
-                true
-            ); !CONFIRM) {
-                // Cancel the calibration
-                SPDLOG_ERROR("User cancelled the time correction constant integer part calibration");
-                return 0;
-            }
-            SPDLOG_DEBUG(
-                "Final confirmation received, time correction constant integer part will be set to the defined clock seconds");
-            break;
-        case IntLogic::NTP_SYNC:
-            SPDLOG_DEBUG("Logic: Synchronize system time with NTP server ...");
-            // Query an NTP server for the current time
-            if (!ensureAccurateSystemTime()) {
-                Cli::err("Failed to synchronize system time with NTP server");
-            }
-        // Intentional fallthrough to case IntLogic::SYSTEM_TIME
-        case IntLogic::SYSTEM_TIME: {
-            SPDLOG_DEBUG("Logic: Use system time ...");
-            // Get the current system time
-            Cli::echo("Calculating time correction integer constant from system time");
-            const std::time_t NOW = std::time(nullptr);
-            std::tm local_time{};
-            localtime_s(&local_time, &NOW);
-            std::ostringstream oss;
-            oss << std::put_time(&local_time, "%H:%M:%S");
-            SPDLOG_DEBUG("{}: {}", SYSTEM_TIME_CURRENT, oss.str());
-            Cli::showStr(std::string(SYSTEM_TIME_CURRENT), oss.str());
-            // Calculate seconds since midnight
-            clock_seconds = (local_time.tm_hour * 3600) + (local_time.tm_min * 60) + local_time.tm_sec;
-            SPDLOG_DEBUG("Calculated seconds since midnight: {}", clock_seconds);
-            break;
-        }
-        default:
-            SPDLOG_ERROR(INVALID_NUM);
-            Cli::err(std::string(INVALID_NUM));
-            return 0;
-    } // end of switch
-    // Get the current NPET time
-    SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...", static_cast<int>(CHANNEL_NUM));
-    const Measurement CURRENT_MEASUREMENT = safeExec([&] { return readSingleMeasurement(CHANNEL_NUM); },
-                                                     "read_single_measurement");
-    SPDLOG_DEBUG("Current measurement read: {}", CURRENT_MEASUREMENT.toString());
-    // Integer part of the time correction constant is the difference between the clock time and the measured time
-    const int INTEGER_PART = clock_seconds - CURRENT_MEASUREMENT.intp;
-    SPDLOG_DEBUG("Calculated integer part of the time correction constant: {}", INTEGER_PART);
-    return INTEGER_PART;
-} // end of calc_integer_CLI function
 
 
 ///

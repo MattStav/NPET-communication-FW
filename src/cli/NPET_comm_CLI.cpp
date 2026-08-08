@@ -22,7 +22,6 @@ constexpr std::string_view BAUD_RATE_CURRENT = "Current baud rate";
 constexpr std::string_view BAUD_RATE_OK = "Baud rate set to";
 constexpr std::string_view BAUD_RATE_ERR = "Failed to set baud rate";
 constexpr std::string_view BAUD_RATE_RESET_FAIL = "Failed to reset baud rate to default";
-constexpr std::string_view CHANNEL_INVALID = "Invalid channel number";
 constexpr std::string_view DATA_FORMAT_RESET_FAIL = "Failed to reset the data format";
 constexpr std::string_view MONITOR_FN_INVALID = "Invalid monitor function";
 constexpr std::string_view TIME_CONST_FAILED_TO_SET = "Failed to define raw time constant: {}";
@@ -257,23 +256,11 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
         num_of_meas = INFINITE_OPERATION; // Magic number for infinite measurements
     }
     SPDLOG_DEBUG("User specified number of measurements to read: {}", num_of_meas);
-    // Prompt user for channel number
-    const std::string CHANNEL_STR = Cli::prompt("Select channel to read from (1 or 2; 0 to cancel)", "1");
-    int channel{};
-    try {
-        channel = std::stoi(CHANNEL_STR);
-        if (channel == 0) {
-            return;
-        }
-        if (channel < 0 || channel >= 3) {
-            throw std::invalid_argument(std::string(CHANNEL_INVALID));
-        }
-    } catch (const std::invalid_argument &) {
-        SPDLOG_ERROR(CHANNEL_INVALID);
-        Cli::err(std::string(CHANNEL_INVALID));
+    const auto CHANNEL = promptChannel(1);
+    if (!CHANNEL.has_value()) {
         return;
-    } // end of try-catch block
-    SPDLOG_DEBUG("User specified channel number: {}", channel);
+    }
+    SPDLOG_DEBUG("User specified channel number: {}", static_cast<int>(CHANNEL.value()));
     // Prompt user for the display and save options
     const std::string MONITOR_STR = Cli::prompt("Measurement monitoring (0 - None, 1 - Basic, 2 - Advanced, 3 - Sync)",
                                                 "1");
@@ -305,7 +292,7 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
                                                                ? std::optional{
                                                                    std::filesystem::path(
                                                                        outputFilePath(
-                                                                           static_cast<Channel>(channel), USER_FILES))
+                                                                           CHANNEL.value(), USER_FILES))
                                                                }
                                                                : std::nullopt;
     SPDLOG_DEBUG("Measurements will be saved to: {}", SAVE_PATH ? SAVE_PATH->string() : "none");
@@ -314,7 +301,7 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
         .num_of_meas = num_of_meas,
         .monitor_fn = monitor_fn,
         .save_path = SAVE_PATH,
-        .channel = static_cast<Channel>(channel),
+        .channel = CHANNEL.value(),
     };
     SPDLOG_DEBUG("Measurement context object: {}", MEAS_SETTINGS.toString());
     safeExec([&] { readBatchMeasurements(MEAS_SETTINGS); }, "read_batch_measurements");
@@ -364,13 +351,15 @@ void NPETCommCLI::setTimeConstantCLI() {
                 return;
             }
             SPDLOG_DEBUG("User specified number of measurements for averaging: {}", AVER_NUM);
-            const Channel PPS_CHANNEL = static_cast<Channel>(std::stoi(
-                Cli::prompt("What channel is the PPS connected to?", "2")));
-            SPDLOG_DEBUG("User specified PPS channel: {}", static_cast<int>(PPS_CHANNEL));
+            const auto PPS_CHANNEL = promptChannel(2, "the PPS channel");
+            if (!PPS_CHANNEL.has_value()) {
+                return;
+            }
+            SPDLOG_DEBUG("User specified PPS channel: {}", static_cast<int>(PPS_CHANNEL.value()));
             SPDLOG_DEBUG(TIME_CONST_FRAC_MEAS);
             Cli::echo(std::string(TIME_CONST_FRAC_MEAS));
             auto bar = ProgressBar({.total = AVER_NUM});
-            const std::optional<__float128> AVE_FRAC = getAverageFraction(AVER_NUM, PPS_CHANNEL, &bar);
+            const std::optional<__float128> AVE_FRAC = getAverageFraction(AVER_NUM, PPS_CHANNEL.value(), &bar);
             Cli::echo(""); // New line after progress bar
             if (!AVE_FRAC.has_value()) {
                 SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_ERR);
@@ -390,7 +379,7 @@ void NPETCommCLI::setTimeConstantCLI() {
             if (INT_CHOICE == 4) {
                 return;
             }
-            new_const.intp = calcInteger(static_cast<IntLogic>(INT_CHOICE), PPS_CHANNEL);
+            new_const.intp = calcInteger(static_cast<IntLogic>(INT_CHOICE), PPS_CHANNEL.value());
             SPDLOG_DEBUG("Calculated integer part of the time correction constant: {}", new_const.intp);
             break;
         }

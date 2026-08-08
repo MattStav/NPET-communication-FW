@@ -14,7 +14,7 @@ constexpr std::string_view NO_DATA_ERR = "No results to process yet";
 constexpr std::string_view DP_ERR = "NPET Data Processor ERROR: Command: {}; Code: {}";
 constexpr std::string_view APP_START_MSG = "NPET communication FW started: ";
 constexpr std::string_view NO_PORTS = "No available COM ports found";
-constexpr std::string_view INVALID_NUM = "Invalid input. Number out of allowed range";
+constexpr std::string_view CHANNEL_INVALID = "Invalid channel number";
 
 
 void printAppIntro() {
@@ -205,6 +205,30 @@ int numValidation(const std::string &num_to_validate, const bool ALLOW_NEGATIVE_
     SPDLOG_DEBUG("Number {} is valid", number_int);
     return number_int;
 } // end of numValidation function
+
+
+///
+/// Prompt the user to select a measurement channel
+/// @return Selected channel
+std::optional<Channel> promptChannel(const int DEFAULT_CHANNEL, const std::string_view PROMPT_MSG) {
+    const std::string CHANNEL_STR = Cli::prompt("Select " + std::string(PROMPT_MSG) + " (1 or 2; 0 to cancel)",
+                                                std::to_string(DEFAULT_CHANNEL));
+    int channel{};
+    try {
+        channel = std::stoi(CHANNEL_STR);
+        if (channel == 0) {
+            return std::nullopt;
+        }
+        if (channel < 0 || channel >= 3) {
+            throw std::invalid_argument(std::string(CHANNEL_INVALID));
+        }
+    } catch (const std::invalid_argument &) {
+        SPDLOG_ERROR(CHANNEL_INVALID);
+        Cli::err(std::string(CHANNEL_INVALID));
+        return std::nullopt;
+    }
+    return static_cast<Channel>(channel);
+} // end of promptChannel function
 
 
 ///

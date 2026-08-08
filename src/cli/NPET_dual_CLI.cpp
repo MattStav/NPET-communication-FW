@@ -215,6 +215,11 @@ void NPETDualCLI::setBaudRateCLI() {
     assert(CURRENT_BAUD_ONE == CURRENT_BAUD_TWO);
     const int NEW_BAUD_RATE = promptBaudRate(CURRENT_BAUD_ONE);
     SPDLOG_DEBUG("User specified new baud rate: {}", NEW_BAUD_RATE);
+    if (NEW_BAUD_RATE == CURRENT_BAUD_ONE) {
+        SPDLOG_DEBUG(BAUD_RATE_ALREADY_SET);
+        Cli::echo(std::string(BAUD_RATE_ALREADY_SET));
+        return;
+    }
     SPDLOG_DEBUG(NPET_SETTING_BAUD_RATE, "START");
     Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "START"));
     setBaudRateSafe(startComm(), NEW_BAUD_RATE);

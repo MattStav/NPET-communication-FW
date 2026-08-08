@@ -17,6 +17,7 @@ constexpr std::string_view FREQ_RESET_FAIL = "Failed to reset the pulse generati
 constexpr std::string_view BAUD_RATE_RESET_FAIL = "Failed to reset baud rate to default";
 constexpr std::string_view DATA_FORMAT_RESET_FAIL = "Failed to reset the data format";
 constexpr std::string_view TIME_CONST_FAILED_TO_CLEAR = "Failed to clear the time correction constant saved in NPET";
+constexpr std::string_view BAUD_RATE_ALREADY_SET = "New baud rate is the same as the current one";
 
 int printManual();
 

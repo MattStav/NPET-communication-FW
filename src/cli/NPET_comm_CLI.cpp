@@ -187,6 +187,11 @@ void NPETCommCLI::setBaudRateCLI() {
     SPDLOG_DEBUG("Setting baud rate ...");
     const int CURRENT_BAUD = getBaudRate();
     const int NEW_BAUD_RATE = promptBaudRate(CURRENT_BAUD);
+    if (NEW_BAUD_RATE == CURRENT_BAUD) {
+        SPDLOG_DEBUG(BAUD_RATE_ALREADY_SET);
+        Cli::echo(std::string(BAUD_RATE_ALREADY_SET));
+        return;
+    }
     setBaudRateSafe(*this, NEW_BAUD_RATE);
 } // end of set_baud_rate_handler function
 

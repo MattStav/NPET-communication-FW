@@ -21,6 +21,7 @@ constexpr std::string_view TIME_CONST_FAILED_TO_CLEAR = "Failed to clear the tim
 constexpr std::string_view TIME_CONST_FAILED_TO_SET = "Failed to define raw time constant: {}";
 constexpr std::string_view TIME_CONST_FRAC_INVALID_MEAS_NUM = "Invalid number of averaging measurements";
 constexpr std::string_view TIME_CONST_CLEAR_OK = "Time correction constant cleared";
+constexpr std::string_view MONITOR_FN_INVALID = "Invalid monitor function";
 
 int printManual();
 

@@ -2,6 +2,8 @@
 
 #include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.
 
+#include "meas_reader_CLI.h"
+
 
 constexpr std::string_view NPET_DUAL_OK_RESPONDING = "NPETs communication is OK";
 constexpr std::string_view NPET_DUAL_NOT_RESPONDING = "Both NPETs not responding!";
@@ -171,24 +173,24 @@ void NPETDualCLI::readBatchMeasurementsCLI() {
     }
     SPDLOG_DEBUG("User specified channel number: {}", static_cast<int>(STOP_CHANNEL.value()));
     // Prompt user for the display and save options
-    // TODO: Add monitoring
-    // const std::string MONITOR_STR = Cli::prompt("Measurement monitoring (0 - None, 1 - Basic, 2 - Advanced, 3 - Sync)",
-    // "1");
+    const std::string MONITOR_STR = Cli::prompt("Measurement monitoring (0 - None, 1 - Basic, 2 - Advanced, 3 - Sync)",
+                                                "1");
     int monitor{};
-    // try {
-    // monitor = std::stoi(MONITOR_STR);
-    // } catch (const std::invalid_argument &) {
-    // SPDLOG_ERROR(MONITOR_FN_INVALID);
-    // Cli::err(std::string(MONITOR_FN_INVALID));
-    // return;
-    // } // end of try-catch block
-    // SPDLOG_DEBUG("User specified measurement monitoring: {}", monitor);
+    try {
+        monitor = std::stoi(MONITOR_STR);
+    } catch (const std::invalid_argument &) {
+        SPDLOG_ERROR(MONITOR_FN_INVALID);
+        Cli::err(std::string(MONITOR_FN_INVALID));
+        return;
+    } // end of try-catch block
+    SPDLOG_DEBUG("User specified measurement monitoring: {}", monitor);
     std::function<void(DualMeasReader &, const DualMeasContext &, const Measurement &start_time_const,
                        const Measurement &stop_time_const)>
             monitor_fn;
     switch (monitor) {
-        // case 1: monitor_fn = readerCliBasic;
-        // break;
+        case 1: monitor_fn = dualReaderCliBasic;
+            break;
+        // TODO: Implement other monitors
         // case 2: monitor_fn = readerCliAdvanced;
         // break;
         // case 3: monitor_fn = readerCliSync;
@@ -264,6 +266,7 @@ void NPETDualCLI::syncNPETsCLI() {
             SPDLOG_DEBUG("User selected adjusting raw raw time correction constant for single NPET");
             try {
                 // TODO: Add
+                Cli::err("Not implemented yet");
             } catch (std::exception &e) {
                 SPDLOG_ERROR(TIME_CONST_FAILED_TO_SET, e.what());
                 Cli::err(std::format(TIME_CONST_FAILED_TO_SET.data(), e.what()));

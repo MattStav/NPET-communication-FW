@@ -13,6 +13,9 @@ constexpr std::string_view SYNC_MONITOR = "Synchronization monitoring";
 constexpr std::string_view ADVANCED_MONITOR = "Advanced monitoring";
 constexpr std::string_view BASIC_MONITOR = "Basic monitoring";
 constexpr std::string_view ALL_SAVED = "All measurements saved";
+constexpr std::string_view DUAL_MEAS_START = "Starting dual measurement sequence...";
+constexpr std::string_view DUAL_MEAS_END = "Dual measurement sequence ended";
+constexpr std::string_view DUAL_BASIC_MONITOR = "Basic dual monitoring";
 
 ///
 /// Print an introduction message to the console at the start of the measurement sequence
@@ -245,3 +248,83 @@ void readerCliBasic(MeasReader &reader, const MeasContext &meas_set, const Measu
     }
     printOutro(reader, meas_set);
 } // end of reader_cli_basic function
+
+
+///
+/// Print an introduction message to the console at the start of a dual measurement sequence
+/// @param meas_set Reference to the dual measurement context
+/// @param start_time_const Reference to the START leg's time correction constant
+/// @param stop_time_const Reference to the STOP leg's time correction constant
+static void printDualIntro(const DualMeasContext &meas_set, const Measurement &start_time_const,
+                           const Measurement &stop_time_const) {
+    SPDLOG_DEBUG(DUAL_MEAS_START);
+    Cli::echo(std::string(DUAL_MEAS_START), fg::green);
+    if (start_time_const.isEmpty() || !start_time_const.isValid() ||
+        stop_time_const.isEmpty() || !stop_time_const.isValid()) {
+        SPDLOG_ERROR(MISSING_CONST);
+        Cli::err(std::string(MISSING_CONST));
+    }
+    if (meas_set.num_of_meas == INFINITE_OPERATION) {
+        Cli::echo("Reading infinite measurements...");
+    } else {
+        Cli::showInt("Reading measurement(s)", meas_set.num_of_meas);
+    }
+    Cli::showInt("Using START channel", static_cast<int>(meas_set.start_channel));
+    Cli::showInt("Using STOP channel", static_cast<int>(meas_set.stop_channel));
+    Cli::echo("Press `Esc` to safely cancel the measurement at any time", fg::gray, style::bold);
+} // end of print_dual_intro function
+
+
+///
+/// Print dual measurement end message.
+static void printDualOutro() {
+    SPDLOG_DEBUG(DUAL_MEAS_END);
+    Cli::echo(std::string(DUAL_MEAS_END), fg::green);
+} // end of print_dual_outro function
+
+
+///
+/// Basic CLI dual measurement monitor for a finite number of measurements
+/// @param dual_reader Reference to the dual measurement reader combining both legs
+/// @param NUM_OF_MEAS Number of measurements to read on each leg
+static void dualReaderCliBasicNonInfMeas(DualMeasReader &dual_reader, const int NUM_OF_MEAS) {
+    int measurement_num{};
+    auto bar = ProgressBar({.total = NUM_OF_MEAS});
+    while (dual_reader.grabMeasurement()) {
+        measurement_num++;
+        bar.update(measurement_num);
+    } // end of while loop
+} // end of dual_reader_cli_basic_non_inf_meas function
+
+
+///
+/// Basic CLI dual measurement monitor for an infinite number of measurements
+/// @param dual_reader Reference to the dual measurement reader combining both legs
+static void dualReaderCliBasicInfMeas(DualMeasReader &dual_reader) {
+    int i = 0;
+    while (dual_reader.grabMeasurement()) {
+        constexpr std::array FRAMES = {'|', '/', '-', '\\'};
+        std::cout << "\rMeasurement running ... " << FRAMES.at(i++ % 4) << std::flush;
+    } // end of while loop
+    std::cout << '\n'; // Newline required
+} // end of dual_reader_cli_basic_inf_meas function
+
+
+///
+/// Display only a progress bar of the combined dual measurement process.
+/// @param dual_reader Reference to the dual measurement reader combining both legs
+/// @param meas_set Reference to the dual measurement context
+/// @param start_time_const Reference to the START leg's time correction constant
+/// @param stop_time_const Reference to the STOP leg's time correction constant
+void dualReaderCliBasic(DualMeasReader &dual_reader, const DualMeasContext &meas_set,
+                        const Measurement &start_time_const, const Measurement &stop_time_const) {
+    printDualIntro(meas_set, start_time_const, stop_time_const);
+    SPDLOG_DEBUG(DUAL_BASIC_MONITOR);
+    Cli::echo(std::string(DUAL_BASIC_MONITOR));
+    if (meas_set.num_of_meas == INFINITE_OPERATION) {
+        dualReaderCliBasicInfMeas(dual_reader);
+    } else {
+        dualReaderCliBasicNonInfMeas(dual_reader, meas_set.num_of_meas);
+    }
+    printDualOutro();
+} // end of dual_reader_cli_basic function

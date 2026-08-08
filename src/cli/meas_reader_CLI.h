@@ -2,6 +2,7 @@
 #define MEASUREMENT_READER_CLI_H
 
 #include "meas_reader.h"
+#include "meas_reader_dual.h"
 
 struct MeasExtended : Measurement { // Inherits from measurement
     std::string processed_str; // Formatted string of the measurement for display
@@ -34,5 +35,11 @@ void readerCliBasic(
     MeasReader &reader,
     const MeasContext &meas_set,
     const Measurement &time_const);
+
+void dualReaderCliBasic(
+    DualMeasReader &dual_reader,
+    const DualMeasContext &meas_set,
+    const Measurement &start_time_const,
+    const Measurement &stop_time_const);
 
 #endif

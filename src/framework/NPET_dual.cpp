@@ -5,8 +5,8 @@ void NPETDual::readBatchMeasurements(const DualMeasContext &meas_set) {
     SPDLOG_DEBUG("Reading batch measurements from Dual NPETs: {}", meas_set.toString());
     assert(meas_set.num_of_meas > 0);
     // This program can only process the binary data format
-    executeBoth([&] { setMeasuredDataFormatToBinary(start_); },
-                [&] { setMeasuredDataFormatToBinary(stop_); });
+    executeBoth([&] { setMeasuredDataFormatToBinary(startComm()); },
+                [&] { setMeasuredDataFormatToBinary(stopComm()); });
     // Release the GIL to allow other threads to run while reading measurements
 #ifdef PYBIND11_ENABLED
     pybind11::gil_scoped_release release;
@@ -33,8 +33,8 @@ void NPETDual::readBatchMeasurements(const DualMeasContext &meas_set) {
         .channel = meas_set.stop_channel,
     };
     runWithSleepDisabled([&] {
-        executeBoth([&] { startMeasurement(start_, START_CTX); },
-                    [&] { startMeasurement(stop_, STOP_CTX); });
+        executeBoth([&] { startMeasurement(startComm(), START_CTX); },
+                    [&] { startMeasurement(stopComm(), STOP_CTX); });
     });
     SPDLOG_INFO("Batch measurements reading completed");
 }

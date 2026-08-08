@@ -68,8 +68,8 @@ static int openCommLoop(NPETComm &npet, const std::string &designation, const st
 /// Open serial communication with both NPETs.
 void NPETDualCLI::openCommunicationCLI() {
     SPDLOG_INFO("Opening both NPETs communication with CLI");
-    const int START_PORT = openCommLoop(start_, "START", NPET_START_NOT_RESPONDING);
-    openCommLoop(stop_, "STOP", NPET_STOP_NOT_RESPONDING, START_PORT);
+    const int START_PORT = openCommLoop(one_, "START", NPET_START_NOT_RESPONDING);
+    openCommLoop(two_, "STOP", NPET_STOP_NOT_RESPONDING, START_PORT);
     SPDLOG_INFO("Both NPETs communication opened successfully");
 } // end of open_NPET_communication function
 
@@ -89,10 +89,10 @@ bool NPETDualCLI::bothResponsiveCLI() {
     for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         SPDLOG_DEBUG("Responsiveness check attempt: {}", attempt + 1);
         if (!start_res) {
-            start_res = safeExec([&] { return start_.isResponsive(); }, "is_start_responsive");
+            start_res = safeExec([&] { return startComm().isResponsive(); }, "is_start_responsive");
         }
         if (!stop_res) {
-            stop_res = safeExec([&] { return stop_.isResponsive(); }, "is_stop_responsive");
+            stop_res = safeExec([&] { return stopComm().isResponsive(); }, "is_stop_responsive");
         }
         if (start_res && stop_res) {
             SPDLOG_DEBUG(NPET_DUAL_OK_RESPONDING);
@@ -104,16 +104,16 @@ bool NPETDualCLI::bothResponsiveCLI() {
         if (!start_res && !stop_res) {
             SPDLOG_ERROR(NPET_DUAL_NOT_RESPONDING);
             Cli::err(std::string(NPET_DUAL_NOT_RESPONDING));
-            start_.purgePort();
-            stop_.purgePort();
+            startComm().purgePort();
+            stopComm().purgePort();
         } else if (!start_res) {
             SPDLOG_ERROR(NPET_START_NOT_RESPONDING);
             Cli::err(std::string(NPET_START_NOT_RESPONDING));
-            start_.purgePort();
+            startComm().purgePort();
         } else {
             SPDLOG_ERROR(NPET_STOP_NOT_RESPONDING);
             Cli::err(std::string(NPET_STOP_NOT_RESPONDING));
-            stop_.purgePort();
+            stopComm().purgePort();
         }
         Sleep(RETRY_DELAY_MS);
     } // end of for loop

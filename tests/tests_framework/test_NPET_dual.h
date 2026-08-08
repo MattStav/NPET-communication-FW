@@ -9,8 +9,8 @@
 // start_/stop_ are protected on NPETDual; expose them for inspection in tests.
 class NPETDualFixture : public ::testing::Test, public NPETDual {
 protected:
-    using NPETDual::start_;
-    using NPETDual::stop_;
+    using NPETDual::one_;
+    using NPETDual::two_;
 };
 
 struct DualToStringParams {

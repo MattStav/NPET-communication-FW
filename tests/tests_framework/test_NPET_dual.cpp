@@ -14,26 +14,26 @@ TEST(NPETDualTest, ConstructsAndDestructsWithoutThrowing) {
 }
 
 TEST_F(NPETDualFixture, DefaultConstructedStartIsNotOpen) {
-    EXPECT_FALSE(start_.isOpen());
+    EXPECT_FALSE(one_.isOpen());
 }
 
 TEST_F(NPETDualFixture, DefaultConstructedStopIsNotOpen) {
-    EXPECT_FALSE(stop_.isOpen());
+    EXPECT_FALSE(two_.isOpen());
 }
 
 TEST_F(NPETDualFixture, DefaultConstructedStartFirmwareVersionIsZero) {
-    EXPECT_EQ(start_.fw_version.getValue(), 0);
+    EXPECT_EQ(one_.fw_version.getValue(), 0);
 }
 
 TEST_F(NPETDualFixture, DefaultConstructedStopFirmwareVersionIsZero) {
-    EXPECT_EQ(stop_.fw_version.getValue(), 0);
+    EXPECT_EQ(two_.fw_version.getValue(), 0);
 }
 
 // start_/stop_ must be independent NPETComm instances, not aliases of the same underlying device.
 TEST_F(NPETDualFixture, StartAndStopAreIndependentInstances) {
-    start_.setFWVer(FWVersion::AD_REVISION);
-    EXPECT_EQ(start_.fw_version.getValue(), FWVersion::AD_REVISION);
-    EXPECT_EQ(stop_.fw_version.getValue(), 0);
+    one_.setFWVer(FWVersion::AD_REVISION);
+    EXPECT_EQ(one_.fw_version.getValue(), FWVersion::AD_REVISION);
+    EXPECT_EQ(two_.fw_version.getValue(), 0);
 }
 
 

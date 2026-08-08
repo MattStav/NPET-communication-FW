@@ -13,18 +13,18 @@
 namespace fs = std::filesystem;
 
 TEST_F(DualFrameworkWorkflowFixture, BothConnectionsAreOpenAndResponsive) {
-    ASSERT_TRUE(start_.isOpen());
-    ASSERT_TRUE(stop_.isOpen());
-    EXPECT_TRUE(start_.isResponsive());
-    EXPECT_TRUE(stop_.isResponsive());
+    ASSERT_TRUE(one_.isOpen());
+    ASSERT_TRUE(two_.isOpen());
+    EXPECT_TRUE(one_.isResponsive());
+    EXPECT_TRUE(two_.isResponsive());
 }
 
 TEST_F(DualFrameworkWorkflowFixture, ReadBatchMeasurementsDefaultArgumentSucceeds) {
     // Exercises NPETDual::readBatchMeasurements()'s default DualMeasContext (5 measurements,
     // channel 1 on both legs, no save) - the possibility a caller passes nothing at all.
     EXPECT_NO_THROW(readBatchMeasurements());
-    EXPECT_TRUE(start_.isResponsive());
-    EXPECT_TRUE(stop_.isResponsive());
+    EXPECT_TRUE(one_.isResponsive());
+    EXPECT_TRUE(two_.isResponsive());
 }
 
 // executeBoth() (exercised here via readBatchMeasurements()) is documented to release both legs
@@ -46,8 +46,8 @@ TEST_F(DualFrameworkWorkflowFixture, ReadBatchMeasurementsRunsBothLegsConcurrent
     EXPECT_LT(ELAPSED, std::chrono::milliseconds(1800))
         << "readBatchMeasurements() took " << std::chrono::duration_cast<std::chrono::milliseconds>(ELAPSED).count()
         << "ms - the start/stop legs do not appear to be running concurrently";
-    EXPECT_TRUE(start_.isResponsive());
-    EXPECT_TRUE(stop_.isResponsive());
+    EXPECT_TRUE(one_.isResponsive());
+    EXPECT_TRUE(two_.isResponsive());
 }
 
 class DualBatchMeasurementSaveTest : public DualFrameworkWorkflowFixture {

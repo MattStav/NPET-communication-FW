@@ -26,8 +26,8 @@ inline constexpr int STOP_CLIENT_COM_PORT = 11;
 // VMs' client-side ports, and ~NPETComm() closes again as the fixture is torn down.
 class DualFrameworkWorkflowFixture : public ::testing::Test, public NPETDual {
 protected:
-    using NPETDual::start_;
-    using NPETDual::stop_;
+    using NPETDual::one_;
+    using NPETDual::two_;
 
     static std::unique_ptr<VirtualMachine> start_vm;
     static std::unique_ptr<VirtualMachine> stop_vm;

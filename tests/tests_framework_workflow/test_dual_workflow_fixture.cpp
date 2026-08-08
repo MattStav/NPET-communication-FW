@@ -49,10 +49,10 @@ void DualFrameworkWorkflowFixture::TearDownTestSuite() {
 /// Opens NPETDual's start_/stop_ legs onto the two VMs' client-side ports for this one test
 void DualFrameworkWorkflowFixture::SetUp() {
     try {
-        start_.openCommunication(START_CLIENT_COM_PORT, BAUD_RATE);
-        stop_.openCommunication(STOP_CLIENT_COM_PORT, BAUD_RATE);
-        start_.detectFWVer();
-        stop_.detectFWVer();
+        one_.openCommunication(START_CLIENT_COM_PORT, BAUD_RATE);
+        two_.openCommunication(STOP_CLIENT_COM_PORT, BAUD_RATE);
+        one_.detectFWVer();
+        two_.detectFWVer();
     } catch (const std::exception &e) {
         GTEST_SKIP() << "Could not open COM" << START_CLIENT_COM_PORT << "/COM" << STOP_CLIENT_COM_PORT
                      << " for this test: " << e.what();
@@ -64,8 +64,8 @@ void DualFrameworkWorkflowFixture::SetUp() {
 /// (and, with them, closed), so a test that silently broke one shows up as its own failure
 /// instead of quietly poisoning whichever later test reopens the same port.
 void DualFrameworkWorkflowFixture::TearDown() {
-    if (start_.isOpen() && stop_.isOpen()) {
-        EXPECT_TRUE(start_.isResponsive()) << "start_ connection was no longer responsive at teardown";
-        EXPECT_TRUE(stop_.isResponsive()) << "stop_ connection was no longer responsive at teardown";
+    if (one_.isOpen() && two_.isOpen()) {
+        EXPECT_TRUE(one_.isResponsive()) << "start_ connection was no longer responsive at teardown";
+        EXPECT_TRUE(two_.isResponsive()) << "stop_ connection was no longer responsive at teardown";
     }
 }

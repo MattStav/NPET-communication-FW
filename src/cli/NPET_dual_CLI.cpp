@@ -327,14 +327,28 @@ void NPETDualCLI::syncNPETsCLI() {
             SPDLOG_DEBUG("Measured average fractional part of the STOP time correction constant: {}",
                          float128ToString(stop_const.fracp));
             SPDLOG_DEBUG("Prompting user for integer part definition logic ...");
-            // SPDLOG_DEBUG("Possible integer part definition logic options: {}", INT_OPTIONS);
-            // const int INT_CHOICE = Cli::menu("Integer part setting logic", INT_OPTIONS, false);
-            // SPDLOG_DEBUG("User selected integer part definition logic: {}", INT_CHOICE);
-            // if (INT_CHOICE == 4) {
-            //     return;
-            // }
-            // new_const.intp = calcInteger(static_cast<IntLogic>(INT_CHOICE), PPS_CHANNEL.value());
-            // SPDLOG_DEBUG("Calculated integer part of the time correction constant: {}", new_const.intp);
+            SPDLOG_DEBUG("Possible integer part definition logic options: {}", INT_OPTIONS);
+            const int INT_CHOICE = Cli::menu("Integer part setting logic", INT_OPTIONS, false);
+            SPDLOG_DEBUG("User selected integer part definition logic: {}", INT_CHOICE);
+            if (INT_CHOICE == 4) {
+                return;
+            }
+            SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}", INT_CHOICE);
+            const int CLOCK_TIME = promptTimeConstSeconds(static_cast<ConstIntSelectionLogic>(INT_CHOICE));
+            // Get the current NPET time
+            SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
+                         static_cast<int>(START_PPS_CHANNEL.value()));
+            const Measurement CURRENT_START_MEASUREMENT = safeExec([&] { return startComm().readSingleMeasurement(START_PPS_CHANNEL.value()); },
+                                                             "read_single_measurement");
+            SPDLOG_DEBUG("Current measurement read: {}", CURRENT_START_MEASUREMENT.toString());
+            start_const.intp = CLOCK_TIME - CURRENT_START_MEASUREMENT.intp;
+            // Get the current NPET time
+            SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
+                         static_cast<int>(STOP_PPS_CHANNEL.value()));
+            const Measurement CURRENT_STOP_MEASUREMENT = safeExec([&] { return stopComm().readSingleMeasurement(STOP_PPS_CHANNEL.value()); },
+                                                             "read_single_measurement");
+            SPDLOG_DEBUG("Current measurement read: {}", CURRENT_STOP_MEASUREMENT.toString());
+            stop_const.intp = CLOCK_TIME - CURRENT_STOP_MEASUREMENT.intp;
             break;
         }
         case 3:

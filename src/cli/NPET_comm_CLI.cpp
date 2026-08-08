@@ -251,12 +251,6 @@ void NPETCommCLI::setTimeConstantCLI() {
         "Clear time constant",
         "Cancel",
     };
-    const std::vector<std::string> INT_OPTIONS = {
-        "User defined",
-        "System time",
-        "System time with NTP sync (Admin required)",
-        "Cancel",
-    };
 
     SPDLOG_DEBUG("Possible new time correction constant definitions: {}", DEFINITION_OPTIONS);
     switch (Cli::menu("Time correction constant definition", DEFINITION_OPTIONS, false)) {

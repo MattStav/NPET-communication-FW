@@ -33,6 +33,13 @@ enum class ConstIntSelectionLogic : std::uint8_t {
     NTP_SYNC = 3,
 };
 
+const std::vector<std::string> INT_OPTIONS = {
+    "User defined",
+    "System time",
+    "System time with NTP sync (Admin required)",
+    "Cancel",
+};
+
 int printManual();
 
 int printLicenseInformation();

@@ -12,8 +12,6 @@ constexpr std::string_view NPET_NOT_RESPONDING = "NPET not responding!";
 constexpr std::string_view FW_CURRENT = "Current NPET firmware version";
 constexpr std::string_view FW_INVALID = "Invalid choice, firmware version not changed";
 constexpr std::string_view FW_UNKNOWN = "Unknown firmware version detected";
-constexpr std::string_view INVALID_NUM = "Invalid input. Number out of allowed range";
-constexpr int INVALID_NUM_SENTINEL = -2;
 constexpr std::string_view FREQ_ERR = "Couldn't set the frequency";
 constexpr std::string_view FREQ_SET = "Pulse generation frequency set to [Hz]";
 constexpr std::string_view FREQ_RESET_FAIL = "Failed to reset the pulse generation frequency";
@@ -145,31 +143,6 @@ void NPETCommCLI::detectFwVerCLI() {
         throw std::invalid_argument(std::string(FW_UNKNOWN));
     }
 } // end of detect_FW_ver_CLI function
-
-
-///
-/// Data validation allows either a positive integer number or (optionally) -1 for infinity.
-/// @param num_to_validate Number to check as string
-/// @param ALLOW_NEGATIVE_ONE Whether to allow -1 as a valid input
-/// @return The validated number in int format, or -2 if the input is invalid
-static int numValidation(const std::string &num_to_validate, const bool ALLOW_NEGATIVE_ONE = true) {
-    int number_int = 0;
-    SPDLOG_DEBUG("Validating number: {}; allow infinity sentinel: {}", num_to_validate, ALLOW_NEGATIVE_ONE);
-
-    try {
-        // Attempt to convert the string to an integer
-        number_int = std::stoi(num_to_validate);
-        if (const int MIN_VALID_VALUE = ALLOW_NEGATIVE_ONE ? -1 : 0; number_int < MIN_VALID_VALUE) {
-            throw std::invalid_argument("Number is out of allowed range");
-        }
-    } catch (const std::invalid_argument &) {
-        SPDLOG_ERROR(INVALID_NUM);
-        Cli::err(std::string(INVALID_NUM));
-        return INVALID_NUM_SENTINEL;
-    }
-    SPDLOG_DEBUG("Number {} is valid", number_int);
-    return number_int;
-} // end of is_valid_num_of_measurements_CLI function
 
 
 ///

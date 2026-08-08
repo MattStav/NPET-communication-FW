@@ -14,6 +14,7 @@ constexpr std::string_view NO_DATA_ERR = "No results to process yet";
 constexpr std::string_view DP_ERR = "NPET Data Processor ERROR: Command: {}; Code: {}";
 constexpr std::string_view APP_START_MSG = "NPET communication FW started: ";
 constexpr std::string_view NO_PORTS = "No available COM ports found";
+constexpr std::string_view INVALID_NUM = "Invalid input. Number out of allowed range";
 
 
 void printAppIntro() {
@@ -179,6 +180,32 @@ bool openCommSafe(NPETComm &npet, const int COM_PORT, const std::string_view ERR
     }
     return true;
 }
+
+
+///
+/// Data validation allows either a positive integer number or (optionally) -1 for infinity.
+/// @param num_to_validate Number to check as string
+/// @param ALLOW_NEGATIVE_ONE Whether to allow -1 as a valid input
+/// @return The validated number in int format, or -2 if the input is invalid
+int numValidation(const std::string &num_to_validate, const bool ALLOW_NEGATIVE_ONE) {
+    int number_int = 0;
+    SPDLOG_DEBUG("Validating number: {}; allow infinity sentinel: {}", num_to_validate, ALLOW_NEGATIVE_ONE);
+
+    try {
+        // Attempt to convert the string to an integer
+        number_int = std::stoi(num_to_validate);
+        if (const int MIN_VALID_VALUE = ALLOW_NEGATIVE_ONE ? -1 : 0; number_int < MIN_VALID_VALUE) {
+            throw std::invalid_argument("Number is out of allowed range");
+        }
+    } catch (const std::invalid_argument &) {
+        SPDLOG_ERROR(INVALID_NUM);
+        Cli::err(std::string(INVALID_NUM));
+        return INVALID_NUM_SENTINEL;
+    }
+    SPDLOG_DEBUG("Number {} is valid", number_int);
+    return number_int;
+} // end of numValidation function
+
 
 ///
 /// Settings menu

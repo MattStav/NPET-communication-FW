@@ -36,10 +36,13 @@ int main(const int argc, char *const*argv) {
     VM->set_help_flag("-h,--help", "Show help for the virtual command");
     int vm_ch1_frequency = 100;
     int vm_com_port{};
+    int corrupt_every{};
     VM->add_option("-f,--frequency", vm_ch1_frequency, "Data measurement frequency [Hz] on channel 1")
             ->check(CLI::Range(1, 2500));
     VM->add_option("--com-port", vm_com_port, "COM port number the virtual device connects to")
             ->required();
+    VM->add_option("--corrupt-every", corrupt_every, "Corrupt every N measurements")
+            ->check(CLI::Range(0, 2500));
     const auto *const DATA_PROCESSOR = app.add_subcommand(
         "dp", "Run the NPET data processor, which needs to be installed separately");
     const auto *const LICENSE = app.add_subcommand("license", "Show license information");
@@ -50,7 +53,9 @@ int main(const int argc, char *const*argv) {
     } else if (*RESET) {
         exit_code = resetNpetStandalone();
     } else if (*VM) {
-        exit_code = launchVm({.com_port = vm_com_port, .ch1_frequency = vm_ch1_frequency});
+        exit_code = launchVm({
+            .com_port = vm_com_port, .ch1_frequency = vm_ch1_frequency, .corrupt_every = corrupt_every,
+        });
     } else if (*DATA_PROCESSOR) {
         exit_code = launchDataProcessor();
     } else if (*LICENSE) {

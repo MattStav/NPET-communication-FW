@@ -9,7 +9,7 @@ std::unique_ptr<NPETComm> FrameworkWorkflowFixture::client;
 /// background thread, once for the whole suite. Ports are opened before the device-loop thread is
 /// started so a missing/unpaired port fails here with nothing left to tear down.
 void FrameworkWorkflowFixture::SetUpTestSuite() {
-    vm = std::make_unique<VirtualMachine>(100);
+    vm = std::make_unique<VirtualMachine>(VmConfig{.com_port = VM_COM_PORT, .ch1_frequency = 100, .corrupt_every = 0});
     client = std::make_unique<NPETComm>();
     try {
         vm->openCommunication(VM_COM_PORT, BAUD_RATE);

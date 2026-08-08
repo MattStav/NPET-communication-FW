@@ -5,10 +5,18 @@
 #include "meas_func.h"
 #include "serial_machine.h"
 
+struct VmConfig {
+    int com_port{};
+    int ch1_frequency{100};
+    int corrupt_every{0};
+};
+
 
 class VirtualMachine : public SerialMachine {
     // Frequency of measurement stream on channel 1
     int ch1_frequency_{};
+    // Corrupt every n-th measurement
+    int corrupt_every_{};
     // The time constant currently saved in NPET
     std::string time_const_;
     // The measurement counter
@@ -34,7 +42,8 @@ class VirtualMachine : public SerialMachine {
     void listenForStopCommand(bool &stop_requested);
 
 public:
-    explicit VirtualMachine(const int CH1_FREQUENCY) : ch1_frequency_(CH1_FREQUENCY) {
+    explicit VirtualMachine(const VmConfig CONFIG) : ch1_frequency_(CONFIG.ch1_frequency),
+                                                     corrupt_every_(CONFIG.corrupt_every) {
     }
 
     void deviceLoop();

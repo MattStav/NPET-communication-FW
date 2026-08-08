@@ -191,8 +191,13 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
             seconds++;
         }
         const Measurement MEASUREMENT{.meas_num = measurement_counter_, .intp = seconds, .fracp = fracp};
-        const auto MEASUREMENT_SET = encodeMeasurementSet(MEASUREMENT, FWVersion(FWVersion::VIRTUAL).getMultiplier());
-        writeRawToSerial(MEASUREMENT_SET);
+        auto measurement_set = encodeMeasurementSet(MEASUREMENT, FWVersion(FWVersion::VIRTUAL).getMultiplier());
+        if (corrupt_every_ > 0 && (i % corrupt_every_) == 0) {
+            // Bump the checksum byte so it no longer matches xorChecksum() of the other 12 bytes,
+            // simulating a corrupted frame for the reader's checksum-validation path to catch.
+            measurement_set.at(12) = static_cast<std::uint8_t>(measurement_set.at(12) + 1);
+        }
+        writeRawToSerial(measurement_set);
         if (i == number_of_measurements) {
             SPDLOG_INFO("Measurement stream completed: {} measurements sent", i);
             break;

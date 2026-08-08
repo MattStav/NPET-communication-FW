@@ -2,8 +2,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "virtual_machine.h"
-
 
 ///
 /// Main function for the mock NPET device virtual machine.
@@ -17,7 +15,7 @@ int launchVm(const VmConfig CONFIG) {
         throw std::invalid_argument("Frequency must be less than or equal to 2500 Hz");
     }
     SPDLOG_INFO("Mock NPET device virtual machine starting ...");
-    auto vm = VirtualMachine(CONFIG.ch1_frequency);
+    auto vm = VirtualMachine(CONFIG);
     SPDLOG_INFO("User specified COM{} ...", CONFIG.com_port);
     vm.openCommunication(CONFIG.com_port, 115200);
     SPDLOG_INFO("Mock NPET device virtual machine COM port open");

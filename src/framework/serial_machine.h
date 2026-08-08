@@ -8,7 +8,6 @@
 #include <vector>
 #include <boost/asio.hpp>
 #include <stdexcept>
-#include <spdlog/spdlog.h>
 
 class CommTimeoutError final : public std::runtime_error {
 public:
@@ -43,9 +42,6 @@ public:
     // Constructor
     SerialMachine() = default;
 
-    // Open communication over serial COM port
-    void openCommunication(int COM_PORT, int BAUD_RATE);
-
     // TODO: Phase out the use of these getters
     [[nodiscard]] boost::asio::io_context &getIO() {
         return io_;
@@ -77,29 +73,15 @@ public:
         }
     }
 
+    void openCommunication(int COM_PORT, int BAUD_RATE);
+
     void writeToSerial(const std::string &command);
 
-    // Cancel any pending operation on the port. If BLOCK is true, wait until the
-    // cancellation has been processed by the io_context; otherwise only process
-    // whatever handlers are already ready without waiting.
-    void cancelPendingOperation(const bool BLOCK = true) {
-        port_.cancel();
-        if (BLOCK) {
-            io_.run();
-        } else {
-            io_.poll();
-        }
-    }
+    void cancelPendingOperation(bool BLOCK = true);
 
-    [[nodiscard]] bool isOpen() const {
-        return port_.is_open();
-    }
+    [[nodiscard]] bool isOpen() const;
 
-    void closeCommunication() {
-        if (port_.is_open()) {
-            port_.close();
-        }
-    }
+    void closeCommunication();
 
     void purgePort();
 
@@ -124,10 +106,7 @@ protected:
 
     std::string readFromSerial(std::size_t MAX_BYTES = 128);
 
-    void setBaudRateSerial(const int NEW_BAUD_RATE) {
-        port_.set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
-        SPDLOG_INFO("Baud rate changed to {}", NEW_BAUD_RATE);
-    }
+    void setBaudRateSerial(int NEW_BAUD_RATE);
 };
 
 

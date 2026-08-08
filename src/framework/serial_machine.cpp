@@ -197,6 +197,37 @@ std::string SerialMachine::readFromSerial(const std::size_t MAX_BYTES) {
 
 
 ///
+/// Cancel any pending operation on the port. If BLOCK is true, wait until the
+/// cancellation has been processed by the io_context; otherwise only process
+/// whatever handlers are already ready without waiting.
+/// @param BLOCK Whether to block until the cancellation has been processed
+void SerialMachine::cancelPendingOperation(const bool BLOCK) {
+    port_.cancel();
+    if (BLOCK) {
+        io_.run();
+    } else {
+        io_.poll();
+    }
+}
+
+
+///
+/// @return Whether the serial port is currently open
+bool SerialMachine::isOpen() const {
+    return port_.is_open();
+}
+
+
+///
+/// Close the serial port, if open.
+void SerialMachine::closeCommunication() {
+    if (port_.is_open()) {
+        port_.close();
+    }
+}
+
+
+///
 /// Purge the COM Port.
 /// Close the port and purge all handles.
 void SerialMachine::purgePort() {
@@ -212,4 +243,13 @@ int SerialMachine::getBaudRate() {
     boost::asio::serial_port_base::baud_rate current_baud{};
     getPort().get_option(current_baud);
     return static_cast<int>(current_baud.value());
+}
+
+
+///
+/// Change the baud rate of the already-open serial port.
+/// @param NEW_BAUD_RATE Baud rate to switch to
+void SerialMachine::setBaudRateSerial(const int NEW_BAUD_RATE) {
+    port_.set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
+    SPDLOG_INFO("Baud rate changed to {}", NEW_BAUD_RATE);
 }

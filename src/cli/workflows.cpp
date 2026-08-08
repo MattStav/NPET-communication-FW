@@ -17,7 +17,6 @@ static void singleNPETSettingsMenu(NPETCommCLI &npet_comm) {
     const std::vector<std::string> SETTINGS_MENU_ITEMS = {
         "Communication baud rate",
         "Time correction constant",
-        "NPET FW version",
         "Reset NPET settings",
         "Return to main menu",
     };
@@ -30,11 +29,7 @@ static void singleNPETSettingsMenu(NPETCommCLI &npet_comm) {
             SPDLOG_DEBUG("Settings menu choice: Time constant");
             npet_comm.setTimeConstantCLI();
             return;
-        case 3: // Set FW version
-            SPDLOG_DEBUG("Settings menu choice: FW version");
-            npet_comm.setFwVerCLI();
-            return;
-        case 4: // Reset NPET
+        case 3: // Reset NPET
             SPDLOG_DEBUG("Settings menu choice: Reset NPET");
             npet_comm.resetCLI();
         default: ;
@@ -105,7 +100,6 @@ static void dualNPETSettingsMenu(NPETDualCLI &npet_dual) {
     const std::vector<std::string> SETTINGS_MENU_ITEMS = {
         "Communication baud rate",
         "Time correction constants",
-        "NPETs FW version",
         "Switch START/STOP designation",
         "Reset NPETs settings",
         "Return to main menu",
@@ -121,15 +115,11 @@ static void dualNPETSettingsMenu(NPETDualCLI &npet_dual) {
             throw std::runtime_error("Not implemented for dual NPET mode");
             // npet_dual.setTimeConstantCLI();
             return;
-        case 3: // Set FW version
-            SPDLOG_DEBUG("Settings menu choice: FW version");
-            npet_dual.setFwVerCLI();
-            return;
-        case 4:
+        case 3:
             SPDLOG_DEBUG("Settings menu choice: Switch START/STOP designation");
             npet_dual.switchStartStopCLI();
             return;
-        case 5: // Reset NPET
+        case 4: // Reset NPET
             SPDLOG_DEBUG("Settings menu choice: Reset NPET");
             npet_dual.resetCLI();
         default: ;

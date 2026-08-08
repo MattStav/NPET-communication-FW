@@ -266,10 +266,11 @@ void NPETDualCLI::syncNPETsCLI() {
     SPDLOG_DEBUG("Possible new time correction constant definitions: {}", DEFINITION_OPTIONS);
     switch (Cli::menu("Time correction constant definition", DEFINITION_OPTIONS, false)) {
         case 1:
-            SPDLOG_DEBUG("User selected adjusting raw raw time correction constant for single NPET");
+            SPDLOG_DEBUG("User selected adjusting raw time correction constant for single NPET");
             try {
                 // TODO: Add
                 Cli::err("Not implemented yet");
+                return;
             } catch (std::exception &e) {
                 SPDLOG_ERROR(TIME_CONST_FAILED_TO_SET, e.what());
                 Cli::err(std::format(TIME_CONST_FAILED_TO_SET.data(), e.what()));

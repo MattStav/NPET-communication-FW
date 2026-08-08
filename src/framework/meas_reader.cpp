@@ -136,20 +136,16 @@ void MeasReader::dataProcessor(const MeasContext &meas_set, const Measurement &t
         if (!measurement_res_raw) {
             break;
         }
-        Measurement measurement_res;
         meas_counter++;
         try {
-            measurement_res = decodeMeasurementSet(*measurement_res_raw, MULTIPLIER, time_const);
+            const Measurement MEASUREMENT_RES = decodeMeasurementSet(*measurement_res_raw, MULTIPLIER, time_const);
+            std::scoped_lock const LOCK(mtx_data_);
+            for_saver_q_.push(MEASUREMENT_RES);
+            for_monitor_q.push(MEASUREMENT_RES);
         } catch (const std::exception &) {
             corrupted.fetch_add(1, std::memory_order_relaxed);
             SPDLOG_WARN("Corrupted measurement received, discarding. Corrupted measurements: {}",
                         corrupted.load(std::memory_order_relaxed));
-            continue;
-        } {
-            // Code block to limit the scope of the lock
-            std::scoped_lock const LOCK(mtx_data_);
-            for_saver_q_.push(measurement_res);
-            for_monitor_q.push(measurement_res);
         }
         // If target meas number is reached, end the measurement sequence. Except in infinite operation.
         if (meas_counter == meas_set.num_of_meas && meas_counter != INFINITE_OPERATION) {

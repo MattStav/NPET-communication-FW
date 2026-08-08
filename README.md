@@ -7,7 +7,8 @@
 ![vcpkg](https://img.shields.io/badge/dependencies-vcpkg-0078D4)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20MSYS2-blue)
 
-Note: CI can't run a full test suite, skewing the test coverage percentage
+Note: CI can't run a full test suite, as that requires self-hosted runners (which I don't have)
+Shown coverage is therefore underreported.
 
 ---
 

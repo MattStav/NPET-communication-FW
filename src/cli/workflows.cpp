@@ -133,9 +133,7 @@ static void dualNPETSettingsMenu(NPETDualCLI &npet_dual) {
             return;
         case 5: // Reset NPET
             SPDLOG_DEBUG("Settings menu choice: Reset NPET");
-            // TODO: Implement for dual NPET mode
-            throw std::runtime_error("Not implemented for dual NPET mode");
-            // npet_dual.resetCLI();
+            npet_dual.resetCLI();
         default: ;
     } // end of switch
 } // end of menu_settings function

@@ -492,26 +492,7 @@ int NPETCommCLI::calcInteger(const IntLogic INT_LOGIC, const Channel CHANNEL_NUM
 void NPETCommCLI::resetCLI() {
     SPDLOG_INFO(RESET_INITIATED);
     Cli::echo(std::string(RESET_INITIATED), fg::yellow);
-    if (!safeExec([&] { return clearTimeConstant(); }, "clear_time_constant")) {
-        SPDLOG_ERROR(TIME_CONST_FAILED_TO_CLEAR);
-        Cli::err(std::string(TIME_CONST_FAILED_TO_CLEAR));
-    }
-    if (!safeExec([&] { return generatePulses(0); }, "generate_pulses")) {
-        SPDLOG_ERROR(PULSE_GEN_STOP_FAIL);
-        Cli::err(std::string(PULSE_GEN_STOP_FAIL));
-    }
-    if (!safeExec([&] { return setFrequency(); }, "set_frequency")) {
-        SPDLOG_ERROR(FREQ_RESET_FAIL);
-        Cli::err(std::string(FREQ_RESET_FAIL));
-    }
-    if (!safeExec([&] { return setMeasuredDataFormat(1); }, "set_measured_data_format")) {
-        SPDLOG_ERROR(DATA_FORMAT_RESET_FAIL);
-        Cli::err(std::string(DATA_FORMAT_RESET_FAIL));
-    }
-    if (!safeExec([&] { return setBaudRate(); }, "set_baud_rate")) {
-        SPDLOG_ERROR(BAUD_RATE_RESET_FAIL);
-        Cli::err(std::string(BAUD_RATE_RESET_FAIL));
-    }
+    resetNPETSafe(*this);
     SPDLOG_INFO(RESET_COMPLETE);
     Cli::echo(std::string(RESET_COMPLETE), fg::green);
 } // end of reset_NPET function

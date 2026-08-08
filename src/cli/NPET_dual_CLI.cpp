@@ -391,31 +391,8 @@ void NPETDualCLI::syncNPETsCLI() {
 void NPETDualCLI::resetCLI() {
     SPDLOG_INFO(DUAL_RESET_INITIATED);
     Cli::echo(std::string(DUAL_RESET_INITIATED), fg::yellow);
-    if (!safeExec([&] { return one_.clearTimeConstant(); }, "clear_time_constant") ||
-        !safeExec([&] { return two_.clearTimeConstant(); }, "clear_time_constant")) {
-        SPDLOG_ERROR(TIME_CONST_FAILED_TO_CLEAR);
-        Cli::err(std::string(TIME_CONST_FAILED_TO_CLEAR));
-    }
-    if (!safeExec([&] { return one_.generatePulses(0); }, "generate_pulses") ||
-        !safeExec([&] { return two_.generatePulses(0); }, "generate_pulses")) {
-        SPDLOG_ERROR(PULSE_GEN_STOP_FAIL);
-        Cli::err(std::string(PULSE_GEN_STOP_FAIL));
-    }
-    if (!safeExec([&] { return one_.setFrequency(); }, "set_frequency") ||
-        !safeExec([&] { return two_.setFrequency(); }, "set_frequency")) {
-        SPDLOG_ERROR(FREQ_RESET_FAIL);
-        Cli::err(std::string(FREQ_RESET_FAIL));
-    }
-    if (!safeExec([&] { return one_.setMeasuredDataFormat(1); }, "set_measured_data_format") ||
-        !safeExec([&] { return two_.setMeasuredDataFormat(1); }, "set_measured_data_format")) {
-        SPDLOG_ERROR(DATA_FORMAT_RESET_FAIL);
-        Cli::err(std::string(DATA_FORMAT_RESET_FAIL));
-    }
-    if (!safeExec([&] { return one_.setBaudRate(); }, "set_baud_rate") ||
-        !safeExec([&] { return two_.setBaudRate(); }, "set_baud_rate")) {
-        SPDLOG_ERROR(BAUD_RATE_RESET_FAIL);
-        Cli::err(std::string(BAUD_RATE_RESET_FAIL));
-    }
+    executeBoth([&] { resetNPETSafe(startComm(), "START"); },
+                [&] { resetNPETSafe(stopComm(), "STOP"); });
     SPDLOG_INFO(DUAL_RESET_COMPLETE);
     Cli::echo(std::string(DUAL_RESET_COMPLETE), fg::green);
 } // end of reset_NPET function

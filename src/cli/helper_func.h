@@ -47,6 +47,8 @@ int promptBaudRate(INT CURRENT_BAUD_RATE);
 
 void setBaudRateSafe(NPETComm &npet, int NEW_BAUD_RATE);
 
+void resetNPETSafe(NPETComm &npet, std::string_view designation = "");
+
 FWVersion promptFWVersion(FWVersion CURRENT_FW_VERSION);
 
 void printAppIntro();

@@ -22,8 +22,7 @@ TEST(SerialMachineTimeout, ReadWithTimeoutThrowsCommTimeoutErrorWhenNoDataArrive
     } catch (const std::exception &e) {
         GTEST_SKIP() << "Could not open COM" << VM_COM_PORT << ": " << e.what()
                 << ". This test requires a com0com virtual null-modem pair on COM"
-                << VM_COM_PORT << "/COM" << CLIENT_COM_PORT
-                << " (see .github/workflows/testing_pipeline.yml for setup) - skipping.";
+                << VM_COM_PORT << "/COM" << CLIENT_COM_PORT << " - skipping.";
     }
 
     EXPECT_THROW(

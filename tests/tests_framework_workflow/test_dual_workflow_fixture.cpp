@@ -23,8 +23,7 @@ void DualFrameworkWorkflowFixture::SetUpTestSuite() {
         GTEST_SKIP() << "Could not open COM" << START_VM_COM_PORT << "/COM" << START_CLIENT_COM_PORT
                      << " and/or COM" << STOP_VM_COM_PORT << "/COM" << STOP_CLIENT_COM_PORT << ": "
                      << e.what() << ". This suite requires two com0com virtual null-modem pairs, "
-                        "on these ports (see .github/workflows/testing_pipeline.yml for setup) - "
-                        "skipping.";
+                        "on these ports - skipping.";
     }
     start_vm_thread = std::make_unique<std::jthread>([] { start_vm->deviceLoop(); });
     stop_vm_thread = std::make_unique<std::jthread>([] { stop_vm->deviceLoop(); });

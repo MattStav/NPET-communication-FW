@@ -19,8 +19,7 @@ void FrameworkWorkflowFixture::SetUpTestSuite() {
         client.reset();
         GTEST_SKIP() << "Could not open COM" << VM_COM_PORT << "/COM" << CLIENT_COM_PORT << ": "
                      << e.what() << ". This suite requires a com0com virtual null-modem pair on "
-                        "these ports (see .github/workflows/testing_pipeline.yml for setup) - "
-                        "skipping.";
+                        "these ports - skipping.";
     }
     vm_thread = std::make_unique<std::jthread>([] { vm->deviceLoop(); });
 }

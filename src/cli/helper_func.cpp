@@ -56,6 +56,7 @@ int printManual() {
 ///
 /// Print the license information into the console.
 int printLicenseInformation() {
+    SPDLOG_DEBUG("License information printing initiated ...");
     Cli::echo("NPET communication FW License Information:\n\n");
     Cli::echo(license_text);
     Cli::echo(notice_text);

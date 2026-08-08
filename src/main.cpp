@@ -31,7 +31,7 @@ int main(const int argc, char *const*argv) {
     const auto *const SINGLE = app.add_subcommand("single", "Run the app for single NPET [default]");
     const auto *const DUAL = app.add_subcommand("dual", "Run the app for dual NPET");
     const auto *const MANUAL = app.add_subcommand("manual", "Show manual");
-    const auto *const RESET = app.add_subcommand("reset", "Reset the NPET");
+    const auto *const RESET = app.add_subcommand("reset", "Reset connected NPET to default settings");
     auto *const VM = app.add_subcommand("virtual", "Run virtual machine NPET which can be used to test the FW");
     VM->set_help_flag("-h,--help", "Show help for the virtual command");
     int vm_ch1_frequency = 100;
@@ -49,16 +49,21 @@ int main(const int argc, char *const*argv) {
     CLI11_PARSE(app, argc, argv);
     int exit_code = 1;
     if (*MANUAL) {
+        spdlog::set_level(spdlog::level::off);
         exit_code = printManual();
     } else if (*RESET) {
+        spdlog::set_level(spdlog::level::off);
         exit_code = resetNpetStandalone();
     } else if (*VM) {
+        spdlog::set_level(spdlog::level::off);
         exit_code = launchVm({
             .com_port = vm_com_port, .ch1_frequency = vm_ch1_frequency, .corrupt_every = corrupt_every,
         });
     } else if (*DATA_PROCESSOR) {
+        spdlog::set_level(spdlog::level::off);
         exit_code = launchDataProcessor();
     } else if (*LICENSE) {
+        spdlog::set_level(spdlog::level::off);
         exit_code = printLicenseInformation();
     } else if (*SINGLE || app.get_subcommands().empty()) {
         exit_code = singleNPETMainMenu();

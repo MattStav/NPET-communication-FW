@@ -34,6 +34,7 @@ static int openCommLoop(NPETComm &npet, const std::string &designation, const st
                         const int EXCLUDED_PORT = 0) {
     constexpr int MAX_ATTEMPTS = 5;
     bool autoselect{true};
+    auto excluded_ports = std::vector{EXCLUDED_PORT};
 
     SPDLOG_INFO("Opening {} NPET communication with CLI, max attempts: {}", designation, MAX_ATTEMPTS);
     for (int i = 0; i < MAX_ATTEMPTS; i++) {
@@ -43,13 +44,14 @@ static int openCommLoop(NPETComm &npet, const std::string &designation, const st
         }
         SPDLOG_DEBUG("Attempt {} to open {} NPET communication", i + 1, designation);
         Cli::echo("Select the COM port number for the " + designation + " NPET", fg::gray, style::bold);
-        const int COM_PORT = selectComPortCli(autoselect, std::vector{EXCLUDED_PORT});
+        const int COM_PORT = selectComPortCli(autoselect, excluded_ports);
         if (!openCommSafe(npet, COM_PORT, ERROR_MSG)) {
             continue;
         }
         npet.detectFWVer();
         if (!confirmNPETSelection(npet, designation)) {
             npet.closeCommunication();
+            excluded_ports.push_back(COM_PORT);
             continue;
         }
         SPDLOG_INFO("{} NPET communication opened successfully", designation);

@@ -33,8 +33,8 @@ TEST_F(VirtualMachineFixture, CloseCommunicationOnUnopenedVmDoesNotThrow) {
 // Two independently constructed VMs must not secretly share the io_context/port owned by
 // the SerialMachine base, otherwise closing/opening one would affect the other.
 TEST(VirtualMachineState, DistinctInstancesOwnDistinctIO) {
-    VirtualMachine vm_a{100};
-    VirtualMachine vm_b{200};
+    VirtualMachine vm_a{VmConfig{}};
+    VirtualMachine vm_b{VmConfig{}};
     EXPECT_NE(&vm_a.getIO(), &vm_b.getIO());
     EXPECT_NE(&vm_a.getPort(), &vm_b.getPort());
 }

@@ -8,7 +8,7 @@
 // the >2500Hz validation that launchVm performs separately.
 class VirtualMachineFixture : public ::testing::Test {
 protected:
-    VirtualMachine vm{100};
+    VirtualMachine vm{VmConfig{.com_port = 1, .ch1_frequency = 100, .corrupt_every = 0}};
 };
 
 #endif //TEST_VIRTUAL_MACHINE_H

@@ -6,7 +6,7 @@
 
 /// Simulates Ctrl+C via std::raise(SIGINT): on Windows.
 TEST(VirtualMachineTest, DeviceLoopTerminatesOnSigint) {
-    VirtualMachine vm{100};
+    VirtualMachine vm{VmConfig{}};
     vm.openCommunication(VM_COM_PORT, BAUD_RATE);
     std::future<void> loop_done = std::async(std::launch::async, [&vm] { vm.deviceLoop(); });
     // Give deviceLoop() time to install its signal_set and enter its first blocking read;

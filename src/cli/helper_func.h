@@ -39,6 +39,8 @@ int promptBaudRate(INT CURRENT_BAUD_RATE);
 
 void setBaudRateSafe(NPETComm &npet, int NEW_BAUD_RATE);
 
+FWVersion promptFWVersion(FWVersion CURRENT_FW_VERSION);
+
 void printAppIntro();
 
 #endif //NPET_COMM_FW_HELPER_FUNC_H

@@ -34,12 +34,10 @@ bool NPETComm::isResponsive(const bool END_STREAM) {
 /// Firmware version must be either 1, 2, or 3.
 /// Version is saved into the fw_version attribute.
 /// @param NEW_FW_VERSION New firmware version to set
-void NPETComm::setFWVer(const int NEW_FW_VERSION) {
-    SPDLOG_DEBUG("Setting NPET firmware version to {}", NEW_FW_VERSION);
-    assert((NEW_FW_VERSION == FWVersion::ORIGINAL || NEW_FW_VERSION == FWVersion::AD_REVISION ||
-        NEW_FW_VERSION == FWVersion::VIRTUAL) && "Invalid NPET firmware version");
+void NPETComm::setFWVer(const FWVersion NEW_FW_VERSION) {
+    SPDLOG_DEBUG("Setting NPET firmware version to {}", NEW_FW_VERSION.getDescription());
     fw_version = FWVersion(NEW_FW_VERSION);
-    SPDLOG_INFO("NPET firmware successfully version set to {}", fw_version.getValue());
+    SPDLOG_INFO("NPET firmware successfully version set to {}", fw_version.getDescription());
 } // end of set_NPET_FW_ver function
 
 
@@ -54,13 +52,13 @@ void NPETComm::detectFWVer() {
     // Get and check the FW version
     if (const std::string RES = exchangeComm("?"); RES.contains(REVISION_STRING)) {
         // Set the FW version to 2 running NPET with the latest components revision
-        setFWVer(2);
+        setFWVer(FWVersion(2));
     } else if (RES.contains(OFFLINE_STRING)) {
         // Set the FW version to 3 if running with virtual NPET
-        setFWVer(3);
+        setFWVer(FWVersion(3));
     } else {
         // Set the FW version to 1 if running the original NPET
-        setFWVer(1);
+        setFWVer(FWVersion(1));
     }
 } // end of automatic_FW_detection function
 

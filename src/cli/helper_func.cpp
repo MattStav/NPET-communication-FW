@@ -19,6 +19,8 @@ constexpr std::string_view CHANNEL_INVALID = "Invalid channel number";
 constexpr std::string_view BAUD_RATE_CURRENT = "Current baud rate";
 constexpr std::string_view BAUD_RATE_OK = "Baud rate set to";
 constexpr std::string_view BAUD_RATE_ERR = "Failed to set baud rate";
+constexpr std::string_view FW_CURRENT = "Current NPET firmware version";
+constexpr std::string_view FW_INVALID = "Invalid choice, firmware version not changed";
 
 
 void printAppIntro() {
@@ -286,4 +288,32 @@ void setBaudRateSafe(NPETComm &npet, const int NEW_BAUD_RATE) {
         Cli::confirmExit();
         throw;
     } // end of try-catch block
+}
+
+
+///
+/// Prompt the user to define the NPET internal FW version.
+/// @param CURRENT_FW_VERSION The current firmware version of the NPET.
+/// @return Selected FW version
+FWVersion promptFWVersion(const FWVersion CURRENT_FW_VERSION) {
+    const std::vector FW_OPTIONS = {
+        std::string(FWVersion(FWVersion::ORIGINAL).getDescription()),
+        std::string(FWVersion(FWVersion::AD_REVISION).getDescription()),
+    };
+    SPDLOG_DEBUG("{}: {}", FW_CURRENT, CURRENT_FW_VERSION.getDescription());
+    Cli::showStr(std::string(FW_CURRENT), std::string(CURRENT_FW_VERSION.getDescription()));
+    SPDLOG_DEBUG("Selecting new version from: {}", FW_OPTIONS);
+    while (true) {
+        if (const int USER_CHOICE = Cli::menu("What firmware is your NPET using?", FW_OPTIONS, false);
+            USER_CHOICE == FWVersion::ORIGINAL ||
+            USER_CHOICE == FWVersion::AD_REVISION ||
+            USER_CHOICE == FWVersion::VIRTUAL) {
+            const auto SELECTED_FW = FWVersion(USER_CHOICE);
+            SPDLOG_DEBUG("User selected firmware: {}", SELECTED_FW.getDescription());
+            Cli::echo("Selected firmware: " + std::string(SELECTED_FW.getDescription()));
+            return SELECTED_FW;
+        }
+        SPDLOG_ERROR(FW_INVALID);
+        Cli::err(std::string(FW_INVALID));
+    }
 }

@@ -9,8 +9,6 @@
 
 constexpr std::string_view NPET_OK_RESPONDING = "NPET communication is OK";
 constexpr std::string_view NPET_NOT_RESPONDING = "NPET not responding!";
-constexpr std::string_view FW_CURRENT = "Current NPET firmware version";
-constexpr std::string_view FW_INVALID = "Invalid choice, firmware version not changed";
 constexpr std::string_view FW_UNKNOWN = "Unknown firmware version detected";
 constexpr std::string_view FREQ_ERR = "Couldn't set the frequency";
 constexpr std::string_view FREQ_SET = "Pulse generation frequency set to [Hz]";
@@ -95,23 +93,9 @@ bool NPETCommCLI::isResponsiveCLI() {
 /// Ask the user to select what version of FW the connected NPET device is running.
 /// Firmware version is saved into the fw_version attribute.
 void NPETCommCLI::setFwVerCLI() {
-    const std::vector FW_OPTIONS = {
-        std::string(FWVersion(FWVersion::ORIGINAL).getDescription()),
-        std::string(FWVersion(FWVersion::AD_REVISION).getDescription()),
-    };
-    SPDLOG_DEBUG("{}: {}", FW_CURRENT, fw_version.getValue());
-    Cli::showInt(std::string(FW_CURRENT), fw_version.getValue());
-    SPDLOG_DEBUG("Selecting new version from: {}", FW_OPTIONS);
-    const int USER_CHOICE = Cli::menu("What firmware is your NPET using?", FW_OPTIONS, false);
-    if (USER_CHOICE == FWVersion::ORIGINAL || USER_CHOICE == FWVersion::AD_REVISION) {
-        Cli::echo("Selected firmware: " + FW_OPTIONS.at(USER_CHOICE - 1));
-    } else {
-        SPDLOG_ERROR(FW_INVALID);
-        Cli::err(std::string(FW_INVALID));
-        return;
-    }
-    SPDLOG_DEBUG("Setting NPET firmware version to: {}", FW_OPTIONS.at(USER_CHOICE - 1).data());
-    safeExec([&] { setFWVer(USER_CHOICE); }, "set_FW_ver");
+    const FWVersion NEW_FW = promptFWVersion(fw_version);
+    SPDLOG_DEBUG("Setting NPET firmware version to: {}", NEW_FW.getDescription());
+    safeExec([&] { setFWVer(NEW_FW); }, "set_FW_ver");
 } // end of select_NPET_FW_ver function
 
 

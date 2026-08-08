@@ -19,7 +19,7 @@ public:
     [[nodiscard]] bool isResponsive(bool END_STREAM = false);
 
     // Functions to select NPET firmware version and save it into fw_version attribute
-    void setFWVer(int NEW_FW_VERSION);
+    void setFWVer(FWVersion NEW_FW_VERSION);
 
     void detectFWVer();
 

@@ -51,14 +51,11 @@ void NPETComm::detectFWVer() {
     const std::string OFFLINE_STRING = "offline";
     // Get and check the FW version
     if (const std::string RES = exchangeComm("?"); RES.contains(REVISION_STRING)) {
-        // Set the FW version to 2 running NPET with the latest components revision
-        setFWVer(FWVersion(2));
+        setFWVer(FWVersion(FWVersion::AD_REVISION));
     } else if (RES.contains(OFFLINE_STRING)) {
-        // Set the FW version to 3 if running with virtual NPET
-        setFWVer(FWVersion(3));
+        setFWVer(FWVersion(FWVersion::VIRTUAL));
     } else {
-        // Set the FW version to 1 if running the original NPET
-        setFWVer(FWVersion(1));
+        setFWVer(FWVersion(FWVersion::ORIGINAL));
     }
 } // end of automatic_FW_detection function
 

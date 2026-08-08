@@ -31,7 +31,7 @@ TEST_F(NPETDualFixture, DefaultConstructedStopFirmwareVersionIsZero) {
 
 // start_/stop_ must be independent NPETComm instances, not aliases of the same underlying device.
 TEST_F(NPETDualFixture, StartAndStopAreIndependentInstances) {
-    one_.setFWVer(FWVersion(2));
+    one_.setFWVer(FWVersion(FWVersion::AD_REVISION));
     EXPECT_EQ(one_.fw_version.getValue(), FWVersion::AD_REVISION);
     EXPECT_EQ(two_.fw_version.getValue(), 0);
 }
@@ -112,7 +112,7 @@ TEST_F(NPETDualFixture, SwitchStartStopCalledOddNumberOfTimesLeavesDesignationSw
 // one_/two_ themselves, since NPETComm is non-movable (see NPET_dual.h) and can't be physically
 // swapped.
 TEST_F(NPETDualFixture, SwitchStartStopRelabelsRatherThanMovingState) {
-    one_.setFWVer(FWVersion(2));
+    one_.setFWVer(FWVersion(FWVersion::AD_REVISION));
     switchStartStop();
     EXPECT_EQ(one_.fw_version.getValue(), FWVersion::AD_REVISION)
         << "one_'s own state changed - switchStartStop() must not touch the underlying instances";

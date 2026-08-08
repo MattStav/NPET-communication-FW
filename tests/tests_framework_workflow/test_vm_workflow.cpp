@@ -33,7 +33,7 @@ class MeasurementCounterTest : public FrameworkWorkflowFixture {
 /// VirtualMachine::measurement_counter_ starts at 0 on construction,
 /// so the first measurement read from a freshly initialized VM must carry meas_num == 1
 TEST_F(MeasurementCounterTest, FirstMeasurementHasCounterOne) {
-    client->setFWVer(FWVersion(3)); // must match the multiplier the VM encoded with
+    client->setFWVer(FWVersion(FWVersion::VIRTUAL)); // must match the multiplier the VM encoded with
     const Measurement FIRST = client->readSingleMeasurement(Channel::CH1);
     EXPECT_EQ(FIRST.meas_num, 1);
 }
@@ -47,7 +47,7 @@ class MeasurementStartTimeTest : public FrameworkWorkflowFixture {
 /// Channel 1 (10ms tick grid at 100Hz) is used rather than channel 2 (fixed 1s grid), since
 /// channel 2's very first tick always lands at exactly 1.0s, not 0.
 TEST_F(MeasurementStartTimeTest, FirstMeasurementStartsAtZeroSeconds) {
-    client->setFWVer(FWVersion(3)); // must match the multiplier the VM encoded with
+    client->setFWVer(FWVersion(FWVersion::VIRTUAL)); // must match the multiplier the VM encoded with
     const Measurement FIRST = client->readSingleMeasurement(Channel::CH1);
     EXPECT_EQ(FIRST.intp, 0);
 

@@ -17,6 +17,8 @@ constexpr std::string_view APP_START_MSG = "NPET communication FW started: ";
 constexpr std::string_view NO_PORTS = "No available COM ports found";
 constexpr std::string_view CHANNEL_INVALID = "Invalid channel number";
 constexpr std::string_view BAUD_RATE_CURRENT = "Current baud rate";
+constexpr std::string_view BAUD_RATE_OK = "Baud rate set to";
+constexpr std::string_view BAUD_RATE_ERR = "Failed to set baud rate";
 
 
 void printAppIntro() {
@@ -257,3 +259,30 @@ int promptBaudRate(const int CURRENT_BAUD_RATE) {
             return CURRENT_BAUD_RATE;
     }
 } // end of promptBaudRate function
+
+
+///
+/// Change communication baud rate for the referenced NPET.
+/// @param npet The NPETComm reference
+/// @param NEW_BAUD_RATE The new baud rate to set for the NPET communication
+void setBaudRateSafe(NPETComm &npet, const int NEW_BAUD_RATE) {
+    try {
+        SPDLOG_WARN("INITIATING BAUD RATE CHANGE!");
+        Cli::echo("YOU ARE ABOUT TO CHANGE THE COMMUNICATION BAUD RATE.", fg::yellow, style::bold);
+        Cli::echo("DO NOT DISCONNECT THE DEVICE OR CLOSE THE PROGRAM!", fg::yellow, style::bold);
+        Cli::echo("IF THIS PROCESS FAILS, RESTART THE DEVICE AND LAUNCH THIS PROGRAM ANEW.", fg::yellow, style::bold);
+        Sleep(1000); // Wait for 1 second to let the user read the warning
+        if (npet.setBaudRate(NEW_BAUD_RATE)) {
+            SPDLOG_DEBUG("{}: {}", BAUD_RATE_OK, NEW_BAUD_RATE);
+            Cli::showInt(std::string(BAUD_RATE_OK), NEW_BAUD_RATE);
+        } else {
+            SPDLOG_ERROR(BAUD_RATE_ERR);
+            Cli::err(std::string(BAUD_RATE_ERR));
+        }
+    } catch (std::runtime_error &e) {
+        SPDLOG_ERROR("{}: {}", BAUD_RATE_ERR, e.what());
+        Cli::err(BAUD_RATE_ERR.data() + std::string(e.what()));
+        Cli::confirmExit();
+        throw;
+    } // end of try-catch block
+}

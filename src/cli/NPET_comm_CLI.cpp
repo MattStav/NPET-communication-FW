@@ -18,8 +18,6 @@ constexpr std::string_view FREQ_RESET_FAIL = "Failed to reset the pulse generati
 constexpr std::string_view PULSE_GEN_OK = "Pulse generation successful";
 constexpr std::string_view PULSE_GEN_ERR = "Pulse generation failed";
 constexpr std::string_view PULSE_GEN_STOP_FAIL = "Failed to stop pulse generation";
-constexpr std::string_view BAUD_RATE_OK = "Baud rate set to";
-constexpr std::string_view BAUD_RATE_ERR = "Failed to set baud rate";
 constexpr std::string_view BAUD_RATE_RESET_FAIL = "Failed to reset baud rate to default";
 constexpr std::string_view DATA_FORMAT_RESET_FAIL = "Failed to reset the data format";
 constexpr std::string_view MONITOR_FN_INVALID = "Invalid monitor function";
@@ -194,26 +192,7 @@ void NPETCommCLI::setBaudRateCLI() {
     SPDLOG_DEBUG("Setting baud rate ...");
     const int CURRENT_BAUD = getBaudRate();
     const int NEW_BAUD_RATE = promptBaudRate(CURRENT_BAUD);
-    try {
-        SPDLOG_WARN("INITIATING BAUD RATE CHANGE!");
-        Cli::echo("YOU ARE ABOUT TO CHANGE THE COMMUNICATION BAUD RATE.", fg::yellow, style::bold);
-        Cli::echo("DO NOT DISCONNECT THE DEVICE OR CLOSE THE PROGRAM!", fg::yellow, style::bold);
-        Cli::echo("IF THIS PROCESS FAILS, RESTART THE DEVICE AND LAUNCH THIS PROGRAM ANEW.", fg::yellow, style::bold);
-        Sleep(1000); // Wait for 1 second to let the user read the warning
-        if (setBaudRate(NEW_BAUD_RATE)) {
-            SPDLOG_DEBUG("{}: {}", BAUD_RATE_OK, NEW_BAUD_RATE);
-            Cli::showInt(std::string(BAUD_RATE_OK), NEW_BAUD_RATE);
-        } else {
-            SPDLOG_ERROR(BAUD_RATE_ERR);
-            Cli::err(std::string(BAUD_RATE_ERR));
-        }
-    } catch (std::runtime_error &e) {
-        SPDLOG_ERROR("{}: {}", BAUD_RATE_ERR, e.what());
-        Cli::err(BAUD_RATE_ERR.data() + std::string(e.what()));
-        SPDLOG_WARN("Attempting to reopen the communication");
-        Cli::echo("Attempting to reopen the communication. If this keeps failing, reset the NPET!", fg::yellow);
-        openCommunicationCLI();
-    } // end of try-catch block
+    setBaudRateSafe(*this, NEW_BAUD_RATE);
 } // end of set_baud_rate_handler function
 
 

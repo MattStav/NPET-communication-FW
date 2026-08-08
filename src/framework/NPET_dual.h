@@ -33,16 +33,16 @@ public:
     /// Predeclare a thread per callable, then release both at once off a common signal so
     /// they start in lockstep rather than one running ahead while the other is still spinning up.
     /// Blocks until both have finished.
-    template<typename FuncStart, typename FuncStop>
-    void executeBoth(FuncStart &&start_func, FuncStop &&stop_func) {
+    template<typename FuncOne, typename FuncTwo>
+    void executeBoth(FuncOne &&func_one, FuncTwo &&func_two) {
         std::latch start_signal{1};
         std::jthread start_thread([&] {
             start_signal.wait();
-            std::forward<FuncStart>(start_func)();
+            std::forward<FuncOne>(func_one)();
         });
         std::jthread stop_thread([&] {
             start_signal.wait();
-            std::forward<FuncStop>(stop_func)();
+            std::forward<FuncTwo>(func_two)();
         });
         start_signal.count_down();
     }

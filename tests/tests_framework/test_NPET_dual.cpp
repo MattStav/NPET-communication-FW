@@ -80,6 +80,48 @@ TEST_F(NPETDualFixture, ExecuteBothRunsCallablesConcurrently) {
 }
 
 
+// --- switchStartStop(): logical START/STOP designation ---
+
+TEST_F(NPETDualFixture, DefaultDesignationMapsStartToOneAndStopToTwo) {
+    EXPECT_EQ(&startComm(), &one_);
+    EXPECT_EQ(&stopComm(), &two_);
+}
+
+TEST_F(NPETDualFixture, SwitchStartStopSwapsDesignation) {
+    switchStartStop();
+    EXPECT_EQ(&startComm(), &two_);
+    EXPECT_EQ(&stopComm(), &one_);
+}
+
+TEST_F(NPETDualFixture, SwitchStartStopTwiceRestoresOriginalDesignation) {
+    switchStartStop();
+    switchStartStop();
+    EXPECT_EQ(&startComm(), &one_);
+    EXPECT_EQ(&stopComm(), &two_);
+}
+
+TEST_F(NPETDualFixture, SwitchStartStopCalledOddNumberOfTimesLeavesDesignationSwapped) {
+    for (int i = 0; i < 3; i++) {
+        switchStartStop();
+    }
+    EXPECT_EQ(&startComm(), &two_);
+    EXPECT_EQ(&stopComm(), &one_);
+}
+
+// switchStartStop() only relabels which accessor resolves to which instance - it must not touch
+// one_/two_ themselves, since NPETComm is non-movable (see NPET_dual.h) and can't be physically
+// swapped.
+TEST_F(NPETDualFixture, SwitchStartStopRelabelsRatherThanMovingState) {
+    one_.setFWVer(FWVersion::AD_REVISION);
+    switchStartStop();
+    EXPECT_EQ(one_.fw_version.getValue(), FWVersion::AD_REVISION)
+        << "one_'s own state changed - switchStartStop() must not touch the underlying instances";
+    EXPECT_EQ(two_.fw_version.getValue(), 0);
+    EXPECT_EQ(stopComm().fw_version.getValue(), FWVersion::AD_REVISION)
+        << "stopComm() should now resolve to one_, which carries the firmware version set above";
+}
+
+
 // --- DualMeasContext::toString() ---
 
 class DualMeasContextToString : public testing::TestWithParam<DualToStringParams> {

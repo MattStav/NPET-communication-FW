@@ -19,6 +19,16 @@ TEST_F(DualFrameworkWorkflowFixture, BothConnectionsAreOpenAndResponsive) {
     EXPECT_TRUE(two_.isResponsive());
 }
 
+// switchStartStop() only relabels which live connection startComm()/stopComm() resolve to (see
+// NPET_dual.h); both must still be the same open, responsive connections as one_/two_.
+TEST_F(DualFrameworkWorkflowFixture, SwitchStartStopStillResolvesToLiveConnections) {
+    switchStartStop();
+    EXPECT_EQ(&startComm(), &two_);
+    EXPECT_EQ(&stopComm(), &one_);
+    EXPECT_TRUE(startComm().isResponsive());
+    EXPECT_TRUE(stopComm().isResponsive());
+}
+
 TEST_F(DualFrameworkWorkflowFixture, ReadBatchMeasurementsDefaultArgumentSucceeds) {
     // Exercises NPETDual::readBatchMeasurements()'s default DualMeasContext (5 measurements,
     // channel 1 on both legs, no save) - the possibility a caller passes nothing at all.
@@ -148,6 +158,22 @@ TEST_F(DualBatchMeasurementSaveTest, SaveWritesOneFilePerLegWhenChannelsMatch) {
     const std::vector<std::string> NAMES = savedFileNames();
     EXPECT_EQ(std::ranges::count_if(NAMES, [](const std::string &n) { return n.starts_with("START_"); }), 1);
     EXPECT_EQ(std::ranges::count_if(NAMES, [](const std::string &n) { return n.starts_with("STOP_"); }), 1);
+}
+
+// readBatchMeasurements() must keep working end-to-end through startComm()/stopComm() once the
+// designation has been swapped, still producing one correctly-prefixed file per leg.
+TEST_F(DualBatchMeasurementSaveTest, ReadBatchMeasurementsSucceedsAfterSwitchStartStop) {
+    switchStartStop();
+    const DualMeasContext CTX{
+        .num_of_meas = 3,
+        .monitor_fn = nullptr,
+        .save_dir = save_dir,
+        .start_channel = Channel::CH1,
+        .stop_channel = Channel::CH2,
+    };
+    EXPECT_NO_THROW(readBatchMeasurements(CTX));
+    EXPECT_EQ(savedFileCount(), 2U);
+    EXPECT_EQ(readSavedLines().size(), 6U); // 3 measurements from each of the two legs
 }
 
 TEST_F(DualBatchMeasurementSaveTest, NoSaveDirWritesNoFile) {

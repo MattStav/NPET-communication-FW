@@ -28,6 +28,8 @@ class DualFrameworkWorkflowFixture : public ::testing::Test, public NPETDual {
 protected:
     using NPETDual::one_;
     using NPETDual::two_;
+    using NPETDual::startComm;
+    using NPETDual::stopComm;
 
     static std::unique_ptr<VirtualMachine> start_vm;
     static std::unique_ptr<VirtualMachine> stop_vm;

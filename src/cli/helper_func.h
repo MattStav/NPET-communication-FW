@@ -54,7 +54,7 @@ int selectComPortCli(bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS = {
 
 bool openCommSafe(NPETComm &npet, int COM_PORT, std::string_view ERROR_MSG);
 
-void resetNPETSafe(NPETComm &npet, std::string_view designation = "");
+void resetNPETSafe(NPETComm &npet, std::string_view DESIGNATION = "");
 
 int numValidation(const std::string &num_to_validate, bool ALLOW_NEGATIVE_ONE = true);
 

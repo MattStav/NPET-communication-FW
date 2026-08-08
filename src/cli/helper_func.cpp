@@ -296,25 +296,25 @@ void setBaudRateSafe(NPETComm &npet, const int NEW_BAUD_RATE) {
 ///
 /// Reset all the NPET settings
 /// @param npet The NPETComm reference
-/// @param designation The NPET name
-void resetNPETSafe(NPETComm &npet, const std::string_view designation) {
-    if (!safeExec([&] { return npet.clearTimeConstant(); }, std::string(designation) + " clear_time_constant")) {
+/// @param DESIGNATION Optional designation for the NPET, used in error messages. If empty, a default message will be used.
+void resetNPETSafe(NPETComm &npet, const std::string_view DESIGNATION) {
+    if (!safeExec([&] { return npet.clearTimeConstant(); }, std::string(DESIGNATION) + " clear_time_constant")) {
         SPDLOG_ERROR(TIME_CONST_FAILED_TO_CLEAR);
         Cli::err(std::string(TIME_CONST_FAILED_TO_CLEAR));
     }
-    if (!safeExec([&] { return npet.generatePulses(0); }, std::string(designation) + " generate_pulses")) {
+    if (!safeExec([&] { return npet.generatePulses(0); }, std::string(DESIGNATION) + " generate_pulses")) {
         SPDLOG_ERROR(PULSE_GEN_STOP_FAIL);
         Cli::err(std::string(PULSE_GEN_STOP_FAIL));
     }
-    if (!safeExec([&] { return npet.setFrequency(); }, std::string(designation) + " set_frequency")) {
+    if (!safeExec([&] { return npet.setFrequency(); }, std::string(DESIGNATION) + " set_frequency")) {
         SPDLOG_ERROR(FREQ_RESET_FAIL);
         Cli::err(std::string(FREQ_RESET_FAIL));
     }
-    if (!safeExec([&] { return npet.setMeasuredDataFormat(1); }, std::string(designation) + " set_data_format")) {
+    if (!safeExec([&] { return npet.setMeasuredDataFormat(1); }, std::string(DESIGNATION) + " set_data_format")) {
         SPDLOG_ERROR(DATA_FORMAT_RESET_FAIL);
         Cli::err(std::string(DATA_FORMAT_RESET_FAIL));
     }
-    if (!safeExec([&] { return npet.setBaudRate(); }, std::string(designation) + " set_baud_rate")) {
+    if (!safeExec([&] { return npet.setBaudRate(); }, std::string(DESIGNATION) + " set_baud_rate")) {
         SPDLOG_ERROR(BAUD_RATE_RESET_FAIL);
         Cli::err(std::string(BAUD_RATE_RESET_FAIL));
     }

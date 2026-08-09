@@ -8,7 +8,7 @@
 TEST(VirtualMachineTest, DeviceLoopTerminatesOnSigint) {
     VirtualMachine vm{VmConfig{}};
     try {
-        vm.openCommunication(VM_COM_PORT, BAUD_RATE);
+        vm.ser.openCommunication(VM_COM_PORT, BAUD_RATE);
     } catch (const std::exception &e) {
         GTEST_SKIP() << "Could not open COM" << VM_COM_PORT << ": " << e.what()
                 << ". This test requires a com0com virtual null-modem pair on COM"
@@ -25,11 +25,11 @@ TEST(VirtualMachineTest, DeviceLoopTerminatesOnSigint) {
         EXPECT_NO_THROW(loop_done.get());
     } else {
         // Don't let the background task outlive this test (and the local vm it captured by reference).
-        vm.getPort().cancel();
+        vm.ser.cancelPendingOperation(false);
         loop_done.wait();
     }
-    vm.closeCommunication();
-    EXPECT_FALSE(vm.isOpen());
+    vm.ser.closeCommunication();
+    EXPECT_FALSE(vm.ser.isOpen());
 }
 
 

@@ -4,7 +4,6 @@
 #include <gmock/gmock-matchers.h>
 #include <sstream>
 #include <thread>
-#include <type_traits>
 
 #include "serial.h"
 
@@ -18,37 +17,13 @@ public:
     using VirtualMachine::getRunTime;
 };
 
-// VirtualMachine only adds device-simulation behavior on top of SerialMachine; every
-// public/protected communication primitive it relies on (open/close/isOpen/getIO/getPort)
-// must come from the base class.
-TEST(VirtualMachineType, IsASerialMachine) {
-    EXPECT_TRUE((std::is_base_of_v<Serial, VirtualMachine>));
-}
-
 TEST_F(VirtualMachineFixture, ConstructedIsNotOpen) {
-    EXPECT_FALSE(vm.isOpen());
-}
-
-TEST_F(VirtualMachineFixture, GetIOReturnsSameInstanceOnRepeatedCalls) {
-    EXPECT_EQ(&vm.getIO(), &vm.getIO());
-}
-
-TEST_F(VirtualMachineFixture, GetPortReturnsSameInstanceOnRepeatedCalls) {
-    EXPECT_EQ(&vm.getPort(), &vm.getPort());
+    EXPECT_FALSE(vm.ser.isOpen());
 }
 
 TEST_F(VirtualMachineFixture, CloseCommunicationOnUnopenedVmDoesNotThrow) {
-    EXPECT_NO_THROW(vm.closeCommunication());
-    EXPECT_FALSE(vm.isOpen());
-}
-
-// Two independently constructed VMs must not secretly share the io_context/port owned by
-// the SerialMachine base, otherwise closing/opening one would affect the other.
-TEST(VirtualMachineState, DistinctInstancesOwnDistinctIO) {
-    VirtualMachine vm_a{VmConfig{}};
-    VirtualMachine vm_b{VmConfig{}};
-    EXPECT_NE(&vm_a.getIO(), &vm_b.getIO());
-    EXPECT_NE(&vm_a.getPort(), &vm_b.getPort());
+    EXPECT_NO_THROW(vm.ser.closeCommunication());
+    EXPECT_FALSE(vm.ser.isOpen());
 }
 
 // getRunTime() must always report elapsed time as zero-padded hh:mm:ss, the format

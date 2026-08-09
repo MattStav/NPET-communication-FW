@@ -24,14 +24,14 @@ TEST(Constants, PacketSizeValue) {
 }
 
 TEST_F(NPETCommFixture, DefaultConstructedFirmwareVersionIsZero) {
-    EXPECT_EQ(comm.fw_version.getValue(), 0);
+    EXPECT_EQ(comm.getFWVer().getValue(), 0);
 }
 
 // NPETComm inherits SerialMachine's closed-by-default state; the destructor
 // relies on isOpen() to decide whether to talk to the device, so this must
 // hold for the fixture (and every other test built on it) to be hermetic.
 TEST_F(NPETCommFixture, DefaultConstructedIsNotOpen) {
-    EXPECT_FALSE(comm.isOpen());
+    EXPECT_FALSE(comm.ser.isOpen());
 }
 
 
@@ -53,6 +53,6 @@ TEST_P(SetFirmwareVersionTest, SetValidAndInvalidFirmwareVersions) {
     const auto [FIRMWARE_VERSION] = GetParam();
     EXPECT_NO_THROW({
         comm.setFWVer(FWVersion(FIRMWARE_VERSION));
-        EXPECT_EQ(comm.fw_version, FWVersion(FIRMWARE_VERSION));
+        EXPECT_EQ(comm.getFWVer(), FWVersion(FIRMWARE_VERSION));
         });
 }

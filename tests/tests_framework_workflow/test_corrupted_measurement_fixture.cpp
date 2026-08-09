@@ -15,8 +15,8 @@ void CorruptedMeasurementWorkflowFixture::SetUpTestSuite() {
         VmConfig{.com_port = VM_COM_PORT, .ch1_frequency = 100, .corrupt_every = CORRUPT_EVERY});
     client = std::make_unique<NPETComm>();
     try {
-        vm->openCommunication(VM_COM_PORT, BAUD_RATE);
-        client->openCommunication(CLIENT_COM_PORT, BAUD_RATE);
+        vm->ser.openCommunication(VM_COM_PORT, BAUD_RATE);
+        client->ser.openCommunication(CLIENT_COM_PORT, BAUD_RATE);
     } catch (const std::exception &e) {
         vm.reset();
         client.reset();
@@ -34,14 +34,14 @@ void CorruptedMeasurementWorkflowFixture::SetUpTestSuite() {
 /// OperationCancelledError, which deviceLoop() treats as a clean shutdown signal (see
 /// virtual_machine.cpp); resetting vm_thread then joins once that return happens.
 void CorruptedMeasurementWorkflowFixture::TearDownTestSuite() {
-    if (client && client->isOpen() && vm && vm->isOpen()) {
+    if (client && client->ser.isOpen() && vm && vm->ser.isOpen()) {
         EXPECT_TRUE(client->isResponsive()) << "Connection was no longer responsive at teardown";
     }
     if (client) {
-        client->closeCommunication();
+        client->ser.closeCommunication();
     }
-    if (vm && vm->isOpen()) {
-        vm->getPort().cancel();
+    if (vm && vm->ser.isOpen()) {
+        vm->ser.cancelPendingOperation(false);
     }
     vm_thread.reset();
     vm.reset();
@@ -54,6 +54,6 @@ void CorruptedMeasurementWorkflowFixture::TearDownTestSuite() {
 void CorruptedMeasurementWorkflowFixture::SetUp() {
     if (client) {
         client->detectFWVer();
-        EXPECT_EQ(client->fw_version, FWVersion(FWVersion::VIRTUAL));
+        EXPECT_EQ(client->getFWVer(), FWVersion(FWVersion::VIRTUAL));
     }
 }

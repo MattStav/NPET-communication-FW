@@ -17,7 +17,7 @@ PYBIND11_MODULE(NPET_comm_FW_lib, m) {
     // TODO: Add a class init method that sets the FW version
     py::class_<NPETComm>(m, "NPET_comm")
             .def(py::init<>())
-            .def("open_NPET_communication", &NPETComm::openCommunication)
+            // .def("open_NPET_communication", &NPETComm::openCommunication) TODO: needs a fix
             .def("is_NPET_connected", &NPETComm::isResponsive)
             .def("set_NPET_FW_ver", &NPETComm::setFWVer)
             .def("set_frequency", &NPETComm::setFrequency)

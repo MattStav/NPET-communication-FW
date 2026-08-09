@@ -13,8 +13,8 @@
 namespace fs = std::filesystem;
 
 TEST_F(DualFrameworkWorkflowFixture, BothConnectionsAreOpenAndResponsive) {
-    ASSERT_TRUE(one_.isOpen());
-    ASSERT_TRUE(two_.isOpen());
+    ASSERT_TRUE(one_.ser.isOpen());
+    ASSERT_TRUE(two_.ser.isOpen());
     EXPECT_TRUE(one_.isResponsive());
     EXPECT_TRUE(two_.isResponsive());
 }

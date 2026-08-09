@@ -14,26 +14,26 @@ TEST(NPETDualTest, ConstructsAndDestructsWithoutThrowing) {
 }
 
 TEST_F(NPETDualFixture, DefaultConstructedStartIsNotOpen) {
-    EXPECT_FALSE(one_.isOpen());
+    EXPECT_FALSE(one_.ser.isOpen());
 }
 
 TEST_F(NPETDualFixture, DefaultConstructedStopIsNotOpen) {
-    EXPECT_FALSE(two_.isOpen());
+    EXPECT_FALSE(two_.ser.isOpen());
 }
 
 TEST_F(NPETDualFixture, DefaultConstructedStartFirmwareVersionIsZero) {
-    EXPECT_EQ(one_.fw_version.getValue(), 0);
+    EXPECT_EQ(one_.getFWVer().getValue(), 0);
 }
 
 TEST_F(NPETDualFixture, DefaultConstructedStopFirmwareVersionIsZero) {
-    EXPECT_EQ(two_.fw_version.getValue(), 0);
+    EXPECT_EQ(two_.getFWVer().getValue(), 0);
 }
 
 // start_/stop_ must be independent NPETComm instances, not aliases of the same underlying device.
 TEST_F(NPETDualFixture, StartAndStopAreIndependentInstances) {
     one_.setFWVer(FWVersion(FWVersion::AD_REVISION));
-    EXPECT_EQ(one_.fw_version.getValue(), FWVersion::AD_REVISION);
-    EXPECT_EQ(two_.fw_version.getValue(), 0);
+    EXPECT_EQ(one_.getFWVer().getValue(), FWVersion::AD_REVISION);
+    EXPECT_EQ(two_.getFWVer().getValue(), 0);
 }
 
 
@@ -114,10 +114,10 @@ TEST_F(NPETDualFixture, SwitchStartStopCalledOddNumberOfTimesLeavesDesignationSw
 TEST_F(NPETDualFixture, SwitchStartStopRelabelsRatherThanMovingState) {
     one_.setFWVer(FWVersion(FWVersion::AD_REVISION));
     switchStartStop();
-    EXPECT_EQ(one_.fw_version.getValue(), FWVersion::AD_REVISION)
+    EXPECT_EQ(one_.getFWVer().getValue(), FWVersion::AD_REVISION)
         << "one_'s own state changed - switchStartStop() must not touch the underlying instances";
-    EXPECT_EQ(two_.fw_version.getValue(), 0);
-    EXPECT_EQ(stopComm().fw_version.getValue(), FWVersion::AD_REVISION)
+    EXPECT_EQ(two_.getFWVer().getValue(), 0);
+    EXPECT_EQ(stopComm().getFWVer().getValue(), FWVersion::AD_REVISION)
         << "stopComm() should now resolve to one_, which carries the firmware version set above";
 }
 

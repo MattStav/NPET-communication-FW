@@ -15,8 +15,8 @@ void DualFrameworkWorkflowFixture::SetUpTestSuite() {
     stop_vm = std::make_unique<VirtualMachine>(
         VmConfig{.com_port = STOP_VM_COM_PORT, .ch1_frequency = 100, .corrupt_every = 0});
     try {
-        start_vm->openCommunication(START_VM_COM_PORT, BAUD_RATE);
-        stop_vm->openCommunication(STOP_VM_COM_PORT, BAUD_RATE);
+        start_vm->ser.openCommunication(START_VM_COM_PORT, BAUD_RATE);
+        stop_vm->ser.openCommunication(STOP_VM_COM_PORT, BAUD_RATE);
     } catch (const std::exception &e) {
         start_vm.reset();
         stop_vm.reset();
@@ -34,11 +34,11 @@ void DualFrameworkWorkflowFixture::SetUpTestSuite() {
 /// it treats as a clean shutdown signal (see virtual_machine.cpp); resetting the *_vm_thread
 /// members then joins once that return happens.
 void DualFrameworkWorkflowFixture::TearDownTestSuite() {
-    if (start_vm && start_vm->isOpen()) {
-        start_vm->getPort().cancel();
+    if (start_vm && start_vm->ser.isOpen()) {
+        start_vm->ser.cancelPendingOperation(false);
     }
-    if (stop_vm && stop_vm->isOpen()) {
-        stop_vm->getPort().cancel();
+    if (stop_vm && stop_vm->ser.isOpen()) {
+        stop_vm->ser.cancelPendingOperation(false);
     }
     start_vm_thread.reset();
     stop_vm_thread.reset();
@@ -50,8 +50,8 @@ void DualFrameworkWorkflowFixture::TearDownTestSuite() {
 /// Opens NPETDual's start_/stop_ legs onto the two VMs' client-side ports for this one test
 void DualFrameworkWorkflowFixture::SetUp() {
     try {
-        one_.openCommunication(START_CLIENT_COM_PORT, BAUD_RATE);
-        two_.openCommunication(STOP_CLIENT_COM_PORT, BAUD_RATE);
+        one_.ser.openCommunication(START_CLIENT_COM_PORT, BAUD_RATE);
+        two_.ser.openCommunication(STOP_CLIENT_COM_PORT, BAUD_RATE);
         one_.detectFWVer();
         two_.detectFWVer();
     } catch (const std::exception &e) {
@@ -65,7 +65,7 @@ void DualFrameworkWorkflowFixture::SetUp() {
 /// (and, with them, closed), so a test that silently broke one shows up as its own failure
 /// instead of quietly poisoning whichever later test reopens the same port.
 void DualFrameworkWorkflowFixture::TearDown() {
-    if (one_.isOpen() && two_.isOpen()) {
+    if (one_.ser.isOpen() && two_.ser.isOpen()) {
         EXPECT_TRUE(one_.isResponsive()) << "start_ connection was no longer responsive at teardown";
         EXPECT_TRUE(two_.isResponsive()) << "stop_ connection was no longer responsive at teardown";
     }

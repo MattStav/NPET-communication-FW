@@ -30,7 +30,7 @@ protected:
     void SetUp() override {
         if (client) {
             client->detectFWVer();
-            EXPECT_EQ(client->fw_version, FWVersion(FWVersion::VIRTUAL));
+            EXPECT_EQ(client->getFWVer(), FWVersion(FWVersion::VIRTUAL));
         }
     }
 };

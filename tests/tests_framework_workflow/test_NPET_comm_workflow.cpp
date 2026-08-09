@@ -12,17 +12,16 @@
 // Proves the setup itself: two virtual ports paired via com0com, a VirtualMachine listening on
 // one end, and a plain NPETComm client on the other, actually exchange bytes end to end.
 TEST_F(FrameworkWorkflowFixture, ClientIsResponsiveToVirtualMachine) {
-    ASSERT_TRUE(client->isOpen());
-    ASSERT_TRUE(vm->isOpen());
+    ASSERT_TRUE(client->ser.isOpen());
+    ASSERT_TRUE(vm->ser.isOpen());
     EXPECT_TRUE(client->isResponsive());
 }
 
 TEST_F(FrameworkWorkflowFixture, SetBaudRate) {
     ASSERT_TRUE(client->setBaudRate(230400));
     EXPECT_TRUE(client->isResponsive());
-    boost::asio::serial_port_base::baud_rate current_baud{};
-    client->getPort().get_option(current_baud);
-    EXPECT_EQ(current_baud.value(), 230400);
+    const int current_baud = client->ser.getBaudRate();
+    EXPECT_EQ(current_baud, 230400);
 }
 
 class CloseResetsBaudRateTest : public FrameworkWorkflowFixture {
@@ -33,22 +32,20 @@ class CloseResetsBaudRateTest : public FrameworkWorkflowFixture {
 // thing that opens the port at some other speed.
 TEST_F(CloseResetsBaudRateTest, DestructorResetsBaudRateTo115200) {
     ASSERT_TRUE(client->setBaudRate(230400));
-    boost::asio::serial_port_base::baud_rate vm_baud_before{};
-    vm->getPort().get_option(vm_baud_before);
-    ASSERT_EQ(vm_baud_before.value(), 230400);
+    const int vm_baud_before = client->ser.getBaudRate();
+    ASSERT_EQ(vm_baud_before, 230400);
 
     client.reset(); // Triggers ~NPETComm()
 
-    boost::asio::serial_port_base::baud_rate vm_baud_after{};
-    vm->getPort().get_option(vm_baud_after);
-    EXPECT_EQ(vm_baud_after.value(), 115200);
+    const int vm_baud_after = client->ser.getBaudRate();
+    EXPECT_EQ(vm_baud_after, 115200);
 }
 
 // The VM answers "?" with "Firmware none - offline", which detectFWVer() recognizes as the
 // Virtual NPET firmware.
 TEST_F(FrameworkWorkflowFixture, DetectFWVerSetsVirtualVersion) {
     client->detectFWVer();
-    EXPECT_EQ(client->fw_version, FWVersion(FWVersion::VIRTUAL));
+    EXPECT_EQ(client->getFWVer(), FWVersion(FWVersion::VIRTUAL));
 }
 
 TEST_F(FrameworkWorkflowFixture, SetMeasuredDataFormatSucceedsForBinary) {

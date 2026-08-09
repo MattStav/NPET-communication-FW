@@ -30,7 +30,7 @@ int main(const int argc, char *const*argv) {
             exit_code = resetNpetStandalone();
             break;
         case AppCommand::Virtual:
-            spdlog::set_level(spdlog::level::off);
+            spdlog::set_level(spdlog::level::info);
             exit_code = launchVm(vm_config);
             break;
         case AppCommand::DataProcessor:

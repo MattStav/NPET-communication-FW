@@ -193,7 +193,7 @@ int Serial::getBaudRate() const {
 }
 
 
-void Serial::setBaudRateSerial(const int NEW_BAUD_RATE) {
+void Serial::setBaudRate(const int NEW_BAUD_RATE) {
     port_.set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
     SPDLOG_INFO("Baud rate changed to {}", NEW_BAUD_RATE);
 }

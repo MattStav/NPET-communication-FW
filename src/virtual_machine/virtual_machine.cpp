@@ -90,7 +90,7 @@ std::string VirtualMachine::getResponse(const std::string &command) {
 
 void VirtualMachine::changeBaudRate(const int NEW_BAUD_RATE) {
     try {
-        ser.setBaudRateSerial(NEW_BAUD_RATE);
+        ser.setBaudRate(NEW_BAUD_RATE);
     } catch (const std::exception &e) {
         SPDLOG_ERROR("Couldn't change the baud rate: {}", e.what());
     }

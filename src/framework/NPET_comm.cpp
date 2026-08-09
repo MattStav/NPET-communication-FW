@@ -95,7 +95,7 @@ bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
     ser.writeToSerial(CMD);
     // Read response to clear the buffer
     ser.readFromSerial();
-    ser.setBaudRateSerial(NEW_BAUD_RATE);
+    ser.setBaudRate(NEW_BAUD_RATE);
     const bool SUCCESS = isResponsive();
     if (SUCCESS) {
         SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE);

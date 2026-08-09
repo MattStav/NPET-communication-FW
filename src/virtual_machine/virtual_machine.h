@@ -16,10 +16,10 @@ struct VmConfig {
 class VirtualMachine : public SerialMachine {
     // Frequency of measurement stream on channel 1
     int ch1_frequency_{};
-    // Corrupt every n-th measurement
-    int corrupt_every_{};
     // Delay of channel 1's tick grid relative to channel 2's, see VmConfig::ch1_delay_ns
     std::chrono::nanoseconds ch1_delay_ns_{0};
+    // Corrupt every n-th measurement
+    int corrupt_every_{};
     // The time constant currently saved in NPET
     std::string time_const_;
     // The measurement counter

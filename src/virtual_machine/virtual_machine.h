@@ -9,6 +9,7 @@ struct VmConfig {
     int com_port{};
     int ch1_frequency{100};
     int corrupt_every{0};
+    int ch1_delay_ns{0};
 };
 
 
@@ -17,6 +18,8 @@ class VirtualMachine : public SerialMachine {
     int ch1_frequency_{};
     // Corrupt every n-th measurement
     int corrupt_every_{};
+    // Delay of channel 1's tick grid relative to channel 2's, see VmConfig::ch1_delay_ns
+    std::chrono::nanoseconds ch1_delay_ns_{0};
     // The time constant currently saved in NPET
     std::string time_const_;
     // The measurement counter
@@ -57,7 +60,10 @@ class VirtualMachine : public SerialMachine {
     /// device acknowledges a stop request received while still streaming.
     /// @param num_str Number of measurements to send as a string
     /// @param PERIOD Fixed time between measurements (e.g. 1s, 250ms, 400us), anchored to start_time
-    void sendMeasurements(const std::string &num_str, std::chrono::microseconds PERIOD);
+    /// @param OFFSET Additional delay added to start_time before laying out the grid, letting a channel's
+    /// ticks (and thus the measurement timestamps sent) lag behind another channel's by a fixed amount
+    void sendMeasurements(const std::string &num_str, std::chrono::microseconds PERIOD,
+                          std::chrono::nanoseconds OFFSET = std::chrono::nanoseconds(0));
 
     ///
     /// Arm a one-shot, non-blocking listen for a stop command ('c') on the serial port.
@@ -76,7 +82,8 @@ protected:
 
 public:
     explicit VirtualMachine(const VmConfig CONFIG) : ch1_frequency_(CONFIG.ch1_frequency),
-                                                     corrupt_every_(CONFIG.corrupt_every) {
+                                                     corrupt_every_(CONFIG.corrupt_every),
+                                                     ch1_delay_ns_(std::chrono::nanoseconds(CONFIG.ch1_delay_ns)) {
     }
 
     ///

@@ -25,6 +25,9 @@ ParsedArgs parseArgs(const int argc, char *const *argv) {
             ->required();
     VM->add_option("--corrupt-every", vm_config.corrupt_every, "Corrupt every N measurements")
             ->check(CLI::Range(0, 2500));
+    VM->add_option("--offset", vm_config.ch1_delay_ns,
+                   "Delay of channel 1 relative to channel 2 (PPS, fixed 1 Hz) [ns]")
+            ->check(CLI::Range(0, 999));
     const auto *const DATA_PROCESSOR = app.add_subcommand(
         "dp", "Run the NPET data processor, which needs to be installed separately");
     const auto *const LICENSE = app.add_subcommand("license", "Show license information");

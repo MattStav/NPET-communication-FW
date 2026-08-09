@@ -63,7 +63,7 @@ std::string VirtualMachine::getResponse(const std::string &command) {
     }
     if (command.starts_with('e')) {
         SPDLOG_INFO("Reading measurements from channel {}", 1);
-        sendMeasurements(command.substr(1), std::chrono::microseconds(1'000'000 / ch1_frequency_));
+        sendMeasurements(command.substr(1), std::chrono::microseconds(1'000'000 / ch1_frequency_), ch1_delay_ns_);
         return "";
     }
     if (command.starts_with('h')) {
@@ -111,7 +111,8 @@ void VirtualMachine::listenForStopCommand(bool &stop_requested) {
 }
 
 
-void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chrono::microseconds PERIOD) {
+void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chrono::microseconds PERIOD,
+                                      const std::chrono::nanoseconds OFFSET) {
     if (!correct_meas_format_set_) {
         SPDLOG_ERROR("Measurement format not set to binary, cannot send measurements");
         return;
@@ -130,9 +131,12 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
     listenForStopCommand(stop_requested);
     // poll once to start the async read
     pollUntil([&] { return true; }, true);
-    // Align to the next tick of the start_time grid
-    const auto TICKS_ELAPSED = (std::chrono::high_resolution_clock::now() - START_TIME) / PERIOD; // NOLINT(readability-redundant-parentheses)
-    auto next_tick = START_TIME + (TICKS_ELAPSED + 1) * PERIOD;
+    // Align to the next tick of the start_time grid, shifted by OFFSET.
+    // ELAPSED_NS below is still measured from start_time, so the shift
+    // carries through into the reported measurement timestamps, not just the trigger schedule.
+    const auto ANCHOR = START_TIME + OFFSET;
+    const auto TICKS_ELAPSED = (std::chrono::high_resolution_clock::now() - ANCHOR) / PERIOD; // NOLINT(readability-redundant-parentheses)
+    auto next_tick = ANCHOR + (TICKS_ELAPSED + 1) * PERIOD;
     while (true) {
         // Wait for the next fixed tick since start_time, while still polling for the stop command to arrive.
         // Don't restart the io_context here: the stop-command read stays outstanding across ticks.
@@ -145,11 +149,11 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
         // Increment the measurement counters
         measurement_counter_++;
         i++;
-        // Time the VM has been alive, trusted only down to the microsecond
-        const auto ELAPSED_US = std::chrono::duration_cast<std::chrono::microseconds>(next_tick - START_TIME);
-        const auto ELAPSED_SECONDS = std::chrono::duration_cast<std::chrono::seconds>(ELAPSED_US);
-        const auto SUB_SECOND_US = ELAPSED_US - ELAPSED_SECONDS; // whole microseconds within the current second
-        const __float128 KNOWN_FRACP = static_cast<__float128>(SUB_SECOND_US.count()) / 1'000'000;
+        // Time the VM has been alive, trusted down to the nanosecond
+        const auto ELAPSED_NS = std::chrono::duration_cast<std::chrono::nanoseconds>(next_tick - START_TIME);
+        const auto ELAPSED_SECONDS = std::chrono::duration_cast<std::chrono::seconds>(ELAPSED_NS);
+        const auto SUB_SECOND_NS = ELAPSED_NS - ELAPSED_SECONDS; // whole nanoseconds within the current second
+        const __float128 KNOWN_FRACP = static_cast<__float128>(SUB_SECOND_NS.count()) / 1'000'000'000;
         // Add this VM instance's fixed offset, plus hundred picosecond-level noise
         std::uniform_real_distribution jitter_distrib(0.0, 1e-10);
         const __float128 fracp = KNOWN_FRACP + TIMING_OFFSET + static_cast<__float128>(jitter_distrib(gen));

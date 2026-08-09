@@ -36,11 +36,6 @@ class VirtualMachine : public SerialMachine {
     [[nodiscard]] static __float128 randomOffset();
 
     ///
-    /// Get the current virtual machine run time
-    /// @return The current run time of the virtual machine formatted as hh:mm:ss.
-    [[nodiscard]] std::string getRunTime() const;
-
-    ///
     /// Process a received command and generate an appropriate response.
     /// @param command Command string received
     /// @return The response string to send back
@@ -72,6 +67,12 @@ class VirtualMachine : public SerialMachine {
     /// @param stop_requested Set to true if the received line starts with 'c'; left untouched otherwise. Must
     ///                        outlive the read, since it's captured by reference in the completion handler.
     void listenForStopCommand(bool &stop_requested);
+
+protected:
+    ///
+    /// Get the current virtual machine run time
+    /// @return The current run time of the virtual machine formatted as hh:mm:ss.
+    [[nodiscard]] std::string getRunTime() const;
 
 public:
     explicit VirtualMachine(const VmConfig CONFIG) : ch1_frequency_(CONFIG.ch1_frequency),

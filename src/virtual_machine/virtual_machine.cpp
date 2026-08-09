@@ -128,7 +128,8 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
     // Start listening for an incoming stop command without blocking the measurement stream below
     bool stop_requested = false;
     listenForStopCommand(stop_requested);
-    getIO().restart();
+    // poll once to start the async read
+    pollUntil([&] { return true; }, true);
     // Align to the next tick of the start_time grid
     const auto TICKS_ELAPSED = (std::chrono::high_resolution_clock::now() - START_TIME) / PERIOD; // NOLINT(readability-redundant-parentheses)
     auto next_tick = START_TIME + (TICKS_ELAPSED + 1) * PERIOD;
@@ -151,14 +152,11 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
         const __float128 KNOWN_FRACP = static_cast<__float128>(SUB_SECOND_US.count()) / 1'000'000;
         // Add this VM instance's fixed offset, plus hundred picosecond-level noise
         std::uniform_real_distribution jitter_distrib(0.0, 1e-10);
-        __float128 fracp = KNOWN_FRACP + TIMING_OFFSET + static_cast<__float128>(jitter_distrib(gen));
-        int seconds = static_cast<int>(ELAPSED_SECONDS.count());
-        if (fracp >= 1) {
-            // jitter pushed the fractional part past the next whole second
-            fracp -= 1;
-            seconds++;
-        }
-        const Measurement MEASUREMENT{.meas_num = measurement_counter_, .intp = seconds, .fracp = fracp};
+        const __float128 fracp = KNOWN_FRACP + TIMING_OFFSET + static_cast<__float128>(jitter_distrib(gen));
+        const int seconds = static_cast<int>(ELAPSED_SECONDS.count());
+        Measurement MEASUREMENT{.meas_num = measurement_counter_, .intp = seconds, .fracp = fracp};
+        // Jitter might push the fractional part past the next whole second
+        MEASUREMENT.resolve();
         auto measurement_set = encodeMeasurementSet(MEASUREMENT, FWVersion(FWVersion::VIRTUAL).getMultiplier());
         if (corrupt_every_ > 0 && (i % corrupt_every_) == 0) {
             // Bump the checksum byte so it no longer matches xorChecksum() of the other 12 bytes,

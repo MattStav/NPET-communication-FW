@@ -29,6 +29,6 @@ INSTANTIATE_TEST_SUITE_P(
 // the (here, non-existent) COM port; the resulting failure comes from Boost.Asio rather than
 // the std::invalid_argument thrown by the validation check itself, proving the check was cleared.
 TEST(VmConfigValidation, FrequencyAtLimitPassesValidationAndAttemptsToOpenPort) {
-    const VmConfig CONFIG{.com_port = 250, .ch1_frequency = 2500};
+    constexpr VmConfig CONFIG{.com_port = 250, .ch1_frequency = 2500};
     EXPECT_THROW((void) launchVm(CONFIG), boost::system::system_error);
 }

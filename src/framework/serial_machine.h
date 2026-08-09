@@ -49,6 +49,13 @@ class SerialMachine {
                                  const std::optional<boost::system::error_code> &timer_result,
                                  std::chrono::milliseconds TIMEOUT);
 
+    ///
+    /// Arm a handler that closes the serial connection cooperatively when SIGINT (Ctrl+C) is
+    /// received, instead of relying on the OS's default handler, which force-kills threads and
+    /// can deadlock the process if one of them was terminated mid-syscall inside a blocking
+    /// serial port read. One-shot: call again after it fires if the port is reopened and the
+    /// handler needs to be re-armed.
+    void armSIGINTShutdown();
 public:
     // Constructor
     SerialMachine() = default;
@@ -177,14 +184,6 @@ protected:
     /// untouched otherwise. Must outlive the read, since it's captured by reference in the
     /// completion handler.
     void listenForCommand(char EXPECTED_FIRST_BYTE, bool &matched);
-
-    ///
-    /// Arm a handler that closes the serial connection cooperatively when SIGINT (Ctrl+C) is
-    /// received, instead of relying on the OS's default handler, which force-kills threads and
-    /// can deadlock the process if one of them was terminated mid-syscall inside a blocking
-    /// serial port read. One-shot: call again after it fires if the port is reopened and the
-    /// handler needs to be re-armed.
-    void armSigintShutdown();
 };
 
 

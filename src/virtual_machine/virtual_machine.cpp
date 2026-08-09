@@ -170,8 +170,6 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
 
 
 void VirtualMachine::deviceLoop() {
-    armSigintShutdown();
-
     while (true) {
         SPDLOG_INFO("Virtual NPET runtime [hh:mm:ss]: {}", getRunTime());
         SPDLOG_INFO("Waiting for data...");

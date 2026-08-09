@@ -16,6 +16,8 @@ void SerialMachine::openCommunication(const int COM_PORT, const int BAUD_RATE) {
     port_.set_option(boost::asio::serial_port_base::baud_rate(BAUD_RATE));
     SPDLOG_DEBUG("COM{} opened with {} baud rate ", COM_PORT, BAUD_RATE);
     assert(port_.is_open());
+    armSIGINTShutdown();
+    SPDLOG_DEBUG("SIGINT shutdown armed");
     SPDLOG_INFO("Communication on COM{} opened successfully", COM_PORT);
 } // end of openCommunication function
 
@@ -210,7 +212,7 @@ void SerialMachine::listenForCommand(const char EXPECTED_FIRST_BYTE, bool &match
 }
 
 
-void SerialMachine::armSigintShutdown() {
+void SerialMachine::armSIGINTShutdown() {
     sigint_signals_.async_wait([this](const boost::system::error_code &ec, int) {
         if (ec) {
             return; // signal_set was cancelled/destroyed

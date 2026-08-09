@@ -3,7 +3,7 @@
 #include <chrono>
 
 #include "meas_func.h"
-#include "serial_machine.h"
+#include "serial.h"
 
 struct VmConfig {
     int com_port{};

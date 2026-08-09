@@ -1,4 +1,4 @@
-#include "serial_machine.h"
+#include "serial.h"
 
 #include <gtest/gtest.h>
 #include <type_traits>

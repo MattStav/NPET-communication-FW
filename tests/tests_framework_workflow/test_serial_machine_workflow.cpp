@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <chrono>
 
-#include "serial_machine.h"
+#include "serial.h"
 #include "test_workflow_fixture.h"
 
 // Opens one end of the com0com virtual null-modem pair and leaves the other end untouched, so a

@@ -3,7 +3,7 @@
 #include <chrono>
 #include <thread>
 
-#include "serial_machine.h"
+#include "serial.h"
 #include "test_workflow_fixture.h"
 
 // Polls SERIAL until PRED is true or TIMEOUT elapses, whichever comes first. Serial::pollUntil()

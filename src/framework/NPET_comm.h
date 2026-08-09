@@ -7,7 +7,7 @@
 #include "meas_reader.h"
 #include "meas_func.h"
 #include "fw_version.h"
-#include "serial_machine.h"
+#include "serial.h"
 
 
 class NPETComm {

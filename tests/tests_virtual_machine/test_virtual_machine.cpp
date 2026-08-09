@@ -6,7 +6,7 @@
 #include <thread>
 #include <type_traits>
 
-#include "serial_machine.h"
+#include "serial.h"
 
 using ::testing::MatchesRegex;
 

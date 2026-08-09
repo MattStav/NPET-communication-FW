@@ -25,11 +25,7 @@ void MeasReader::dataReceiver() {
         bool completed = false;
 
         // Read exactly 13 bytes - guarantees a complete packet
-        boost::asio::async_read(npet_.getPort(), boost::asio::buffer(buf),
-                                [&](const boost::system::error_code &error, const size_t /*_*/) {
-                                    ec = error;
-                                    completed = true;
-                                });
+        npet_.readExactAsync(buf, ec, completed);
         // Run until the async read completes
         npet_.pollUntil([&] { return completed || stop_sign.load(std::memory_order_relaxed); });
         // If the operation was aborted by error or another thread, exit the loop

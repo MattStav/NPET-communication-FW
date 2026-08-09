@@ -212,6 +212,15 @@ void SerialMachine::listenForCommand(const char EXPECTED_FIRST_BYTE, bool &match
 }
 
 
+void SerialMachine::readExactAsync(const std::span<std::uint8_t> DATA, boost::system::error_code &ec, bool &completed) {
+    boost::asio::async_read(port_, boost::asio::buffer(DATA.data(), DATA.size()),
+                            [&ec, &completed](const boost::system::error_code &error, std::size_t) {
+                                ec = error;
+                                completed = true;
+                            });
+}
+
+
 void SerialMachine::armSIGINTShutdown() {
     sigint_signals_.async_wait([this](const boost::system::error_code &ec, int) {
         if (ec) {

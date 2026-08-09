@@ -127,6 +127,17 @@ public:
     /// @return Current baud rate of the serial port
     int getBaudRate();
 
+    ///
+    /// Arm a one-shot, non-blocking read of exactly DATA.size() bytes from the serial port.
+    /// Returns immediately; the actual read completes later on the io_context (see getIO()), so
+    /// the caller must keep driving it (e.g. via pollUntil()) for COMPLETED to ever become true.
+    /// @param DATA Buffer to fill; its size determines how many bytes are read
+    /// @param ec Set to the read's resulting error code once it completes (default-constructed,
+    /// i.e. falsy, on success). Must outlive the read, since it's captured by reference.
+    /// @param completed Set to true once the read completes, successfully or otherwise. Must
+    /// outlive the read, since it's captured by reference in the completion handler.
+    void readExactAsync(std::span<std::uint8_t> DATA, boost::system::error_code &ec, bool &completed);
+
 protected:
     /**
      * @brief Read mode for the read_with_timeout function.

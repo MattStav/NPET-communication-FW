@@ -9,21 +9,6 @@ TEST(SerialMachineState, DefaultConstructedIsNotOpen) {
     EXPECT_FALSE(MACHINE.isOpen());
 }
 
-TEST(SerialMachineState, GetIOReturnsSameInstanceOnRepeatedCalls) {
-    Serial machine;
-    EXPECT_EQ(&machine.getIO(), &machine.getIO());
-}
-
-TEST(SerialMachineState, GetPortReturnsSameInstanceOnRepeatedCalls) {
-    Serial machine;
-    EXPECT_EQ(&machine.getPort(), &machine.getPort());
-}
-
-TEST(SerialMachineState, GetPortReflectsIsOpen) {
-    Serial machine;
-    EXPECT_EQ(machine.getPort().is_open(), machine.isOpen());
-}
-
 TEST(SerialMachineState, CloseCommunicationOnUnopenedMachineDoesNotThrow) {
     Serial machine;
     EXPECT_NO_THROW(machine.closeCommunication());

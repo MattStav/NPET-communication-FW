@@ -7,10 +7,6 @@
 #include "NPET_comm.h"
 
 
-///
-/// Generate a fixed, random timing offset for this VM instance, simulating a real device's
-/// small, constant clock skew that stays put for as long as it's powered on.
-/// @return A random offset expressed in seconds
 __float128 VirtualMachine::randomOffset() {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -19,9 +15,6 @@ __float128 VirtualMachine::randomOffset() {
 } // end of random_offset function
 
 
-///
-/// Get the current virtual machine run time
-/// @return The current run time of the virtual machine formatted as hh:mm:ss.
 std::string VirtualMachine::getRunTime() const {
     const std::chrono::time_point CURRENT_TIME = std::chrono::high_resolution_clock::now();
     const auto TOTAL_SECONDS = std::chrono::duration_cast<std::chrono::seconds>(CURRENT_TIME - START_TIME).count();
@@ -35,10 +28,6 @@ std::string VirtualMachine::getRunTime() const {
     return ss.str();
 }
 
-///
-/// Process a received command and generate an appropriate response.
-/// @param command Command string received
-/// @return The response string to send back
 std::string VirtualMachine::getResponse(const std::string &command) {
     if (command.starts_with('c')) {
         // Communication check
@@ -100,9 +89,6 @@ std::string VirtualMachine::getResponse(const std::string &command) {
 } // end of get_response function
 
 
-///
-/// Change the baud rate of the serial port for the virtual device.
-/// @param NEW_BAUD_RATE New baud rate to set
 void VirtualMachine::changeBaudRate(const int NEW_BAUD_RATE) {
     try {
         setBaudRateSerial(NEW_BAUD_RATE);
@@ -112,13 +98,6 @@ void VirtualMachine::changeBaudRate(const int NEW_BAUD_RATE) {
 } // end of change_baud_rate function
 
 
-///
-/// Arm a one-shot, non-blocking listen for a stop command ('c') on the serial port.
-/// Returns immediately; the actual read completes later on the io_context (see get_io()), so the caller must
-/// keep driving it (e.g. via poll_one()) for stop_requested to ever become true. Once a line has been read - or
-/// the read is cancelled, e.g. via get_port().cancel() - the listen is over and does not re-arm itself.
-/// @param stop_requested Set to true if the received line starts with 'c'; left untouched otherwise. Must
-///                        outlive the read, since it's captured by reference in the completion handler.
 void VirtualMachine::listenForStopCommand(bool &stop_requested) {
     const auto LINE = std::make_shared<boost::asio::streambuf>();
     boost::asio::async_read_until(getPort(), *LINE, '\n',
@@ -132,17 +111,6 @@ void VirtualMachine::listenForStopCommand(bool &stop_requested) {
 }
 
 
-///
-/// Simulate sending measurement data over the serial port.
-/// Measurements are fired on a fixed grid of times anchored to start_time (i.e. at start_time + k * period for
-/// integer k). This mirrors a real NPET device, whose measurement ticks are driven by a free-running internal clock.
-/// The first measurement is sent on the next upcoming grid tick.
-/// Concurrently listens for an incoming stop command ('c'), which the client sends (e.g. via NPET_comm::is_responsive)
-/// when the user cancels the measurement mid-stream (see meas_reader's Esc handling). If it arrives before all
-/// measurements have been sent, streaming stops early and a "c1" response is sent back, mirroring how a real NPET
-/// device acknowledges a stop request received while still streaming.
-/// @param num_str Number of measurements to send as a string
-/// @param PERIOD Fixed time between measurements (e.g. 1s, 250ms, 400us), anchored to start_time
 void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chrono::microseconds PERIOD) {
     if (!correct_meas_format_set_) {
         SPDLOG_ERROR("Measurement format not set to binary, cannot send measurements");
@@ -213,9 +181,6 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
 } // end of send_measurements function
 
 
-///
-/// Mock NPET device function that simulates the behavior of a real NPET device.
-/// Receives commands over a serial port and responds accordingly.
 void VirtualMachine::deviceLoop() {
     // Handle Ctrl+C cooperatively: cancel the pending read instead of relying on the
     // OS's default handler, which force-kills threads and can deadlock the process if

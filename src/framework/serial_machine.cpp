@@ -5,10 +5,6 @@
 constexpr std::string_view COMM_TIMEOUT_ERR = "Communication timeout: Device did not respond within {}ms";
 
 
-///
-/// Open serial communication on the specified COM port.
-/// @param COM_PORT COM port number to open communication on (e.g. 8 for COM8)
-/// @param BAUD_RATE Baud rate for the serial communication
 void SerialMachine::openCommunication(const int COM_PORT, const int BAUD_RATE) {
     SPDLOG_INFO("Opening communication on COM{} ...", COM_PORT);
     assert(COM_PORT > 0);
@@ -24,12 +20,6 @@ void SerialMachine::openCommunication(const int COM_PORT, const int BAUD_RATE) {
 } // end of openCommunication function
 
 
-///
-/// Block until the pending read and timer operations have both completed, cancelling
-/// whichever one is still outstanding once the other finishes.
-/// @param timer Timer guarding the read operation
-/// @param read_result Set once the read operation completes
-/// @param timer_result Set once the timer fires or is cancelled
 void SerialMachine::waitForReadOrTimeout(boost::asio::steady_timer &timer,
                                          std::optional<boost::system::error_code> &read_result,
                                          std::optional<boost::system::error_code> &timer_result) {
@@ -43,11 +33,6 @@ void SerialMachine::waitForReadOrTimeout(boost::asio::steady_timer &timer,
     }
 }
 
-///
-/// Translate a completed read/timer result pair into the appropriate exception, if any.
-/// @param read_result Result of the read operation
-/// @param timer_result Result of the timer operation
-/// @param TIMEOUT Timeout, used for the timeout error message
 void SerialMachine::throwOnReadError(const std::optional<boost::system::error_code> &read_result,
                                      const std::optional<boost::system::error_code> &timer_result,
                                      const std::chrono::milliseconds TIMEOUT) {
@@ -67,14 +52,6 @@ void SerialMachine::throwOnReadError(const std::optional<boost::system::error_co
     }
 }
 
-///
-/// Asynchronously read a response from the device, aborting if nothing arrives within the timeout.
-/// Does not send anything first; use this directly when a command has already been written,
-/// or a device response is expected unprompted (e.g. the virtual machine's device loop).
-/// @param MODE Mode to read the response, either until a newline character or a fixed number of bytes
-/// @param TIMEOUT Time to wait for a response before aborting the operation
-/// @param FIXED_BYTES Number of bytes to read if the mode is set to FixedBytes; unused otherwise
-/// @return Bytes read from the device
 std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
                                                  const std::chrono::milliseconds TIMEOUT,
                                                  const std::size_t FIXED_BYTES) {
@@ -134,10 +111,6 @@ std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
 } // end of read_with_timeout function
 
 
-///
-/// Send a command to the device and get the response as a string.
-/// @param command Command string to send to the device
-/// @return Device response string
 std::string SerialMachine::exchangeComm(const std::string &command) {
     assert(port_.is_open());
     assert(!command.empty());
@@ -155,10 +128,6 @@ std::string SerialMachine::exchangeComm(const std::string &command) {
 } // end of exchange_comm function
 
 
-///
-/// Send a simple command over serial connection, does NOT await response.
-/// Makes sure the command is correctly terminated.
-/// @param command Command string to send to the device
 void SerialMachine::writeToSerial(const std::string &command) {
     assert(port_.is_open());
     SPDLOG_DEBUG("Writing to serial: {}", command);
@@ -170,22 +139,12 @@ void SerialMachine::writeToSerial(const std::string &command) {
 }
 
 
-///
-/// Send raw bytes over the serial connection as-is, without appending a line terminator.
-/// Use this for binary payloads (e.g. measurement packets), where appending "\r\n" would
-/// corrupt the data and desync the byte stream for the reader on the other end.
-/// @param DATA Raw bytes to send to the device
 void SerialMachine::writeRawToSerial(const std::span<const std::uint8_t> DATA) {
     assert(port_.is_open());
     boost::asio::write(port_, boost::asio::buffer(DATA.data(), DATA.size()));
 }
 
 
-///
-/// Read whatever is currently available on the serial port, up to max_bytes.
-/// This is a blocking call!
-/// @param MAX_BYTES Maximum number of bytes to read in this call
-/// @return Bytes read, converted to a string
 std::string SerialMachine::readFromSerial(const std::size_t MAX_BYTES) {
     assert(port_.is_open());
     std::vector<char> buffer(MAX_BYTES);
@@ -196,11 +155,6 @@ std::string SerialMachine::readFromSerial(const std::size_t MAX_BYTES) {
 }
 
 
-///
-/// Cancel any pending operation on the port. If BLOCK is true, wait until the
-/// cancellation has been processed by the io_context; otherwise only process
-/// whatever handlers are already ready without waiting.
-/// @param BLOCK Whether to block until the cancellation has been processed
 void SerialMachine::cancelPendingOperation(const bool BLOCK) {
     port_.cancel();
     if (BLOCK) {
@@ -211,15 +165,11 @@ void SerialMachine::cancelPendingOperation(const bool BLOCK) {
 }
 
 
-///
-/// @return Whether the serial port is currently open
 bool SerialMachine::isOpen() const {
     return port_.is_open();
 }
 
 
-///
-/// Close the serial port, if open.
 void SerialMachine::closeCommunication() {
     if (port_.is_open()) {
         port_.close();
@@ -227,9 +177,6 @@ void SerialMachine::closeCommunication() {
 }
 
 
-///
-/// Purge the COM Port.
-/// Close the port and purge all handles.
 void SerialMachine::purgePort() {
     SPDLOG_DEBUG("Cancelling pending comms and purging all buffers ...");
     port_.cancel();
@@ -237,8 +184,6 @@ void SerialMachine::purgePort() {
 }
 
 
-///
-/// @return Current baud rate of the serial port
 int SerialMachine::getBaudRate() {
     boost::asio::serial_port_base::baud_rate current_baud{};
     getPort().get_option(current_baud);
@@ -246,9 +191,6 @@ int SerialMachine::getBaudRate() {
 }
 
 
-///
-/// Change the baud rate of the already-open serial port.
-/// @param NEW_BAUD_RATE Baud rate to switch to
 void SerialMachine::setBaudRateSerial(const int NEW_BAUD_RATE) {
     port_.set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
     SPDLOG_INFO("Baud rate changed to {}", NEW_BAUD_RATE);

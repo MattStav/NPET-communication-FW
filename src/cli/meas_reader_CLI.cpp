@@ -98,11 +98,6 @@ static std::string formatMeasurement(
 }
 
 
-///
-/// Display the measurement read from NPET only as hh:mm:ss with the fractional part rounded.
-/// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
-/// @param meas_set Reference to the measurement context
-/// @param time_const Reference to the time correction constant imported from the NPET device
 void readerCliSync(MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
     printIntro(meas_set, time_const);
     SPDLOG_DEBUG(SYNC_MONITOR);
@@ -120,11 +115,6 @@ void readerCliSync(MeasReader &reader, const MeasContext &meas_set, const Measur
 } // end of readerCliSync function
 
 
-///
-/// Advanced CLI measurement monitor showing extended information about ongoing measurement.
-/// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
-/// @param meas_set Reference to the measurement context
-/// @param time_const Reference to the time correction constant imported from the NPET device
 void readerCliAdvanced(MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
     // Initialized progress string
     std::string progress;
@@ -232,11 +222,6 @@ static void readerCliBasicInfMeas(const MeasReader &reader) {
 } // end of reader_cli_basic_inf_meas function
 
 
-///
-/// Display only a progress bar of the measurement process.
-/// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
-/// @param meas_set Reference to the measurement context
-/// @param time_const Reference to the time correction constant imported from the NPET device
 void readerCliBasic(MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
     printIntro(meas_set, time_const);
     SPDLOG_DEBUG(BASIC_MONITOR);
@@ -314,12 +299,6 @@ static void dualReaderCliBasicInfMeas(DualMeasReader &dual_reader) {
 } // end of dual_reader_cli_basic_inf_meas function
 
 
-///
-/// Display only a progress bar of the combined dual measurement process.
-/// @param dual_reader Reference to the dual measurement reader combining both legs
-/// @param meas_set Reference to the dual measurement context
-/// @param start_time_const Reference to the START leg's time correction constant
-/// @param stop_time_const Reference to the STOP leg's time correction constant
 void dualReaderCliBasic(DualMeasReader &dual_reader, const DualMeasContext &meas_set,
                         const Measurement &start_time_const, const Measurement &stop_time_const) {
     printDualIntro(meas_set, start_time_const, stop_time_const);

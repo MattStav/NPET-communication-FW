@@ -37,18 +37,42 @@ class MeasReader {
     // Queue to store processed measurements
     std::queue<Measurement> for_saver_q_{};
 
+    ///
+    /// Grab data from NPET and put them in a queue for further processing.
+    /// Asynchronously reads data from the serial port and adds them to the queue.
+    /// Handles cancellation signal from keyboard input as well as cancellation from other threads.
+    /// Inserting a sentinel value (256) into the queue to signal the processor thread to stop.
     void dataReceiver();
 
+    ///
+    /// Grab measurement bytes from the receiver queue for processing.
+    /// Grab the first two bytes and check if they match the measurement start sequence (1 followed by 11).
+    /// If they do, grab the next 13 bytes for processing. If not, discard the first byte and check again until the correct sequence is found.
+    /// If there is no data in the queue, wait until there is some data or a stop signal is received. If a stop signal is received
+    /// while waiting, return an empty array to signal the processor thread to stop immediately.
+    /// This ensures that the processor thread does not get stuck waiting for data when the program is trying to exit.
+    /// @return Array of 13 bytes containing the measurement data, or an empty array if a stop signal was received while waiting for data.
     std::optional<std::array<uint8_t, 13> > grabMeasFromReceiver();
 
+    ///
+    /// Process the data received from NPET.
+    /// @param meas_set Measurement context struct
+    /// /// Contains the number of measurements, display and save flags, and channel number
+    /// @param time_const Time correction constant imported from NPET
     void dataProcessor(const MeasContext &meas_set, const Measurement &time_const);
 
     void dataSaver(const std::filesystem::path &save_path);
 
-    // Main function to read measurements from NPET, this is called in the constructor and starts the measurement sequence
+    ///
+    /// Read measurements from NPET.
+    /// Sets the NPEt to start streaming a number of measurements from a specified channel.
+    /// Starts the threads to process the measurements.
+    /// @param meas_set Measurement context struct
+    /// /// Contains the number of measurements, monitor function, a save flag, and channel number
     void main(const MeasContext &meas_set);
 
-    // End the measurement sequence, this is necessary, otherwise the program will crash
+    ///
+    /// Clean up after the measurement stream.
     void endSequence() const;
 
 public:

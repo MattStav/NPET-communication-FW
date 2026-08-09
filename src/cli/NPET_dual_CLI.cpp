@@ -75,8 +75,6 @@ static int openCommLoop(NPETComm &npet, const std::string &designation, const st
 }
 
 
-///
-/// Open serial communication with both NPETs.
 void NPETDualCLI::openCommunicationCLI() {
     SPDLOG_INFO("Opening both NPETs communication with CLI");
     const int START_PORT = openCommLoop(one_, "START", NPET_START_NOT_RESPONDING);
@@ -85,11 +83,6 @@ void NPETDualCLI::openCommunicationCLI() {
 } // end of open_NPET_communication function
 
 
-///
-/// Checks if both NPET devices are connected to the specified COM ports and responsive.
-/// Several attempts are made with a delay between each attempt.
-/// Prints the status to the CLI.
-/// @return True if both NPETs are connected and responsive, otherwise false.
 bool NPETDualCLI::bothResponsiveCLI() {
     constexpr int MAX_ATTEMPTS = 5;
     constexpr int RETRY_DELAY_MS = 1000;
@@ -133,8 +126,6 @@ bool NPETDualCLI::bothResponsiveCLI() {
 } // end of is_NPET_connected_CLI function
 
 
-///
-/// CLI wrapper to set the NPET firmware version for both NPETs.
 void NPETDualCLI::setFwVerCLI() {
     Cli::echo("Select the START NPET firmware version");
     const FWVersion NEW_FW = promptFWVersion(startComm().fw_version);
@@ -148,9 +139,6 @@ void NPETDualCLI::setFwVerCLI() {
 }
 
 
-///
-/// CLI wrapper for the reading batch measurements from both NPETs.
-/// Asks the user for the number of measurements, channel to read from, display, and save options.
 void NPETDualCLI::readBatchMeasurementsCLI() {
     SPDLOG_DEBUG("Reading batch measurements ...");
     // Prompt user for the number of measurements
@@ -217,8 +205,6 @@ void NPETDualCLI::readBatchMeasurementsCLI() {
 } // end of read_measurements_handler function
 
 
-///
-/// Switch the NPET START/STOP designation.
 void NPETDualCLI::switchStartStopCLI() {
     SPDLOG_DEBUG(NPET_DESIGNATION_SWITCH_INIT);
     Cli::echo(std::string(NPET_DESIGNATION_SWITCH_INIT));
@@ -228,8 +214,6 @@ void NPETDualCLI::switchStartStopCLI() {
 }
 
 
-///
-/// CLI wrapper for setting baud rate on both NPETs
 void NPETDualCLI::setBaudRateCLI() {
     SPDLOG_DEBUG("Setting baud rate on both NPETs ...");
     const int CURRENT_BAUD_ONE = one_.getBaudRate();
@@ -252,8 +236,6 @@ void NPETDualCLI::setBaudRateCLI() {
 }
 
 
-///
-/// Synchronize the two NPETs.
 void NPETDualCLI::syncNPETsCLI() {
     SPDLOG_DEBUG("Setting time correction constant ...");
     Measurement start_const{.meas_num = -1};
@@ -404,8 +386,6 @@ void NPETDualCLI::syncNPETsCLI() {
 }
 
 
-///
-/// Reset both NPETs into default settings.
 void NPETDualCLI::resetCLI() {
     SPDLOG_INFO(DUAL_RESET_INITIATED);
     Cli::echo(std::string(DUAL_RESET_INITIATED), fg::yellow);

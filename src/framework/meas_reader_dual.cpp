@@ -6,8 +6,6 @@
 #include <spdlog/spdlog.h>
 
 
-///
-/// Clear all combining state left over from a previous run.
 void DualMeasReader::reset() {
     std::scoped_lock const LOCK(combine_mtx_);
     pending_start_.clear();
@@ -18,10 +16,6 @@ void DualMeasReader::reset() {
 } // end of reset function
 
 
-///
-/// Match a single measurement against the other leg's pending measurements by meas_num.
-/// @param IS_START Whether MEAS came from the START leg (true) or the STOP leg (false)
-/// @param MEAS The measurement just read from the IS_START leg
 void DualMeasReader::matchMeasurement(const bool IS_START, const Measurement &MEAS) {
     std::scoped_lock const LOCK(combine_mtx_);
     auto &other_pending = IS_START ? pending_stop_ : pending_start_;
@@ -37,9 +31,6 @@ void DualMeasReader::matchMeasurement(const bool IS_START, const Measurement &ME
 } // end of matchMeasurement function
 
 
-///
-/// Mark one leg as finished; once both legs have called this, signal grabMeasurement() to stop
-/// waiting and warn about any measurements that were left without a match.
 void DualMeasReader::finishLeg() {
     if (active_legs_.fetch_sub(1, std::memory_order_relaxed) == 1) {
         std::scoped_lock const LOCK(combine_mtx_);
@@ -53,11 +44,6 @@ void DualMeasReader::finishLeg() {
 } // end of finishLeg function
 
 
-///
-/// Monitoring function for a Single NPET MMeasurement Reader,
-/// which passes the measurements into matchmaking with another MeasurementReader.
-/// @param IS_START Measurement Reader designation (START/STOP)
-/// @param reader Measurement Reader reference
 void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const MeasContext & /*meas_set*/,
                              const Measurement & /*time_const*/) {
     while (true) {
@@ -71,9 +57,6 @@ void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const Meas
 } // end of combine function
 
 
-///
-/// @return A dual measurement from the Dual Measurement Reader.
-/// Is nullopt if the Dual Measurement has stopped.
 std::optional<DualMeasurement> DualMeasReader::grabMeasurement() {
     while (true) {
         {

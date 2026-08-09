@@ -64,29 +64,35 @@ protected:
     // Set once both legs have finished, so grabMeasurement() knows no further pairs are coming
     std::atomic<bool> stop_sign_{false};
 
-    // Matches MEAS (just read from the IS_START leg) against the other leg's pending
-    // measurements by meas_num. Pushes the combined [meas_start, meas_stop] pair onto
-    // for_monitor_q if the other half has already arrived, otherwise stashes MEAS to wait for it.
+    ///
+    /// Match a single measurement against the other leg's pending measurements by meas_num.
+    /// @param IS_START Whether MEAS came from the START leg (true) or the STOP leg (false)
+    /// @param MEAS The measurement just read from the IS_START leg
     void matchMeasurement(bool IS_START, const Measurement &MEAS);
 
-    // Marks one leg as finished. Once both legs have called this, sets stop_sign_ so
-    // grabMeasurement() stops waiting, and warns about any measurements that never found a match.
+    ///
+    /// Mark one leg as finished; once both legs have called this, signal grabMeasurement() to stop
+    /// waiting and warn about any measurements that were left without a match.
     void finishLeg();
 
 public:
     // Combined START/STOP measurement pairs
     std::queue<DualMeasurement> for_monitor_q{};
 
-    // Clear all state left over from a previous run. Call before starting a new pair of legs.
+    ///
+    /// Clear all combining state left over from a previous run.
     void reset();
 
-    // Monitor function meant to be installed on both legs' MeasContext::monitor_fn, once per leg
-    // (distinguished by IS_START). Drains the calling leg's own reader.for_monitor_q via
-    // matchMeasurement() until the leg is done, then calls finishLeg().
+    ///
+    /// Monitoring function for a Single NPET MMeasurement Reader,
+    /// which passes the measurements into matchmaking with another MeasurementReader.
+    /// @param IS_START Measurement Reader designation (START/STOP)
+    /// @param reader Measurement Reader reference
     void combine(bool IS_START, MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const);
 
-    // Pop the next combined measurement pair, blocking until one is available or both legs have
-    // finished with nothing left to match.
+    ///
+    /// @return A dual measurement from the Dual Measurement Reader.
+    /// Is nullopt if the Dual Measurement has stopped.
     std::optional<DualMeasurement> grabMeasurement();
 };
 

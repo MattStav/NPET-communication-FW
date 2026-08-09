@@ -13,12 +13,6 @@ using namespace rang;
 
 constexpr std::string_view MENU_INVALID_CHOICE = "Invalid choice {}";
 
-///
-/// Print a styled message to the console.
-/// @param msg Message to print
-/// @param END_LINE Whether to end the line after the message
-/// @param FG_COLOR Foreground color
-/// @param STYLE_TYPE Style type
 void Cli::echo(const string &msg, const fg FG_COLOR, const style STYLE_TYPE, const bool END_LINE) {
     SPDLOG_DEBUG("CLI -> {}", msg);
     cout << STYLE_TYPE << FG_COLOR << msg << style::reset;
@@ -26,40 +20,24 @@ void Cli::echo(const string &msg, const fg FG_COLOR, const style STYLE_TYPE, con
 } // end of echo function
 
 
-///
-/// Print an error message to the console.
-/// @param msg Message to print
 void Cli::err(const string &msg) {
     SPDLOG_ERROR("CLI ERROR -> {}", msg);
     cout << style::bold << style::reversed << fg::red << msg << " " << style::reset << '\n';
 } // end of echo function
 
 
-///
-/// Show a value in CLI
-/// @param msg Message to print
-/// @param value Value to show
 void Cli::showInt(const string &msg, const int &value) {
     SPDLOG_DEBUG("CLI SHOW -> {}; Value: {}", msg, value);
     cout << msg << ": " << style::italic << bg::blue << " " << value << " " << style::reset << '\n';
 } // end of show_int function
 
 
-///
-/// Show a value in CLI
-/// @param msg Message to print
-/// @param value Value to show
 void Cli::showStr(const string &msg, const string &value) {
     SPDLOG_DEBUG("CLI SHOW -> {}; Value: {}", msg, value);
     cout << msg << ": " << style::italic << bg::blue << " " << value << " " << style::reset << '\n';
 } // end of show_str function
 
 
-///
-/// Ask for user confirmation with a yes/no question.
-/// @param question User confirm question
-/// @param default_yes Default to yes if True else False
-/// @return Bool value of user input
 bool Cli::confirm(const string &question, const bool &default_yes) {
     SPDLOG_DEBUG("CLI CONFIRM -> {}; default? {}", question, default_yes);
     string answer;
@@ -78,8 +56,6 @@ bool Cli::confirm(const string &question, const bool &default_yes) {
 } // end of confirm function
 
 
-///
-/// Ask the user to press Enter to exit the program.
 void Cli::confirmExit() {
     SPDLOG_DEBUG("CLI CONFIRM EXIT -> Asking user to press Enter to exit the program");
     cout << "Press " << style::blink << fg::red << "Enter" << style::reset << " to exit the program." << '\n';
@@ -89,11 +65,6 @@ void Cli::confirmExit() {
 } // end of confirm_exit function
 
 
-///
-/// Ask for user input with a question prompt. If the user input is empty, return the default value.
-/// @param question User prompt question
-/// @param default_value Default value if the user input is empty
-/// @return User input or default value
 string Cli::prompt(const string &question, const string &default_value) {
     SPDLOG_DEBUG("CLI PROMPT -> {}; default: {}", question, default_value);
     string input;
@@ -110,12 +81,6 @@ string Cli::prompt(const string &question, const string &default_value) {
 } // end of prompt function
 
 
-///
-/// List a menu of options and ask the user to select one.
-/// @param title Menu title
-/// @param options Menu options
-/// @param END_LINE Whether to end the line after the menu
-/// @return Index of the selected option (1-based). Returns -2 for invalid input.
 int Cli::menu(const string &title, const vector<string> &options, const bool END_LINE) {
     string user_choice{};
     int choice_int{};
@@ -162,9 +127,6 @@ static void drawProgressBar(const int PERCENTAGE, const int BAR_WIDTH) {
 }
 
 
-///
-/// Create a CLI Progress bar object which can be used to show process progress.
-/// @param CONFIG Progress bar configuration (total, redraw threshold, bar width)
 ProgressBar::ProgressBar(const ProgressBarConfig CONFIG)
     : total_(CONFIG.total), change_trigger_(CONFIG.min_percent_change_to_redraw), bar_width_(CONFIG.bar_width) {
     assert(total_ > 0);
@@ -174,10 +136,6 @@ ProgressBar::ProgressBar(const ProgressBarConfig CONFIG)
 }
 
 
-///
-/// Update the progress bar.
-/// Whether the bar is redraw in CLI depends on change_trigger_ parameter.
-/// @param PROGRESS Current progress value (0 to total_)
 void ProgressBar::update(const int PROGRESS) {
     const float RATIO = static_cast<float>(PROGRESS) / static_cast<float>(total_);
     const int PERCENTAGE = static_cast<int>(RATIO * 100.0F);

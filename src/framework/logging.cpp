@@ -11,9 +11,6 @@
 
 #include "helper_func.h"
 
-///
-/// Get a path to the log directory.
-/// @return Path to where logs are stored, which is in the APPDATA folder under NPET_FW/logs with a filename based on the current datetime.
 std::filesystem::path getLogPath() {
     static const std::filesystem::path PATH = [] {
         std::array<char, 32> datetime{};
@@ -29,7 +26,6 @@ std::filesystem::path getLogPath() {
 } // end of get_log_path function
 
 
-/// Initialize file logging using spdlog library.
 void initLogging() {
     assert(spdlog::thread_pool() != nullptr && "spdlog thread pool must be initialised before calling init_logging()");
     if (spdlog::get("Logger")) {

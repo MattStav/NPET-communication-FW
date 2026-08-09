@@ -15,27 +15,58 @@ public:
     // Internal NPET firmware version
     FWVersion fw_version{};
 
-    // Check if NPET is responsive
+    ///
+    /// Checks if the NPET device is connected and responsive.
+    /// @return: True, indicating the device is responsive. Otherwise, return false.
     [[nodiscard]] bool isResponsive(bool END_STREAM = false);
 
-    // Functions to select NPET firmware version and save it into fw_version attribute
+    ///
+    /// Set the firmware version.
+    /// Firmware version must be either 1, 2, or 3.
+    /// Version is saved into the fw_version attribute.
+    /// @param NEW_FW_VERSION New firmware version to set
     void setFWVer(FWVersion NEW_FW_VERSION);
 
+    ///
+    /// Automatically detect the NPET firmware version by querying the device.
+    /// The firmware version is saved into the fw_version attribute.
     void detectFWVer();
 
-    // Set the pulse generation frequency on the NPET device
+    ///
+    /// Set the pulse generation frequency on the NPET device.
+    /// The Default frequency on NPET startup is 100 Hz.
+    /// Save the new frequency into the frequency attribute.
+    /// @param NEW_FREQUENCY New pulse generation frequency in Hz
+    /// @return True if the frequency was successfully set, otherwise false
     [[nodiscard]] bool setFrequency(int NEW_FREQUENCY = 100);
 
-    // Generate pulses from the NPET device
+    ///
+    /// Command the NPET device to generate a specified number of pulses.
+    /// @param NUM_OF_PULSES Number of pulses to generate, -1 for infinite
+    /// @return True if the command was successful, otherwise false
     [[nodiscard]] bool generatePulses(int NUM_OF_PULSES = 0);
 
-    // Set the baud rate on the NPET device
+    ///
+    /// Set the port baud rate.
+    /// The default baud rate on NPET startup is 115_200.
+    /// This operation cannot use the exchange_comm framework, making it very brittle.
+    /// DO NOT DISCONNECT THE DEVICE WHILE CHANGING THE BAUD RATE.
+    /// @param NEW_BAUD_RATE New baud rate to set
+    /// @return True if the baud rate was successfully changed, otherwise false
     [[nodiscard]] bool setBaudRate(int NEW_BAUD_RATE = 115200);
 
-    // Set the way NPET sends the measured data, 0 = binary, 1 = ASCII
+    ///
+    /// Set the measured data format on the NPET device.
+    /// @param FORMAT Measured data format. 0 for binary, 1 for ASCII
+    /// @return True if the format was successfully set, otherwise false
     [[nodiscard]] bool setMeasuredDataFormat(int FORMAT);
 
-    // Read measurements from NPET
+    ///
+    /// Use the measurement_reader object to read measurements from the NPET device.
+    /// Measurements are read in binary format.
+    /// Windows sleep is disabled while the measurements are being read.
+    /// @param meas_set Measurement context struct
+    /// /// Contains the number of measurements, display and save flags, and channel number
     void readBatchMeasurements(const MeasContext &meas_set = MeasContext{
         .num_of_meas = 5,
         .monitor_fn = nullptr,
@@ -43,21 +74,53 @@ public:
         .channel = Channel::CH1,
     });
 
+    ///
+    /// Read a single measurement from the specified channel.
+    /// @param CHANNEL Channel to read from (1 or 2)
+    /// @return Single measurement from the specified channel
     Measurement readSingleMeasurement(Channel CHANNEL);
 
+    ///
+    /// Read a single measurement from the specified channel in raw string format, without termination.
+    /// @param CHANNEL Channel to read from (1 or 2)
+    /// @return Single measurement from the specified channel in raw string format, without termination.
+    /// /// Empty string if no measurement was read.
     std::string readSingleMeasurementRaw(Channel CHANNEL);
 
-    // Time correction constant handling on NPET
+    ///
+    /// Export the time constant to the NPET device.
+    /// @param constant Time constant in measurement format
+    /// @return True if the time constant was successfully exported, otherwise false.
     [[nodiscard]] bool exportTimeConstant(const Measurement &constant);
 
+    ///
+    /// Export the time constant to the NPET device.
+    /// @param constant_raw Time constant in string format, without termination!
+    /// Can be a maximum of 28 characters long.
+    /// @return True if the time constant was successfully exported, otherwise false.
     [[nodiscard]] bool exportTimeConstantRaw(const std::string &constant_raw = "");
 
+    ///
+    /// Clear the time constant saved in the NPET devic.
+    /// @return True if the time constant was successfully cleared on the NPET, otherwise false.
     [[nodiscard]] bool clearTimeConstant();
 
+    ///
+    /// Import the time correction constant from the NPET device.
+    /// This should be the only way to get the time constant within the program!!
+    /// Ensuring that the value saved in NPET and in the program are always the same.
+    /// @return Measurement object containing the time constant.
     Measurement importTimeConstant();
 
+    ///
+    /// Import the time correction constant from the NPET device in raw string format, without termination.
+    /// @return Time constant imported from the NPET device in raw string format, without termination.
     std::string importTimeConstantRaw();
 
+    ///
+    /// Get the status of the NPET device.
+    /// This command is only of use when NPET is set in measurement streaming mode, but it is NOT receiving any data.
+    /// @return Current status of the NPET device, check docu for more details.
     std::string getStatus();
 
     // Progress is optionally reported by calling PROGRESS->update(int) with the number of measurements taken so far
@@ -96,6 +159,12 @@ public:
     } // end of destructor
 
 private:
+    ///
+    /// Get the average fractional part of the measurements.
+    /// @param AVER_NUM Number of measurements to average
+    /// @param CHANNEL_NUM Channel number to read the measurements from (1 or 2)
+    /// @param PROGRESS_FN Optional progress function to report the number of measurements taken so far
+    /// @return The average fractional part of the measurements
     std::optional<__float128> getAverageFractionImpl(int AVER_NUM, Channel CHANNEL_NUM,
                                                      const std::function<void(int)> &PROGRESS_FN);
 };

@@ -15,11 +15,6 @@
 #include <spdlog/spdlog.h>
 
 
-///
-/// Grab data from NPET and put them in a queue for further processing.
-/// Asynchronously reads data from the serial port and adds them to the queue.
-/// Handles cancellation signal from keyboard input as well as cancellation from other threads.
-/// Inserting a sentinel value (256) into the queue to signal the processor thread to stop.
 void MeasReader::dataReceiver() {
     std::array<unsigned char, MEASUREMENT_PACKET_SIZE> buf{};
     SPDLOG_DEBUG("Data receiver thread started");
@@ -60,14 +55,6 @@ void MeasReader::dataReceiver() {
 } // end of data_receiver_func function
 
 
-///
-/// Grab measurement bytes from the receiver queue for processing.
-/// Grab the first two bytes and check if they match the measurement start sequence (1 followed by 11).
-/// If they do, grab the next 13 bytes for processing. If not, discard the first byte and check again until the correct sequence is found.
-/// If there is no data in the queue, wait until there is some data or a stop signal is received. If a stop signal is received
-/// while waiting, return an empty array to signal the processor thread to stop immediately.
-/// This ensures that the processor thread does not get stuck waiting for data when the program is trying to exit.
-/// @return Array of 13 bytes containing the measurement data, or an empty array if a stop signal was received while waiting for data.
 std::optional<std::array<uint8_t, 13> > MeasReader::grabMeasFromReceiver() {
     bool has_data = false;
     // Wait until there is some data in the queue or a stop signal is received
@@ -115,11 +102,6 @@ std::optional<std::array<uint8_t, 13> > MeasReader::grabMeasFromReceiver() {
 } // end of grab_data_from_queue function
 
 
-///
-/// Process the data received from NPET.
-/// @param meas_set Measurement context struct
-/// /// Contains the number of measurements, display and save flags, and channel number
-/// @param time_const Time correction constant imported from NPET
 void MeasReader::dataProcessor(const MeasContext &meas_set, const Measurement &time_const) {
     const __float128 MULTIPLIER = npet_.fw_version.getMultiplier();
     int meas_counter = 0; // Track total including overflows
@@ -207,12 +189,6 @@ void MeasReader::dataSaver(const std::filesystem::path &save_path) {
 } // end of data_saver function
 
 
-///
-/// Read measurements from NPET.
-/// Sets the NPEt to start streaming a number of measurements from a specified channel.
-/// Starts the threads to process the measurements.
-/// @param meas_set Measurement context struct
-/// /// Contains the number of measurements, monitor function, a save flag, and channel number
 void MeasReader::main(const MeasContext &meas_set) {
     SPDLOG_INFO("Initiating Measurement Reader ...");
     assert(npet_.isOpen());
@@ -278,8 +254,6 @@ void MeasReader::main(const MeasContext &meas_set) {
 } // end of read_measurements function
 
 
-///
-/// Clean up after the measurement stream.
 void MeasReader::endSequence() const {
     SPDLOG_INFO("Cleaning up after Measurement Reader ...");
     if (!npet_.isResponsive(true)) {

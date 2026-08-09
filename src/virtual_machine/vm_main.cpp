@@ -3,11 +3,6 @@
 #include <spdlog/spdlog.h>
 
 
-///
-/// Main function for the mock NPET device virtual machine.
-/// Launches a mock NPET device that communicates over a specified COM port.
-/// Requires virtual com ports to work!!!
-/// @param CONFIG Virtual machine configurations
 int launchVm(const VmConfig CONFIG) {
     assert(CONFIG.com_port > 0);
     assert(CONFIG.ch1_frequency > 0);

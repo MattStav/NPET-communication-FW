@@ -21,9 +21,6 @@ constexpr std::string_view RESET_INITIATED = "Resetting NPET to default settings
 constexpr std::string_view RESET_COMPLETE = "NPET reset sequence finished";
 
 
-///
-/// Open serial communication with NPET
-/// Initial detection of the COM port is attempted first, followed by user prompt if detection fails.
 void NPETCommCLI::openCommunicationCLI() {
     constexpr int MAX_ATTEMPTS = 5;
     bool autoselect{true};
@@ -49,11 +46,6 @@ void NPETCommCLI::openCommunicationCLI() {
 } // end of open_NPET_communication function
 
 
-///
-/// Checks if the NPET device is connected to the specified COM port and responsive.
-/// Several attempts are made with a delay between each attempt.
-/// Prints the status to the CLI.
-/// @return True if NPET is connected and responsive, otherwise false.
 bool NPETCommCLI::isResponsiveCLI() {
     constexpr int MAX_ATTEMPTS = 5;
     constexpr int RETRY_DELAY_MS = 1000;
@@ -77,9 +69,6 @@ bool NPETCommCLI::isResponsiveCLI() {
 } // end of is_NPET_connected_CLI function
 
 
-///
-/// Ask the user to select what version of FW the connected NPET device is running.
-/// Firmware version is saved into the fw_version attribute.
 void NPETCommCLI::setFwVerCLI() {
     const FWVersion NEW_FW = promptFWVersion(fw_version);
     SPDLOG_DEBUG("Setting NPET firmware version to: {}", NEW_FW.getDescription());
@@ -87,8 +76,6 @@ void NPETCommCLI::setFwVerCLI() {
 } // end of select_NPET_FW_ver function
 
 
-///
-/// CLI wrapper for detect_FW_ver function.
 void NPETCommCLI::detectFwVerCLI() {
     SPDLOG_DEBUG("Detecting NPET firmware version ...");
     safeExec([&] { detectFWVer(); }, "detect_FW_ver");
@@ -106,9 +93,6 @@ void NPETCommCLI::detectFwVerCLI() {
 } // end of detect_FW_ver_CLI function
 
 
-///
-/// CLI wrapper for the generate_pulses function.
-/// Asks the user for the number of pulses to generate and the frequency.
 void NPETCommCLI::generatePulsesCLI() {
     SPDLOG_DEBUG("Generating pulses ...");
     // Set the number of pulses
@@ -153,8 +137,6 @@ void NPETCommCLI::generatePulsesCLI() {
 } // end of generate_pulses_handler function
 
 
-///
-/// ClI wrapper for the set_baud_rate function.
 void NPETCommCLI::setBaudRateCLI() {
     SPDLOG_DEBUG("Setting baud rate ...");
     const int CURRENT_BAUD = getBaudRate();
@@ -168,9 +150,6 @@ void NPETCommCLI::setBaudRateCLI() {
 } // end of set_baud_rate_handler function
 
 
-///
-/// CLI wrapper for the read_measurements function.
-/// Asks the user for the number of measurements, channel to read from, display, and save options
 void NPETCommCLI::readBatchMeasurementsCLI() {
     SPDLOG_DEBUG("Reading batch measurements ...");
     // Prompt user for the number of measurements
@@ -235,11 +214,6 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
 } // end of read_measurements_handler function
 
 
-///
-/// Set the time correction constant on the NPET device.
-/// User can choose between raw format input, time format input, or clearing the constant.
-/// Either way, the time correction constant saved in the NPET and in the program is always the same.
-/// In the end, the constant is exported to the NPET and sample measurements are read to show the effect.
 void NPETCommCLI::setTimeConstantCLI() {
     SPDLOG_DEBUG("Setting time correction constant ...");
     Measurement new_const{.meas_num = -1};
@@ -351,10 +325,6 @@ void NPETCommCLI::setTimeConstantCLI() {
 } // end of set_time_constant_handler function
 
 
-///
-/// Ask the user to provide the time correction constant in raw format [int, frac].
-/// It is also possible to adjust the existing value by a specified number of seconds.
-/// @return The new time correction constant in measurement format.
 Measurement NPETCommCLI::rawTimeConstant() {
     SPDLOG_DEBUG("Defining time correction constant in raw format ...");
     Measurement new_const{.meas_num = -1}; // Measurement num -1 marks the measurement as a time correction constant
@@ -407,8 +377,6 @@ Measurement NPETCommCLI::rawTimeConstant() {
 } // end of raw_time_constant_CLI function
 
 
-///
-/// Reset NPET into default settings.
 void NPETCommCLI::resetCLI() {
     SPDLOG_INFO(RESET_INITIATED);
     Cli::echo(std::string(RESET_INITIATED), fg::yellow);

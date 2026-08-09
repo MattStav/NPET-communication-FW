@@ -13,25 +13,57 @@ constexpr std::string_view COMM_CLOSE = "Closing NPET communication framework";
 
 
 class NPETCommCLI : public NPETComm {
+    ///
+    /// Ask the user to provide the time correction constant in raw format [int, frac].
+    /// It is also possible to adjust the existing value by a specified number of seconds.
+    /// @return The new time correction constant in measurement format.
     Measurement rawTimeConstant();
 
 public:
+    ///
+    /// Open serial communication with NPET
+    /// Initial detection of the COM port is attempted first, followed by user prompt if detection fails.
     void openCommunicationCLI();
 
+    ///
+    /// Checks if the NPET device is connected to the specified COM port and responsive.
+    /// Several attempts are made with a delay between each attempt.
+    /// Prints the status to the CLI.
+    /// @return True if NPET is connected and responsive, otherwise false.
     [[nodiscard]] bool isResponsiveCLI();
 
+    ///
+    /// Ask the user to select what version of FW the connected NPET device is running.
+    /// Firmware version is saved into the fw_version attribute.
     void setFwVerCLI();
 
+    ///
+    /// CLI wrapper for detect_FW_ver function.
     void detectFwVerCLI();
 
+    ///
+    /// CLI wrapper for the generate_pulses function.
+    /// Asks the user for the number of pulses to generate and the frequency.
     void generatePulsesCLI();
 
+    ///
+    /// ClI wrapper for the set_baud_rate function.
     void setBaudRateCLI();
 
+    ///
+    /// CLI wrapper for the read_measurements function.
+    /// Asks the user for the number of measurements, channel to read from, display, and save options
     void readBatchMeasurementsCLI();
 
+    ///
+    /// Set the time correction constant on the NPET device.
+    /// User can choose between raw format input, time format input, or clearing the constant.
+    /// Either way, the time correction constant saved in the NPET and in the program is always the same.
+    /// In the end, the constant is exported to the NPET and sample measurements are read to show the effect.
     void setTimeConstantCLI();
 
+    ///
+    /// Reset NPET into default settings.
     void resetCLI();
 
     ///

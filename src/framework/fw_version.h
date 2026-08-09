@@ -20,13 +20,19 @@ public:
     /// @throws std::invalid_argument if VERSION is not a recognized firmware version.
     explicit FWVersion(int VERSION);
 
-    // Get the raw numerical firmware version
+    ///
+    /// Get the raw numerical firmware version.
+    /// @return Numerical firmware version
     [[nodiscard]] int getValue() const;
 
-    // Get the measurement multiplier associated with this firmware version
+    ///
+    /// Get the measurement multiplier associated with this firmware version.
+    /// @return Measurement multiplier as a 128-bit floating point number
     [[nodiscard]] __float128 getMultiplier() const;
 
-    // Get a human-readable description of this firmware version
+    ///
+    /// Get a human-readable description of this firmware version.
+    /// @return Description of the firmware version
     [[nodiscard]] std::string_view getDescription() const;
 
     bool operator==(const FWVersion &other) const;

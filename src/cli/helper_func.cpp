@@ -36,9 +36,6 @@ void printAppIntro() {
     Cli::showStr("Log path", getLogPath().string()); // Already automatically included in logs
 }
 
-///
-/// Print the manual into the console.
-/// @return Exit code 0
 int printManual() {
     SPDLOG_DEBUG("Manual printing initiated ...");
     Cli::echo("To view the fully formatted latest manual see here:");
@@ -57,8 +54,6 @@ int printManual() {
 } // end of print_manual function
 
 
-///
-/// Print the license information into the console.
 int printLicenseInformation() {
     SPDLOG_DEBUG("License information printing initiated ...");
     Cli::echo("NPET communication FW License Information:\n\n");
@@ -70,9 +65,6 @@ int printLicenseInformation() {
 } // end of print_license_information function
 
 
-///
-/// Reset NPET into default settings.
-/// @return Exit code 0
 int resetNpetStandalone() {
     SPDLOG_DEBUG("NPET reset initiated ...");
     Cli::echo("Resetting NPET to default settings", fg::blue, style::bold, true);
@@ -83,9 +75,6 @@ int resetNpetStandalone() {
 } // end of reset_NPET function
 
 
-///
-/// Launch the NPET data processor which needs to be installed separately.
-/// The data processor is a Python package that processes the raw measurement data and generates plots and reports.
 int launchDataProcessor() {
     SPDLOG_DEBUG("Launching external data processor ...");
     static const std::vector DP_COMMANDS = {
@@ -111,15 +100,6 @@ int launchDataProcessor() {
     return 1;
 } // end of launch_data_processor function
 
-///
-/// Lists available COM ports and prompts the user to select one.
-/// If autoselect is true and only one COM port is available, it will be selected automatically.
-/// Ports listed in EXCLUDED_PORTS are dropped from the selection before it is shown.
-/// WARNING: This function does not check if the selected COM port is valid.
-/// @param AUTOSELECT If true, automatically select the COM port if only one is available.
-/// @param EXCLUDED_PORTS COM port numbers to exclude from the selection (e.g. {5, 8}).
-/// @throws runtime_error if no COM ports are found.
-/// @returns Selected COM port number (e.g. 8 for COM8).
 int selectComPortCli(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS) {
     SPDLOG_DEBUG("Selecting COM port with autoselect: {}", AUTOSELECT);
     int selected_cp{};
@@ -159,13 +139,6 @@ int selectComPortCli(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_POR
 } // end of select_COM_port function
 
 
-///
-/// Open communication for the referenced NPET on the provided NPET.
-/// Errors are handled internally and False is returned if any errors are encountered.
-/// @param npet The NPETComm reference
-/// @param COM_PORT COM port number
-/// @param ERROR_MSG Error message in case of an error
-/// @return True if communication was successfully opened, False otherwise
 bool openCommSafe(NPETComm &npet, const int COM_PORT, const std::string_view ERROR_MSG) {
     Cli::showInt("Opening the NPET communication on COM", COM_PORT);
     if (COM_PORT < 1) {
@@ -191,11 +164,6 @@ bool openCommSafe(NPETComm &npet, const int COM_PORT, const std::string_view ERR
 }
 
 
-///
-/// Data validation allows either a positive integer number or (optionally) -1 for infinity.
-/// @param num_to_validate Number to check as string
-/// @param ALLOW_NEGATIVE_ONE Whether to allow -1 as a valid input
-/// @return The validated number in int format, or -2 if the input is invalid
 int numValidation(const std::string &num_to_validate, const bool ALLOW_NEGATIVE_ONE) {
     int number_int = 0;
     SPDLOG_DEBUG("Validating number: {}; allow infinity sentinel: {}", num_to_validate, ALLOW_NEGATIVE_ONE);
@@ -216,9 +184,6 @@ int numValidation(const std::string &num_to_validate, const bool ALLOW_NEGATIVE_
 } // end of numValidation function
 
 
-///
-/// Prompt the user to select a measurement channel
-/// @return Selected channel
 std::optional<Channel> promptChannel(const int DEFAULT_CHANNEL, const std::string_view PROMPT_MSG) {
     const std::string CHANNEL_STR = Cli::prompt("Select " + std::string(PROMPT_MSG) + " (1 or 2; 0 to cancel)",
                                                 std::to_string(DEFAULT_CHANNEL));
@@ -240,10 +205,6 @@ std::optional<Channel> promptChannel(const int DEFAULT_CHANNEL, const std::strin
 } // end of promptChannel function
 
 
-///
-/// Prompt the user to select a baud rate.
-/// @param CURRENT_BAUD_RATE The current baud rate of the NPET communication.
-/// @return Selected baud rate
 int promptBaudRate(const int CURRENT_BAUD_RATE) {
     const std::vector<std::string> BAUD_RATE_OPTIONS = {
         "115200",
@@ -266,10 +227,6 @@ int promptBaudRate(const int CURRENT_BAUD_RATE) {
 } // end of promptBaudRate function
 
 
-///
-/// Change communication baud rate for the referenced NPET.
-/// @param npet The NPETComm reference
-/// @param NEW_BAUD_RATE The new baud rate to set for the NPET communication
 void setBaudRateSafe(NPETComm &npet, const int NEW_BAUD_RATE) {
     try {
         SPDLOG_WARN("INITIATING BAUD RATE CHANGE!");
@@ -293,10 +250,6 @@ void setBaudRateSafe(NPETComm &npet, const int NEW_BAUD_RATE) {
 }
 
 
-///
-/// Reset all the NPET settings
-/// @param npet The NPETComm reference
-/// @param DESIGNATION Optional designation for the NPET, used in error messages. If empty, a default message will be used.
 void resetNPETSafe(NPETComm &npet, const std::string_view DESIGNATION) {
     if (!safeExec([&] { return npet.clearTimeConstant(); }, std::string(DESIGNATION) + " clear_time_constant")) {
         SPDLOG_ERROR(TIME_CONST_FAILED_TO_CLEAR);
@@ -321,10 +274,6 @@ void resetNPETSafe(NPETComm &npet, const std::string_view DESIGNATION) {
 }
 
 
-///
-/// Prompt the user to define the NPET internal FW version.
-/// @param CURRENT_FW_VERSION The current firmware version of the NPET.
-/// @return Selected FW version
 FWVersion promptFWVersion(const FWVersion CURRENT_FW_VERSION) {
     const std::vector FW_OPTIONS = {
         std::string(FWVersion(FWVersion::ORIGINAL).getDescription()),
@@ -349,10 +298,6 @@ FWVersion promptFWVersion(const FWVersion CURRENT_FW_VERSION) {
 }
 
 
-///
-/// Prompt the user to define the integer part of the time correction constant
-/// @param SEL Time correction constant int part selection logic
-/// @return Time correction constant in seconds
 int promptTimeConstSeconds(const ConstIntSelectionLogic SEL) {
     int user_choice{};
     int clock_seconds{};

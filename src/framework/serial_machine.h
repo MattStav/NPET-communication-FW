@@ -27,13 +27,21 @@ class SerialMachine {
     // Serial port object for communication
     boost::asio::serial_port port_{io_};
 
-    // Block until the pending read and timer operations have both completed,
-    // cancelling whichever one is still outstanding once the other finishes.
+    ///
+    /// Block until the pending read and timer operations have both completed, cancelling
+    /// whichever one is still outstanding once the other finishes.
+    /// @param timer Timer guarding the read operation
+    /// @param read_result Set once the read operation completes
+    /// @param timer_result Set once the timer fires or is cancelled
     void waitForReadOrTimeout(boost::asio::steady_timer &timer,
                               std::optional<boost::system::error_code> &read_result,
                               std::optional<boost::system::error_code> &timer_result);
 
-    // Translate a completed read/timer result pair into the appropriate exception, if any.
+    ///
+    /// Translate a completed read/timer result pair into the appropriate exception, if any.
+    /// @param read_result Result of the read operation
+    /// @param timer_result Result of the timer operation
+    /// @param TIMEOUT Timeout, used for the timeout error message
     static void throwOnReadError(const std::optional<boost::system::error_code> &read_result,
                                  const std::optional<boost::system::error_code> &timer_result,
                                  std::chrono::milliseconds TIMEOUT);
@@ -73,18 +81,40 @@ public:
         }
     }
 
+    ///
+    /// Open serial communication on the specified COM port.
+    /// @param COM_PORT COM port number to open communication on (e.g. 8 for COM8)
+    /// @param BAUD_RATE Baud rate for the serial communication
     void openCommunication(int COM_PORT, int BAUD_RATE);
 
+    ///
+    /// Send a simple command over serial connection, does NOT await response.
+    /// Makes sure the command is correctly terminated.
+    /// @param command Command string to send to the device
     void writeToSerial(const std::string &command);
 
+    ///
+    /// Cancel any pending operation on the port. If BLOCK is true, wait until the
+    /// cancellation has been processed by the io_context; otherwise only process
+    /// whatever handlers are already ready without waiting.
+    /// @param BLOCK Whether to block until the cancellation has been processed
     void cancelPendingOperation(bool BLOCK = true);
 
+    ///
+    /// @return Whether the serial port is currently open
     [[nodiscard]] bool isOpen() const;
 
+    ///
+    /// Close the serial port, if open.
     void closeCommunication();
 
+    ///
+    /// Purge the COM Port.
+    /// Close the port and purge all handles.
     void purgePort();
 
+    ///
+    /// @return Current baud rate of the serial port
     int getBaudRate();
 
 protected:
@@ -96,16 +126,41 @@ protected:
         FIXED_BYTES,
     };
 
+    ///
+    /// Send a command to the device and get the response as a string.
+    /// @param command Command string to send to the device
+    /// @return Device response string
     std::string exchangeComm(const std::string &command);
 
+    ///
+    /// Asynchronously read a response from the device, aborting if nothing arrives within the timeout.
+    /// Does not send anything first; use this directly when a command has already been written,
+    /// or a device response is expected unprompted (e.g. the virtual machine's device loop).
+    /// @param MODE Mode to read the response, either until a newline character or a fixed number of bytes
+    /// @param TIMEOUT Time to wait for a response before aborting the operation
+    /// @param FIXED_BYTES Number of bytes to read if the mode is set to FixedBytes; unused otherwise
+    /// @return Bytes read from the device
     std::vector<char> readWithTimeout(ReadMode MODE = ReadMode::UNTIL_NEWLINE,
                                       std::chrono::milliseconds TIMEOUT = std::chrono::milliseconds(2000),
                                       std::size_t FIXED_BYTES = 1);
 
+    ///
+    /// Send raw bytes over the serial connection as-is, without appending a line terminator.
+    /// Use this for binary payloads (e.g. measurement packets), where appending "\r\n" would
+    /// corrupt the data and desync the byte stream for the reader on the other end.
+    /// @param DATA Raw bytes to send to the device
     void writeRawToSerial(std::span<const std::uint8_t> DATA);
 
+    ///
+    /// Read whatever is currently available on the serial port, up to max_bytes.
+    /// This is a blocking call!
+    /// @param MAX_BYTES Maximum number of bytes to read in this call
+    /// @return Bytes read, converted to a string
     std::string readFromSerial(std::size_t MAX_BYTES = 128);
 
+    ///
+    /// Change the baud rate of the already-open serial port.
+    /// @param NEW_BAUD_RATE Baud rate to switch to
     void setBaudRateSerial(int NEW_BAUD_RATE);
 };
 

@@ -12,17 +12,11 @@ FWVersion::FWVersion(const int VERSION) : version_(VERSION) {
 } // end of FWVersion constructor
 
 
-///
-/// Get the raw numerical firmware version.
-/// @return Numerical firmware version
 int FWVersion::getValue() const {
     return version_;
 } // end of FWVersion::getValue function
 
 
-///
-/// Get the measurement multiplier associated with this firmware version.
-/// @return Measurement multiplier as a 128-bit floating point number
 __float128 FWVersion::getMultiplier() const {
     __float128 mult{};
     if (version_ == ORIGINAL) {
@@ -37,9 +31,6 @@ __float128 FWVersion::getMultiplier() const {
 } // end of FWVersion::getMultiplier function
 
 
-///
-/// Get a human-readable description of this firmware version.
-/// @return Description of the firmware version
 std::string_view FWVersion::getDescription() const {
     if (version_ == ORIGINAL) {
         return "Original";

@@ -12,10 +12,6 @@ constexpr std::string_view INVALID_CHECKSUM_ERR = "Invalid checksum";
 constexpr std::string_view INVALID_MEASUREMENT_ERR = "Invalid measurement data received from NPET: {}";
 
 
-///
-/// Convert a 128bit floating point number to string.
-/// @param VALUE 128bit floating point number
-/// @return String representation of the number
 std::string float128ToString(const __float128 VALUE) {
     std::array<char, 256> buf{};
     // Fixed decimal with the correct quad precision rounding
@@ -24,13 +20,6 @@ std::string float128ToString(const __float128 VALUE) {
 } // end of float128_to_string function
 
 
-///
-/// Generate a name for the output file.
-/// The name includes the NPET channel and a datetime stamp to ensure uniqueness.
-/// @param CHANNEL NPET channel number (1 or 2)
-/// @param base_dir Base directory to save the output file, defaults to the current working directory
-/// @param FILE_PREFIX Optional prefix prepended to the filename (e.g. to distinguish NPETDual's two legs)
-/// @return Output file name
 std::string outputFilePath(const Channel CHANNEL, const std::filesystem::path &base_dir, const std::string &FILE_PREFIX) {
     SPDLOG_DEBUG("Generating output file name for channel {}", static_cast<int>(CHANNEL));
     // Get the current time
@@ -55,10 +44,6 @@ std::string outputFilePath(const Channel CHANNEL, const std::filesystem::path &b
 } // end of output_file_name function
 
 
-///
-/// Calculate the XOR checksum of the first 12 bytes of the given 13-byte set
-/// @param set_to_check Set of bytes to get the checksum for
-/// @return The computed checksum byte
 uint8_t xorChecksum(const std::array<std::uint8_t, 13> &set_to_check) {
     std::uint8_t computed = 0;
 
@@ -75,15 +60,6 @@ uint8_t xorChecksum(const std::array<std::uint8_t, 13> &set_to_check) {
 } // end of xorChecksum function
 
 
-///
-/// Process the data received from NPET.
-/// Compute the time of photon arrival from the measured data.
-/// Corrects the result with the time correction constant from NPET.
-/// Uses 128-bit floating point numbers to avoid overflow.
-/// @param MEASUREMENT_SET Array of 11 measured data received from NPET in binary format.
-/// The data received from NPET has 13 bytes, but the first two bytes are not used in the computation.
-/// @param multiplier Multiplier depending on NPET FW version
-/// @param time_const Time correction constant, defaults to empty const
 Measurement decodeMeasurementSet(
     const std::array<std::uint8_t, 13> MEASUREMENT_SET,
     const __float128 &multiplier,
@@ -125,20 +101,6 @@ Measurement decodeMeasurementSet(
 } // end of compute_time_of_arrival function
 
 
-///
-/// Encode a target arrival time into the raw 13-byte format decoded by decode_measurement_set.
-/// This is the inverse of decode_measurement_set (when called with the default, zero time_const): the coarse,
-/// medium and fine fields are chosen so decoding the returned bytes reproduces the requested time as closely as
-/// the wire format allows. Its finest representable step is 1e-8 / 2^16 s (~152.588 fs), fixed regardless of
-/// multiplier, so femtosecond-precision input is rounded to the nearest representable tick - anything finer than
-/// that is lost to quantization, the same way it would be on a real device.
-/// measurement.intp/fracp mirror measurement::intp/fracp exactly, so a decoded measurement can be passed straight
-/// back in to reproduce (as closely as the format allows) the bytes it came from.
-/// @param measurement Target arrival time to encode: intp is the whole-second part (must be non-negative), fracp
-/// is the fractional-second part (must be in [0, 1)), and meas_num is embedded in byte 2 (becomes
-/// measurement::meas_num on decode)
-/// @param multiplier Multiplier depending on NPET FW version; must match what decode_measurement_set is later called with
-/// @return A 13-byte measurement set, checksum included, that decodes back to approximately the requested time
 std::array<std::uint8_t, 13> encodeMeasurementSet(
     const Measurement &measurement,
     const __float128 &multiplier
@@ -194,11 +156,6 @@ std::array<std::uint8_t, 13> encodeMeasurementSet(
 } // end of encode_measurement_set function
 
 
-///
-/// Formats the measurement command string to be sent to the NPET device.
-/// @param CHANNEL NPET channel to read from (1 or 2)
-/// @param NUM_OF_MEAS Number of measurements to read
-/// @return Formatted measurement command string
 std::string getMeasurementCmd(const Channel CHANNEL, const int NUM_OF_MEAS) {
     const std::string MEAS_LETTER = CHANNEL == Channel::CH1 ? "e" : "h";
     std::string cmd = MEAS_LETTER + std::to_string(NUM_OF_MEAS);

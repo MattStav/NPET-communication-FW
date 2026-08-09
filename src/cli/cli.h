@@ -10,6 +10,12 @@ using namespace rang;
 /// Command Line Interface (CLI) class for user interaction.
 class Cli {
 public:
+    ///
+    /// Print a styled message to the console.
+    /// @param msg Message to print
+    /// @param END_LINE Whether to end the line after the message
+    /// @param FG_COLOR Foreground color
+    /// @param STYLE_TYPE Style type
     static void echo(
         const std::string &msg,
         fg FG_COLOR = fg::gray,
@@ -17,18 +23,47 @@ public:
         bool END_LINE = true
     );
 
+    ///
+    /// Print an error message to the console.
+    /// @param msg Message to print
     static void err(const std::string &msg);
 
+    ///
+    /// Show a value in CLI
+    /// @param msg Message to print
+    /// @param value Value to show
     static void showInt(const std::string &msg, const int &value);
 
+    ///
+    /// Show a value in CLI
+    /// @param msg Message to print
+    /// @param value Value to show
     static void showStr(const std::string &msg, const std::string &value);
 
+    ///
+    /// Ask for user confirmation with a yes/no question.
+    /// @param question User confirm question
+    /// @param default_yes Default to yes if True else False
+    /// @return Bool value of user input
     [[nodiscard]] static bool confirm(const std::string &question, const bool &default_yes = false);
 
+    ///
+    /// Ask the user to press Enter to exit the program.
     static void confirmExit();
 
+    ///
+    /// Ask for user input with a question prompt. If the user input is empty, return the default value.
+    /// @param question User prompt question
+    /// @param default_value Default value if the user input is empty
+    /// @return User input or default value
     [[nodiscard]] static std::string prompt(const std::string &question, const std::string &default_value = "");
 
+    ///
+    /// List a menu of options and ask the user to select one.
+    /// @param title Menu title
+    /// @param options Menu options
+    /// @param END_LINE Whether to end the line after the menu
+    /// @return Index of the selected option (1-based). Returns -2 for invalid input.
     [[nodiscard]] static int menu(
         const std::string &title,
         const std::vector<std::string> &options,
@@ -49,8 +84,15 @@ struct ProgressBarConfig {
 
 class ProgressBar {
 public:
+    ///
+    /// Create a CLI Progress bar object which can be used to show process progress.
+    /// @param CONFIG Progress bar configuration (total, redraw threshold, bar width)
     explicit ProgressBar(ProgressBarConfig CONFIG);
 
+    ///
+    /// Update the progress bar.
+    /// Whether the bar is redraw in CLI depends on change_trigger_ parameter.
+    /// @param PROGRESS Current progress value (0 to total_)
     void update(int PROGRESS);
 
 private:

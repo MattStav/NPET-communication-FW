@@ -62,10 +62,6 @@ static bool ntpPrecheck() {
 } // end of ntp_precheck function
 
 
-///
-/// Ensure that the system time is accurate by triggering an NTP sync.
-/// This function only works on Windows systems.
-/// @return True if the system time was successfully synchronized, false otherwise.
 bool ensureAccurateSystemTime() {
     if (!ntpPrecheck()) {
         return false;

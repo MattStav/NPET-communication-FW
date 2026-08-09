@@ -41,32 +41,87 @@ const std::vector<std::string> INT_OPTIONS = {
     "Cancel",
 };
 
+///
+/// Print the manual into the console.
+/// @return Exit code 0
 int printManual();
 
+///
+/// Print the license information into the console.
 int printLicenseInformation();
 
+///
+/// Reset NPET into default settings.
+/// @return Exit code 0
 int resetNpetStandalone();
 
+///
+/// Launch the NPET data processor which needs to be installed separately.
+/// The data processor is a Python package that processes the raw measurement data and generates plots and reports.
 int launchDataProcessor();
 
 void printAppIntro();
 
+///
+/// Lists available COM ports and prompts the user to select one.
+/// If autoselect is true and only one COM port is available, it will be selected automatically.
+/// Ports listed in EXCLUDED_PORTS are dropped from the selection before it is shown.
+/// WARNING: This function does not check if the selected COM port is valid.
+/// @param AUTOSELECT If true, automatically select the COM port if only one is available.
+/// @param EXCLUDED_PORTS COM port numbers to exclude from the selection (e.g. {5, 8}).
+/// @throws runtime_error if no COM ports are found.
+/// @returns Selected COM port number (e.g. 8 for COM8).
 int selectComPortCli(bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS = {});
 
+///
+/// Open communication for the referenced NPET on the provided NPET.
+/// Errors are handled internally and False is returned if any errors are encountered.
+/// @param npet The NPETComm reference
+/// @param COM_PORT COM port number
+/// @param ERROR_MSG Error message in case of an error
+/// @return True if communication was successfully opened, False otherwise
 bool openCommSafe(NPETComm &npet, int COM_PORT, std::string_view ERROR_MSG);
 
+///
+/// Reset all the NPET settings
+/// @param npet The NPETComm reference
+/// @param DESIGNATION Optional designation for the NPET, used in error messages. If empty, a default message will be used.
 void resetNPETSafe(NPETComm &npet, std::string_view DESIGNATION = "");
 
+///
+/// Data validation allows either a positive integer number or (optionally) -1 for infinity.
+/// @param num_to_validate Number to check as string
+/// @param ALLOW_NEGATIVE_ONE Whether to allow -1 as a valid input
+/// @return The validated number in int format, or -2 if the input is invalid
 int numValidation(const std::string &num_to_validate, bool ALLOW_NEGATIVE_ONE = true);
 
+///
+/// Prompt the user to select a measurement channel
+/// @return Selected channel
 std::optional<Channel> promptChannel(int DEFAULT_CHANNEL, std::string_view PROMPT_MSG = "channel to read from");
 
+///
+/// Prompt the user to select a baud rate.
+/// @param CURRENT_BAUD_RATE The current baud rate of the NPET communication.
+/// @return Selected baud rate
 int promptBaudRate(INT CURRENT_BAUD_RATE);
 
+///
+/// Change communication baud rate for the referenced NPET.
+/// @param npet The NPETComm reference
+/// @param NEW_BAUD_RATE The new baud rate to set for the NPET communication
 void setBaudRateSafe(NPETComm &npet, int NEW_BAUD_RATE);
 
+///
+/// Prompt the user to define the NPET internal FW version.
+/// @param CURRENT_FW_VERSION The current firmware version of the NPET.
+/// @return Selected FW version
 FWVersion promptFWVersion(FWVersion CURRENT_FW_VERSION);
 
+///
+/// Prompt the user to define the integer part of the time correction constant
+/// @param SEL Time correction constant int part selection logic
+/// @return Time correction constant in seconds
 int promptTimeConstSeconds(ConstIntSelectionLogic SEL);
 
 #endif //NPET_COMM_FW_HELPER_FUNC_H

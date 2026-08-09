@@ -13,20 +13,40 @@ constexpr std::string_view COMM_DUAL_CLOSE = "Closing NPETDual communication fra
 
 class NPETDualCLI : public NPETDual {
 public:
+    ///
+    /// Open serial communication with both NPETs.
     void openCommunicationCLI();
 
+    ///
+    /// Checks if both NPET devices are connected to the specified COM ports and responsive.
+    /// Several attempts are made with a delay between each attempt.
+    /// Prints the status to the CLI.
+    /// @return True if both NPETs are connected and responsive, otherwise false.
     [[nodiscard]] bool bothResponsiveCLI();
 
+    ///
+    /// CLI wrapper for the reading batch measurements from both NPETs.
+    /// Asks the user for the number of measurements, channel to read from, display, and save options.
     void readBatchMeasurementsCLI();
 
+    ///
+    /// Switch the NPET START/STOP designation.
     void switchStartStopCLI();
 
+    ///
+    /// CLI wrapper for setting baud rate on both NPETs
     void setBaudRateCLI();
 
+    ///
+    /// Synchronize the two NPETs.
     void syncNPETsCLI();
 
+    ///
+    /// CLI wrapper to set the NPET firmware version for both NPETs.
     void setFwVerCLI();
 
+    ///
+    /// Reset both NPETs into default settings.
     void resetCLI();
 
     ///

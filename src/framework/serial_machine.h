@@ -1,6 +1,7 @@
 #ifndef NPET_COMM_FW_SERIAL_MACHINE_H
 #define NPET_COMM_FW_SERIAL_MACHINE_H
 #include <chrono>
+#include <csignal>
 #include <optional>
 #include <span>
 #include <string>
@@ -26,6 +27,8 @@ class SerialMachine {
     boost::asio::io_context io_;
     // Serial port object for communication
     boost::asio::serial_port port_{io_};
+    // Watches for Ctrl+C, see armSigintShutdown()
+    boost::asio::signal_set sigint_signals_{io_, SIGINT};
 
     ///
     /// Block until the pending read and timer operations have both completed, cancelling
@@ -174,6 +177,14 @@ protected:
     /// untouched otherwise. Must outlive the read, since it's captured by reference in the
     /// completion handler.
     void listenForCommand(char EXPECTED_FIRST_BYTE, bool &matched);
+
+    ///
+    /// Arm a handler that closes the serial connection cooperatively when SIGINT (Ctrl+C) is
+    /// received, instead of relying on the OS's default handler, which force-kills threads and
+    /// can deadlock the process if one of them was terminated mid-syscall inside a blocking
+    /// serial port read. One-shot: call again after it fires if the port is reopened and the
+    /// handler needs to be re-armed.
+    void armSigintShutdown();
 };
 
 

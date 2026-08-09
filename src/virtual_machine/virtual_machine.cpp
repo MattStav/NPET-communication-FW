@@ -1,6 +1,5 @@
 #include "virtual_machine.h"
 
-#include <csignal>
 #include <random>
 #include <spdlog/spdlog.h>
 
@@ -143,12 +142,12 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
         const __float128 KNOWN_FRACP = static_cast<__float128>(SUB_SECOND_NS.count()) / 1'000'000'000;
         // Add this VM instance's fixed offset, plus hundred picosecond-level noise
         std::uniform_real_distribution jitter_distrib(0.0, 1e-10);
-        const __float128 fracp = KNOWN_FRACP + TIMING_OFFSET + static_cast<__float128>(jitter_distrib(gen));
-        const int seconds = static_cast<int>(ELAPSED_SECONDS.count());
-        Measurement MEASUREMENT{.meas_num = measurement_counter_, .intp = seconds, .fracp = fracp};
+        const __float128 FRACP = KNOWN_FRACP + TIMING_OFFSET + static_cast<__float128>(jitter_distrib(gen));
+        const int SECONDS = static_cast<int>(ELAPSED_SECONDS.count());
+        Measurement meas{.meas_num = measurement_counter_, .intp = SECONDS, .fracp = FRACP};
         // Jitter might push the fractional part past the next whole second
-        MEASUREMENT.resolve();
-        auto measurement_set = encodeMeasurementSet(MEASUREMENT, FWVersion(FWVersion::VIRTUAL).getMultiplier());
+        meas.resolve();
+        auto measurement_set = encodeMeasurementSet(meas, FWVersion(FWVersion::VIRTUAL).getMultiplier());
         if (corrupt_every_ > 0 && (i % corrupt_every_) == 0) {
             // Bump the checksum byte so it no longer matches xorChecksum() of the other 12 bytes,
             // simulating a corrupted frame for the reader's checksum-validation path to catch.
@@ -171,17 +170,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
 
 
 void VirtualMachine::deviceLoop() {
-    // Handle Ctrl+C cooperatively: cancel the pending read instead of relying on the
-    // OS's default handler, which force-kills threads and can deadlock the process if
-    // one of them was terminated mid-syscall inside a blocking serial port read.
-    boost::asio::signal_set signals(getIO(), SIGINT);
-    signals.async_wait([this](const boost::system::error_code &ec, int) {
-        if (ec) {
-            return; // signal_set was cancelled/destroyed
-        }
-        SPDLOG_INFO("Shutdown requested, stopping virtual machine ...");
-        closeCommunication();
-    });
+    armSigintShutdown();
 
     while (true) {
         SPDLOG_INFO("Virtual NPET runtime [hh:mm:ss]: {}", getRunTime());

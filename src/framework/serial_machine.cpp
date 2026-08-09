@@ -208,3 +208,14 @@ void SerialMachine::listenForCommand(const char EXPECTED_FIRST_BYTE, bool &match
                                       }
                                   });
 }
+
+
+void SerialMachine::armSigintShutdown() {
+    sigint_signals_.async_wait([this](const boost::system::error_code &ec, int) {
+        if (ec) {
+            return; // signal_set was cancelled/destroyed
+        }
+        SPDLOG_INFO("Shutdown requested, stopping serial communication ...");
+        closeCommunication();
+    });
+}

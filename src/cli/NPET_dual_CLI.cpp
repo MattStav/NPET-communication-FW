@@ -61,7 +61,7 @@ static int openCommLoop(NPETComm &npet, const std::string &designation, const st
         }
         npet.detectFWVer();
         if (!confirmNPETSelection(npet, designation)) {
-            npet.closeCommunication();
+            npet.ser.closeCommunication();
             excluded_ports.push_back(COM_PORT);
             continue;
         }
@@ -108,16 +108,16 @@ bool NPETDualCLI::bothResponsiveCLI() {
         if (!start_res && !stop_res) {
             SPDLOG_ERROR(NPET_DUAL_NOT_RESPONDING);
             Cli::err(std::string(NPET_DUAL_NOT_RESPONDING));
-            startComm().purgePort();
-            stopComm().purgePort();
+            startComm().ser.purgePort();
+            stopComm().ser.purgePort();
         } else if (!start_res) {
             SPDLOG_ERROR(NPET_START_NOT_RESPONDING);
             Cli::err(std::string(NPET_START_NOT_RESPONDING));
-            startComm().purgePort();
+            startComm().ser.purgePort();
         } else {
             SPDLOG_ERROR(NPET_STOP_NOT_RESPONDING);
             Cli::err(std::string(NPET_STOP_NOT_RESPONDING));
-            stopComm().purgePort();
+            stopComm().ser.purgePort();
         }
         Sleep(RETRY_DELAY_MS);
     } // end of for loop
@@ -128,12 +128,12 @@ bool NPETDualCLI::bothResponsiveCLI() {
 
 void NPETDualCLI::setFwVerCLI() {
     Cli::echo("Select the START NPET firmware version");
-    const FWVersion NEW_FW = promptFWVersion(startComm().fw_version);
+    const FWVersion NEW_FW = promptFWVersion(startComm().getFWVer());
     SPDLOG_DEBUG("Setting START NPET firmware version to: {}", NEW_FW.getDescription());
     safeExec([&] { startComm().setFWVer(NEW_FW); }, "set_FW_ver");
     Cli::echo("");
     Cli::echo("Select the STOP NPET firmware version");
-    const FWVersion NEW_FW_TWO = promptFWVersion(stopComm().fw_version);
+    const FWVersion NEW_FW_TWO = promptFWVersion(stopComm().getFWVer());
     SPDLOG_DEBUG("Setting STOP NPET firmware version to: {}", NEW_FW_TWO.getDescription());
     safeExec([&] { stopComm().setFWVer(NEW_FW_TWO); }, "set_FW_ver");
 }
@@ -216,8 +216,8 @@ void NPETDualCLI::switchStartStopCLI() {
 
 void NPETDualCLI::setBaudRateCLI() {
     SPDLOG_DEBUG("Setting baud rate on both NPETs ...");
-    const int CURRENT_BAUD_ONE = one_.getBaudRate();
-    const int CURRENT_BAUD_TWO = one_.getBaudRate();
+    const int CURRENT_BAUD_ONE = one_.ser.getBaudRate();
+    const int CURRENT_BAUD_TWO = one_.ser.getBaudRate();
     assert(CURRENT_BAUD_ONE == CURRENT_BAUD_TWO);
     const int NEW_BAUD_RATE = promptBaudRate(CURRENT_BAUD_ONE);
     SPDLOG_DEBUG("User specified new baud rate: {}", NEW_BAUD_RATE);

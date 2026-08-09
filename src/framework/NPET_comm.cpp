@@ -15,7 +15,7 @@
 
 bool NPETComm::isResponsive(const bool END_STREAM) {
     SPDLOG_DEBUG("Checking if NPET is responsive");
-    const std::string RESPONSE = exchangeComm("c");
+    const std::string RESPONSE = ser.exchangeComm("c");
     // The NPET responds with "c0" to the "c" command.
     // In case the NPET is currently streaming measurements,
     // it responds with "c1" instead, which will be at the end of the response string.
@@ -28,8 +28,8 @@ bool NPETComm::isResponsive(const bool END_STREAM) {
 
 void NPETComm::setFWVer(const FWVersion NEW_FW_VERSION) {
     SPDLOG_DEBUG("Setting NPET firmware version to {}", NEW_FW_VERSION.getDescription());
-    fw_version = FWVersion(NEW_FW_VERSION);
-    SPDLOG_INFO("NPET firmware successfully version set to {}", fw_version.getDescription());
+    fw_version_ = FWVersion(NEW_FW_VERSION);
+    SPDLOG_INFO("NPET firmware successfully version set to {}", fw_version_.getDescription());
 } // end of set_NPET_FW_ver function
 
 
@@ -39,7 +39,7 @@ void NPETComm::detectFWVer() {
     const std::string REVISION_STRING = "ADI";
     const std::string OFFLINE_STRING = "offline";
     // Get and check the FW version
-    if (const std::string RES = exchangeComm("?"); RES.contains(REVISION_STRING)) {
+    if (const std::string RES = ser.exchangeComm("?"); RES.contains(REVISION_STRING)) {
         setFWVer(FWVersion(FWVersion::AD_REVISION));
     } else if (RES.contains(OFFLINE_STRING)) {
         setFWVer(FWVersion(FWVersion::VIRTUAL));
@@ -52,7 +52,7 @@ void NPETComm::detectFWVer() {
 bool NPETComm::setFrequency(const int NEW_FREQUENCY) {
     SPDLOG_DEBUG("Setting pulse generation frequency to {} Hz", NEW_FREQUENCY);
     assert(NEW_FREQUENCY >= 1);
-    const std::string RET = exchangeComm("k" + std::to_string(NEW_FREQUENCY));
+    const std::string RET = ser.exchangeComm("k" + std::to_string(NEW_FREQUENCY));
     const bool SUCCESS = RET.starts_with('k');
     if (SUCCESS) {
         SPDLOG_INFO("Pulse generation frequency successfully set to {} Hz", NEW_FREQUENCY);
@@ -73,7 +73,7 @@ bool NPETComm::generatePulses(const int NUM_OF_PULSES) {
     } else {
         num_of_pulses_str = std::to_string(NUM_OF_PULSES);
     }
-    const std::string RET = exchangeComm("p" + num_of_pulses_str);
+    const std::string RET = ser.exchangeComm("p" + num_of_pulses_str);
     const bool SUCCESS = RET.starts_with('p');
     if (SUCCESS) {
         SPDLOG_INFO("Pulse generation command successful for {} pulses", log_num);
@@ -89,13 +89,13 @@ bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
     assert(NEW_BAUD_RATE > 0);
     // Cancel any pending operations before changing the baud rate
     SPDLOG_DEBUG("Cancelling pending operations");
-    cancelPendingOperation(false);
+    ser.cancelPendingOperation(false);
     // THIS FUNCTION CANNOT USE SEND_COMMAND FROM THIS MODULE!!!
     const std::string CMD = "w" + std::to_string(NEW_BAUD_RATE);
-    writeToSerial(CMD);
+    ser.writeToSerial(CMD);
     // Read response to clear the buffer
-    readFromSerial();
-    setBaudRateSerial(NEW_BAUD_RATE);
+    ser.readFromSerial();
+    ser.setBaudRateSerial(NEW_BAUD_RATE);
     const bool SUCCESS = isResponsive();
     if (SUCCESS) {
         SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE);
@@ -110,7 +110,7 @@ bool NPETComm::setMeasuredDataFormat(const int FORMAT) {
     const std::string LOG_FORMAT = FORMAT == 0 ? "binary" : "ASCII";
     SPDLOG_DEBUG("Setting measured data format to {}", LOG_FORMAT);
     assert(FORMAT == 0 || FORMAT == 1);
-    const std::string RET = exchangeComm("a" + std::to_string(FORMAT));
+    const std::string RET = ser.exchangeComm("a" + std::to_string(FORMAT));
     const bool SUCCESS = RET.starts_with('a');
     if (SUCCESS) {
         SPDLOG_INFO("Measured data format successfully set to {}", LOG_FORMAT);
@@ -142,13 +142,13 @@ Measurement NPETComm::readSingleMeasurement(const Channel CHANNEL) {
 
     // This program can only process the binary data format
     setMeasuredDataFormatToBinary(*this);
-    writeToSerial(getMeasurementCmd(CHANNEL, 1));
-    vec = readWithTimeout(ReadMode::FIXED_BYTES, std::chrono::milliseconds(5000), MEASUREMENT_PACKET_SIZE);
+    ser.writeToSerial(getMeasurementCmd(CHANNEL, 1));
+    vec = ser.readWithTimeout(ReadMode::FIXED_BYTES, std::chrono::milliseconds(5000), MEASUREMENT_PACKET_SIZE);
     SPDLOG_DEBUG("Single measurement received"); // Logging the data is pointless as it's unformatted
     // Transform the binary response into a measurement array
     std::transform(vec.begin(), vec.begin() + MEASUREMENT_PACKET_SIZE, arr.begin(),
                    [](const char C) { return static_cast<uint8_t>(C); });
-    return decodeMeasurementSet(arr, fw_version.getMultiplier());
+    return decodeMeasurementSet(arr, fw_version_.getMultiplier());
 } // end of read_single_measurement function
 
 
@@ -180,7 +180,7 @@ bool NPETComm::exportTimeConstantRaw(const std::string &constant_raw) {
     SPDLOG_DEBUG("Exporting raw time constant to NPET: '{}'", constant_raw);
     SPDLOG_WARN("This will overwrite the previous time correction constant!");
     assert(constant_raw.length() <= 28);
-    const std::string RET = exchangeComm("j" + constant_raw);
+    const std::string RET = ser.exchangeComm("j" + constant_raw);
     const bool SUCCESS = RET.starts_with('j');
     if (SUCCESS) {
         SPDLOG_INFO("Raw time constant successfully exported to NPET: '{}'", constant_raw);
@@ -207,7 +207,7 @@ bool NPETComm::clearTimeConstant() {
 Measurement NPETComm::importTimeConstant() {
     SPDLOG_DEBUG("Importing time constant from NPET");
     // Send command to get the time constant
-    std::string raw_const = exchangeComm("n1");
+    std::string raw_const = ser.exchangeComm("n1");
     SPDLOG_DEBUG("Raw time constant received from NPET: '{:?}'", raw_const);
     // Data validation, triggered if no constant was returned from the NPET
     // Either got no response, which is suspicious for other reasons,
@@ -246,7 +246,7 @@ std::string NPETComm::importTimeConstantRaw() {
 
 std::string NPETComm::getStatus() {
     SPDLOG_DEBUG("Getting status from NPET");
-    std::string ret = exchangeComm("s1");
+    std::string ret = ser.exchangeComm("s1");
     SPDLOG_DEBUG("Status received from NPET: '{}'", ret);
     return ret;
 } // end of get_status function

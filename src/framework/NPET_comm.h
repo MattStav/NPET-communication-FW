@@ -10,10 +10,13 @@
 #include "serial_machine.h"
 
 
-class NPETComm : public SerialMachine {
-public:
+class NPETComm {
     // Internal NPET firmware version
-    FWVersion fw_version{};
+    FWVersion fw_version_{};
+
+public:
+    // Serial connection
+    Serial ser{};
 
     ///
     /// Checks if the NPET device is connected and responsive.
@@ -22,10 +25,13 @@ public:
 
     ///
     /// Set the firmware version.
-    /// Firmware version must be either 1, 2, or 3.
     /// Version is saved into the fw_version attribute.
     /// @param NEW_FW_VERSION New firmware version to set
     void setFWVer(FWVersion NEW_FW_VERSION);
+
+    ///
+    /// @return Current NPET internal FW version.
+    FWVersion getFWVer() const { return fw_version_; }
 
     ///
     /// Automatically detect the NPET firmware version by querying the device.
@@ -150,11 +156,11 @@ public:
     ~NPETComm() {
         SPDLOG_DEBUG("NPET comm destructor called, closing communication and resetting baud rate if possible");
         // Reset to default baud rate
-        if (isOpen()) {
+        if (ser.isOpen()) {
             if (isResponsive()) {
                 (void) setBaudRate(115200); // Ignore return value
             }
-            closeCommunication();
+            ser.closeCommunication();
         }
     } // end of destructor
 

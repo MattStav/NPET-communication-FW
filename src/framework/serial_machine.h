@@ -22,6 +22,12 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+/// @brief Read mode for the read_with_timeout function.
+enum class ReadMode : std::uint8_t {
+    UNTIL_NEWLINE,
+    FIXED_BYTES,
+};
+
 class Serial final {
     // io_context to manage the serial port's I/O operations
     boost::asio::io_context io_;
@@ -137,12 +143,6 @@ public:
     /// @param command Command string to send to the device
     /// @return Device response string
     std::string exchangeComm(const std::string &command);
-
-    /// @brief Read mode for the read_with_timeout function.
-    enum class ReadMode : std::uint8_t {
-        UNTIL_NEWLINE,
-        FIXED_BYTES,
-    };
 
     ///
     /// Asynchronously read a response from the device, aborting if nothing arrives within the timeout.

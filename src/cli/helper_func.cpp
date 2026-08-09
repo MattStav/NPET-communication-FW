@@ -147,7 +147,7 @@ bool openCommSafe(NPETComm &npet, const int COM_PORT, const std::string_view ERR
         return false;
     }
     try {
-        npet.openCommunication(COM_PORT, DEFAULT_BAUD_RATE);
+        npet.ser.openCommunication(COM_PORT, DEFAULT_BAUD_RATE);
     } catch (std::exception &e) {
         SPDLOG_ERROR(FAILED_OPEN_COM_PORT, e.what());
         Cli::err(std::format(FAILED_OPEN_COM_PORT, e.what()));
@@ -157,7 +157,7 @@ bool openCommSafe(NPETComm &npet, const int COM_PORT, const std::string_view ERR
         Cli::echo("COM port opened successfully", fg::yellow);
         SPDLOG_ERROR(ERROR_MSG);
         Cli::err(std::string(ERROR_MSG));
-        npet.closeCommunication();
+        npet.ser.closeCommunication();
         return false;
     }
     return true;

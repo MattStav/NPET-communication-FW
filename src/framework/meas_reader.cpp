@@ -25,14 +25,14 @@ void MeasReader::dataReceiver() {
         bool completed = false;
 
         // Read exactly 13 bytes - guarantees a complete packet
-        npet_.readExactAsync(buf, ec, completed);
+        npet_.ser.readExactAsync(buf, ec, completed);
         // Run until the async read completes
-        npet_.pollUntil([&] { return completed || stop_sign.load(std::memory_order_relaxed); });
+        npet_.ser.pollUntil([&] { return completed || stop_sign.load(std::memory_order_relaxed); });
         // If the operation was aborted by error or another thread, exit the loop
         if (ec == boost::asio::error::operation_aborted || stop_sign.load(std::memory_order_relaxed)) {
             SPDLOG_DEBUG("Data receiver thread stopping ...");
             // Cancel pending operation BEFORE exiting and wait for the cancellation to complete
-            npet_.cancelPendingOperation();
+            npet_.ser.cancelPendingOperation();
             break;
         }
         if (!ec) {
@@ -99,7 +99,7 @@ std::optional<std::array<uint8_t, 13> > MeasReader::grabMeasFromReceiver() {
 
 
 void MeasReader::dataProcessor(const MeasContext &meas_set, const Measurement &time_const) {
-    const __float128 MULTIPLIER = npet_.fw_version.getMultiplier();
+    const __float128 MULTIPLIER = npet_.getFWVer().getMultiplier();
     int meas_counter = 0; // Track total including overflows
     SPDLOG_DEBUG("Data processor thread started");
     SPDLOG_DEBUG("Data processor time const: {}", time_const.toString());
@@ -187,7 +187,7 @@ void MeasReader::dataSaver(const std::filesystem::path &save_path) {
 
 void MeasReader::main(const MeasContext &meas_set) {
     SPDLOG_INFO("Initiating Measurement Reader ...");
-    assert(npet_.isOpen());
+    assert(npet_.ser.isOpen());
     // Import the time constant from NPET
     const Measurement TIME_CONST = npet_.importTimeConstant();
     assert(TIME_CONST.meas_num == -1);
@@ -230,7 +230,7 @@ void MeasReader::main(const MeasContext &meas_set) {
     }); // end of key_watcher thread
     SPDLOG_DEBUG("All threads started");
     // Start the NPET measurements
-    npet_.writeToSerial(getMeasurementCmd(meas_set.channel, meas_set.num_of_meas));
+    npet_.ser.writeToSerial(getMeasurementCmd(meas_set.channel, meas_set.num_of_meas));
     SPDLOG_DEBUG("Measurement command sent to NPET, waiting for threads to finish ...");
     // Join the workers first, to allow key_watcher loop to finish
     if (receiver.joinable()) {

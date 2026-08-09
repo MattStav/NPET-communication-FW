@@ -90,7 +90,7 @@ std::string VirtualMachine::getResponse(const std::string &command) {
 
 void VirtualMachine::changeBaudRate(const int NEW_BAUD_RATE) {
     try {
-        setBaudRateSerial(NEW_BAUD_RATE);
+        ser.setBaudRateSerial(NEW_BAUD_RATE);
     } catch (const std::exception &e) {
         SPDLOG_ERROR("Couldn't change the baud rate: {}", e.what());
     }
@@ -114,9 +114,9 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
     SPDLOG_INFO("Number of measurements: {}", number_of_measurements);
     // Start listening for an incoming stop command without blocking the measurement stream below
     bool stop_requested = false;
-    listenForCommand('c', stop_requested);
+    ser.listenForCommand('c', stop_requested);
     // poll once to start the async read
-    pollUntil([&] { return true; }, true);
+    ser.pollUntil([&] { return true; }, true);
     // Align to the next tick of the start_time grid, shifted by OFFSET.
     // ELAPSED_NS below is still measured from start_time, so the shift
     // carries through into the reported measurement timestamps, not just the trigger schedule.
@@ -126,7 +126,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
     while (true) {
         // Wait for the next fixed tick since start_time, while still polling for the stop command to arrive.
         // Don't restart the io_context here: the stop-command read stays outstanding across ticks.
-        pollUntil([&] { return stop_requested || std::chrono::high_resolution_clock::now() >= next_tick; },
+        ser.pollUntil([&] { return stop_requested || std::chrono::high_resolution_clock::now() >= next_tick; },
                   false, std::chrono::milliseconds(1));
         if (stop_requested) {
             SPDLOG_WARN("Stop command received, ending measurement sequence early");
@@ -153,7 +153,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
             // simulating a corrupted frame for the reader's checksum-validation path to catch.
             measurement_set.at(12) = static_cast<std::uint8_t>(measurement_set.at(12) + 1);
         }
-        writeRawToSerial(measurement_set);
+        ser.writeRawToSerial(measurement_set);
         if (i == number_of_measurements) {
             SPDLOG_INFO("Measurement stream completed: {} measurements sent", i);
             break;
@@ -161,10 +161,10 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
         next_tick += PERIOD;
     } // end of while loop
     // Stop listening for the stop command; harmless if it already completed
-    cancelPendingOperation(false);
+    ser.cancelPendingOperation(false);
     if (stop_requested) {
         SPDLOG_INFO("Stop command received mid-stream, ending measurement sequence early");
-        writeToSerial("c1");
+        ser.writeToSerial("c1");
     }
 } // end of send_measurements function
 
@@ -175,7 +175,7 @@ void VirtualMachine::deviceLoop() {
         SPDLOG_INFO("Waiting for data...");
         std::vector<char> buffer;
         try {
-            buffer = readWithTimeout(ReadMode::UNTIL_NEWLINE, std::chrono::milliseconds(10000));
+            buffer = ser.readWithTimeout(ReadMode::UNTIL_NEWLINE, std::chrono::milliseconds(10000));
         } catch (const CommTimeoutError &e) {
             SPDLOG_DEBUG("No data received: {}", e.what());
             continue;
@@ -198,7 +198,7 @@ void VirtualMachine::deviceLoop() {
             continue;
         }
         SPDLOG_INFO("Writing response: {:?}", RESPONSE);
-        writeToSerial(RESPONSE);
+        ser.writeToSerial(RESPONSE);
     } // end of while loop
     SPDLOG_INFO("Virtual machine shut down");
 } // end of device_loop function

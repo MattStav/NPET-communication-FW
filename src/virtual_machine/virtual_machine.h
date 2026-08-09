@@ -13,7 +13,7 @@ struct VmConfig {
 };
 
 
-class VirtualMachine : public SerialMachine {
+class VirtualMachine{
     // Frequency of measurement stream on channel 1
     int ch1_frequency_{};
     // Delay of channel 1's tick grid relative to channel 2's, see VmConfig::ch1_delay_ns
@@ -72,6 +72,9 @@ protected:
     [[nodiscard]] std::string getRunTime() const;
 
 public:
+    // Serial connection
+    Serial ser{};
+
     explicit VirtualMachine(const VmConfig CONFIG) : ch1_frequency_(CONFIG.ch1_frequency),
                                                      corrupt_every_(CONFIG.corrupt_every),
                                                      ch1_delay_ns_(std::chrono::nanoseconds(CONFIG.ch1_delay_ns)) {

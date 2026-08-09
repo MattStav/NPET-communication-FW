@@ -61,7 +61,7 @@ bool NPETCommCLI::isResponsiveCLI() {
         }
         SPDLOG_ERROR(NPET_NOT_RESPONDING);
         Cli::err(std::string(NPET_NOT_RESPONDING));
-        purgePort();
+        ser.purgePort();
         Sleep(RETRY_DELAY_MS);
     } // end of for loop
     SPDLOG_ERROR("NPET is not responsive after {} attempts", MAX_ATTEMPTS);
@@ -70,7 +70,7 @@ bool NPETCommCLI::isResponsiveCLI() {
 
 
 void NPETCommCLI::setFwVerCLI() {
-    const FWVersion NEW_FW = promptFWVersion(fw_version);
+    const FWVersion NEW_FW = promptFWVersion(getFWVer());
     SPDLOG_DEBUG("Setting NPET firmware version to: {}", NEW_FW.getDescription());
     safeExec([&] { setFWVer(NEW_FW); }, "set_FW_ver");
 } // end of select_NPET_FW_ver function
@@ -80,8 +80,8 @@ void NPETCommCLI::detectFwVerCLI() {
     SPDLOG_DEBUG("Detecting NPET firmware version ...");
     safeExec([&] { detectFWVer(); }, "detect_FW_ver");
     try {
-        const std::string DESCRIPTION = "Detected firmware: " + std::string(fw_version.getDescription());
-        if (fw_version.getValue() == FWVersion::VIRTUAL) {
+        const std::string DESCRIPTION = "Detected firmware: " + std::string(getFWVer().getDescription());
+        if (getFWVer().getValue() == FWVersion::VIRTUAL) {
             Cli::echo(DESCRIPTION, fg::yellow);
         } else {
             Cli::echo(DESCRIPTION);
@@ -139,7 +139,7 @@ void NPETCommCLI::generatePulsesCLI() {
 
 void NPETCommCLI::setBaudRateCLI() {
     SPDLOG_DEBUG("Setting baud rate ...");
-    const int CURRENT_BAUD = getBaudRate();
+    const int CURRENT_BAUD = ser.getBaudRate();
     const int NEW_BAUD_RATE = promptBaudRate(CURRENT_BAUD);
     if (NEW_BAUD_RATE == CURRENT_BAUD) {
         SPDLOG_DEBUG(BAUD_RATE_ALREADY_SET);

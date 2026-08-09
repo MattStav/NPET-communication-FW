@@ -88,6 +88,8 @@ public:
     /// which passes the measurements into matchmaking with another MeasurementReader.
     /// @param IS_START Measurement Reader designation (START/STOP)
     /// @param reader Measurement Reader reference
+    /// @param meas_set Measurement context struct
+    /// @param time_const Time correction constant imported from NPET
     void combine(bool IS_START, MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const);
 
     ///

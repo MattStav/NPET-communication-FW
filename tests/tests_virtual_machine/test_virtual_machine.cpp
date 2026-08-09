@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
+#include <sstream>
 #include <thread>
 #include <type_traits>
 
@@ -52,17 +53,28 @@ TEST(VirtualMachineState, DistinctInstancesOwnDistinctIO) {
 
 // getRunTime() must always report elapsed time as zero-padded hh:mm:ss, the format
 // deviceLoop() logs as the VM's runtime status line.
+// gtest's simple regex engine has no {n} repetition or [...] character classes (see
+// test_meas_func.cpp's make_pattern for the same workaround), so digits are spelled out.
 TEST(VirtualMachineGetRunTime, FormatIsHhMmSs) {
     const TestableVirtualMachine VM{VmConfig{}};
-    EXPECT_THAT(VM.getRunTime(), MatchesRegex(R"(\d{2}:\d{2}:\d{2})"));
+    EXPECT_THAT(VM.getRunTime(), MatchesRegex(R"(\d\d:\d\d:\d\d)"));
 }
 
 // Immediately after construction, almost no time has elapsed, so the runtime must still
-// read 00 hours and 00 minutes. A few seconds of slack on the seconds field tolerates
-// slow test machines without making the test flaky.
+// read 00 hours and 00 minutes. Parsed and compared numerically (rather than matched with a
+// regex range, which gtest's simple regex engine can't express) with a few seconds of slack
+// on the seconds field to tolerate slow test machines without making the test flaky.
 TEST(VirtualMachineGetRunTime, StartsNearZero) {
     const TestableVirtualMachine VM{VmConfig{}};
-    EXPECT_THAT(VM.getRunTime(), MatchesRegex(R"(00:00:0[0-4])"));
+    int hours = 0;
+    int minutes = 0;
+    int seconds = 0;
+    char colon1 = 0;
+    char colon2 = 0;
+    std::istringstream(VM.getRunTime()) >> hours >> colon1 >> minutes >> colon2 >> seconds;
+    EXPECT_EQ(hours, 0);
+    EXPECT_EQ(minutes, 0);
+    EXPECT_LT(seconds, 5);
 }
 
 // getRunTime() must reflect actual elapsed wall-clock time since construction, not a

@@ -7,7 +7,13 @@
 /// Simulates Ctrl+C via std::raise(SIGINT): on Windows.
 TEST(VirtualMachineTest, DeviceLoopTerminatesOnSigint) {
     VirtualMachine vm{VmConfig{}};
-    vm.openCommunication(VM_COM_PORT, BAUD_RATE);
+    try {
+        vm.openCommunication(VM_COM_PORT, BAUD_RATE);
+    } catch (const std::exception &e) {
+        GTEST_SKIP() << "Could not open COM" << VM_COM_PORT << ": " << e.what()
+                << ". This test requires a com0com virtual null-modem pair on COM"
+                << VM_COM_PORT << "/COM" << CLIENT_COM_PORT << " - skipping.";
+    }
     std::future<void> loop_done = std::async(std::launch::async, [&vm] { vm.deviceLoop(); });
     // Give deviceLoop() time to install its signal_set and enter its first blocking read;
     // raising the signal any earlier risks cancel() firing with nothing yet pending to cancel.

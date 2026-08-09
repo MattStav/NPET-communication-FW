@@ -124,15 +124,8 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
     const auto TICKS_ELAPSED = (std::chrono::high_resolution_clock::now() - ANCHOR) / PERIOD; // NOLINT(readability-redundant-parentheses)
     auto next_tick = ANCHOR + (TICKS_ELAPSED + 1) * PERIOD;
     while (true) {
-        // Wait for the next fixed tick since start_time, while still polling for the stop command to arrive.
-        // Don't restart the io_context here: the stop-command read stays outstanding across ticks.
-        ser.pollUntil([&] { return stop_requested || std::chrono::high_resolution_clock::now() >= next_tick; },
-                  false, std::chrono::milliseconds(1));
-        if (stop_requested) {
-            SPDLOG_WARN("Stop command received, ending measurement sequence early");
-            break;
-        }
-        // Increment the measurement counters
+        // Build the frame for the upcoming tick now, while there's still time on the clock,
+        // so writeRawToSerial fires as soon as possible after the tick actually arrives.
         measurement_counter_++;
         i++;
         // Time the VM has been alive, trusted down to the nanosecond
@@ -152,6 +145,14 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
             // Bump the checksum byte so it no longer matches xorChecksum() of the other 12 bytes,
             // simulating a corrupted frame for the reader's checksum-validation path to catch.
             measurement_set.at(12) = static_cast<std::uint8_t>(measurement_set.at(12) + 1);
+        }
+        // Wait for the next fixed tick since start_time, while still polling for the stop command to arrive.
+        // Don't restart the io_context here: the stop-command read stays outstanding across ticks.
+        ser.pollUntil([&] { return stop_requested || std::chrono::high_resolution_clock::now() >= next_tick; },
+                  false, std::chrono::milliseconds(1));
+        if (stop_requested) {
+            SPDLOG_WARN("Stop command received, ending measurement sequence early");
+            break;
         }
         ser.writeRawToSerial(measurement_set);
         if (i == number_of_measurements) {

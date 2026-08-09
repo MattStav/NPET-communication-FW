@@ -37,8 +37,8 @@ class SerialMachine {
     /// @param read_result Set once the read operation completes
     /// @param timer_result Set once the timer fires or is cancelled
     void waitForReadOrTimeout(boost::asio::steady_timer &timer,
-                              std::optional<boost::system::error_code> &read_result,
-                              std::optional<boost::system::error_code> &timer_result);
+                              const std::optional<boost::system::error_code> &read_result,
+                              const std::optional<boost::system::error_code> &timer_result);
 
     ///
     /// Translate a completed read/timer result pair into the appropriate exception, if any.

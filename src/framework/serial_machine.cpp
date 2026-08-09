@@ -23,8 +23,8 @@ void SerialMachine::openCommunication(const int COM_PORT, const int BAUD_RATE) {
 
 
 void SerialMachine::waitForReadOrTimeout(boost::asio::steady_timer &timer,
-                                         std::optional<boost::system::error_code> &read_result,
-                                         std::optional<boost::system::error_code> &timer_result) {
+                                         const std::optional<boost::system::error_code> &read_result,
+                                         const std::optional<boost::system::error_code> &timer_result) {
     while (!read_result || !timer_result) {
         io_.run_one();
         if (read_result && !timer_result) {

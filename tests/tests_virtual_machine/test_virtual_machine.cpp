@@ -22,7 +22,7 @@ public:
 // public/protected communication primitive it relies on (open/close/isOpen/getIO/getPort)
 // must come from the base class.
 TEST(VirtualMachineType, IsASerialMachine) {
-    EXPECT_TRUE((std::is_base_of_v<SerialMachine, VirtualMachine>));
+    EXPECT_TRUE((std::is_base_of_v<Serial, VirtualMachine>));
 }
 
 TEST_F(VirtualMachineFixture, ConstructedIsNotOpen) {

@@ -22,7 +22,7 @@ public:
     using std::runtime_error::runtime_error;
 };
 
-class SerialMachine {
+class Serial final {
     // io_context to manage the serial port's I/O operations
     boost::asio::io_context io_;
     // Serial port object for communication
@@ -59,17 +59,18 @@ class SerialMachine {
 
 public:
     // Constructor
-    SerialMachine() = default;
+    Serial() = default;
 
 
-    // Poll the io_context one handler at a time until PRED returns true.
-    // @param RESTART Whether to restart the io_context before polling. Only valid when the io_context is
-    //                 already stopped, i.e. there's no async operation left outstanding from a previous call
-    //                 (the common case: PRED watches for the completion of an op posted right before this
-    //                 call). Pass false when polling for an op that was posted further back and must stay
-    //                 outstanding across multiple pollUntil calls (e.g. waiting on a clock in between).
-    // @param THROTTLE Sleep duration between polls, to avoid busy-spinning a CPU core while waiting. Leave
-    //                  at 0 on latency/throughput-sensitive paths (e.g. streaming data off the wire).
+    /// Poll the io_context one handler at a time until PRED returns true.
+    /// @param PRED Predicate to evaluate after each poll; when it returns true, stop polling and return.
+    /// @param RESTART Whether to restart the io_context before polling. Only valid when the io_context is
+    ///                 already stopped, i.e. there's no async operation left outstanding from a previous call
+    ///                 (the common case: PRED watches for the completion of an op posted right before this
+    ///                 call). Pass false when polling for an op that was posted further back and must stay
+    ///                 outstanding across multiple pollUntil calls (e.g. waiting on a clock in between).
+    /// @param THROTTLE Sleep duration between polls, to avoid busy-spinning a CPU core while waiting. Leave
+    ///                  at 0 on latency/throughput-sensitive paths (e.g. streaming data off the wire).
     template<typename Predicate>
     void pollUntil(Predicate PRED, const bool RESTART = true,
                    const std::chrono::milliseconds THROTTLE = std::chrono::milliseconds(0)) {
@@ -118,7 +119,7 @@ public:
 
     ///
     /// @return Current baud rate of the serial port
-    int getBaudRate() const;
+    [[nodiscard]] int getBaudRate() const;
 
     ///
     /// Arm a one-shot, non-blocking read of exactly DATA.size() bytes from the serial port.
@@ -131,20 +132,17 @@ public:
     /// outlive the read, since it's captured by reference in the completion handler.
     void readExactAsync(std::span<std::uint8_t> DATA, boost::system::error_code &ec, bool &completed);
 
-protected:
-    /**
-     * @brief Read mode for the read_with_timeout function.
-     */
-    enum class ReadMode : std::uint8_t {
-        UNTIL_NEWLINE,
-        FIXED_BYTES,
-    };
-
     ///
     /// Send a command to the device and get the response as a string.
     /// @param command Command string to send to the device
     /// @return Device response string
     std::string exchangeComm(const std::string &command);
+
+    /// @brief Read mode for the read_with_timeout function.
+    enum class ReadMode : std::uint8_t {
+        UNTIL_NEWLINE,
+        FIXED_BYTES,
+    };
 
     ///
     /// Asynchronously read a response from the device, aborting if nothing arrives within the timeout.

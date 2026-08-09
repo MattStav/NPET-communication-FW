@@ -5,7 +5,7 @@
 constexpr std::string_view COMM_TIMEOUT_ERR = "Communication timeout: Device did not respond within {}ms";
 
 
-void SerialMachine::openCommunication(const int COM_PORT, const int BAUD_RATE) {
+void Serial::openCommunication(const int COM_PORT, const int BAUD_RATE) {
     SPDLOG_INFO("Opening communication on COM{} ...", COM_PORT);
     assert(COM_PORT > 0);
     const std::string PORT_NAME{std::to_string(COM_PORT)};
@@ -22,7 +22,7 @@ void SerialMachine::openCommunication(const int COM_PORT, const int BAUD_RATE) {
 } // end of openCommunication function
 
 
-void SerialMachine::waitForReadOrTimeout(boost::asio::steady_timer &timer,
+void Serial::waitForReadOrTimeout(boost::asio::steady_timer &timer,
                                          const std::optional<boost::system::error_code> &read_result,
                                          const std::optional<boost::system::error_code> &timer_result) {
     while (!read_result || !timer_result) {
@@ -35,7 +35,7 @@ void SerialMachine::waitForReadOrTimeout(boost::asio::steady_timer &timer,
     }
 }
 
-void SerialMachine::throwOnReadError(const std::optional<boost::system::error_code> &read_result,
+void Serial::throwOnReadError(const std::optional<boost::system::error_code> &read_result,
                                      const std::optional<boost::system::error_code> &timer_result,
                                      const std::chrono::milliseconds TIMEOUT) {
     if (read_result && *read_result == boost::asio::error::operation_aborted) {
@@ -54,7 +54,7 @@ void SerialMachine::throwOnReadError(const std::optional<boost::system::error_co
     }
 }
 
-std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
+std::vector<char> Serial::readWithTimeout(const ReadMode MODE,
                                                  const std::chrono::milliseconds TIMEOUT,
                                                  const std::size_t FIXED_BYTES) {
     SPDLOG_DEBUG("Reading with timeout, Mode: {}, Fixed bytes: {}, Timeout: {}ms",
@@ -113,7 +113,7 @@ std::vector<char> SerialMachine::readWithTimeout(const ReadMode MODE,
 } // end of read_with_timeout function
 
 
-std::string SerialMachine::exchangeComm(const std::string &command) {
+std::string Serial::exchangeComm(const std::string &command) {
     assert(port_.is_open());
     assert(!command.empty());
     SPDLOG_DEBUG("Exchanging processed command with device: '{}'", command);
@@ -130,7 +130,7 @@ std::string SerialMachine::exchangeComm(const std::string &command) {
 } // end of exchange_comm function
 
 
-void SerialMachine::writeToSerial(const std::string &command) {
+void Serial::writeToSerial(const std::string &command) {
     assert(port_.is_open());
     SPDLOG_DEBUG("Writing to serial: {}", command);
     std::string full_command = command;
@@ -141,13 +141,13 @@ void SerialMachine::writeToSerial(const std::string &command) {
 }
 
 
-void SerialMachine::writeRawToSerial(const std::span<const std::uint8_t> DATA) {
+void Serial::writeRawToSerial(const std::span<const std::uint8_t> DATA) {
     assert(port_.is_open());
     boost::asio::write(port_, boost::asio::buffer(DATA.data(), DATA.size()));
 }
 
 
-std::string SerialMachine::readFromSerial(const std::size_t MAX_BYTES) {
+std::string Serial::readFromSerial(const std::size_t MAX_BYTES) {
     assert(port_.is_open());
     std::vector<char> buffer(MAX_BYTES);
     const std::size_t BYTES_READ = port_.read_some(boost::asio::buffer(buffer));
@@ -157,7 +157,7 @@ std::string SerialMachine::readFromSerial(const std::size_t MAX_BYTES) {
 }
 
 
-void SerialMachine::cancelPendingOperation(const bool BLOCK) {
+void Serial::cancelPendingOperation(const bool BLOCK) {
     port_.cancel();
     if (BLOCK) {
         io_.run();
@@ -167,39 +167,39 @@ void SerialMachine::cancelPendingOperation(const bool BLOCK) {
 }
 
 
-bool SerialMachine::isOpen() const {
+bool Serial::isOpen() const {
     return port_.is_open();
 }
 
 
-void SerialMachine::closeCommunication() {
+void Serial::closeCommunication() {
     if (port_.is_open()) {
         port_.close();
     }
 }
 
 
-void SerialMachine::purgePort() {
+void Serial::purgePort() {
     SPDLOG_DEBUG("Cancelling pending comms and purging all buffers ...");
     port_.cancel();
     PurgeComm(port_.native_handle(), PURGE_RXCLEAR | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_TXABORT);
 }
 
 
-int SerialMachine::getBaudRate() const {
+int Serial::getBaudRate() const {
     boost::asio::serial_port_base::baud_rate current_baud{};
     port_.get_option(current_baud);
     return static_cast<int>(current_baud.value());
 }
 
 
-void SerialMachine::setBaudRateSerial(const int NEW_BAUD_RATE) {
+void Serial::setBaudRateSerial(const int NEW_BAUD_RATE) {
     port_.set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
     SPDLOG_INFO("Baud rate changed to {}", NEW_BAUD_RATE);
 }
 
 
-void SerialMachine::listenForCommand(const char EXPECTED_FIRST_BYTE, bool &matched) {
+void Serial::listenForCommand(const char EXPECTED_FIRST_BYTE, bool &matched) {
     const auto LINE = std::make_shared<boost::asio::streambuf>();
     boost::asio::async_read_until(port_, *LINE, '\n',
                                   [&matched, LINE, EXPECTED_FIRST_BYTE](const boost::system::error_code &ec, std::size_t) {
@@ -212,7 +212,7 @@ void SerialMachine::listenForCommand(const char EXPECTED_FIRST_BYTE, bool &match
 }
 
 
-void SerialMachine::readExactAsync(const std::span<std::uint8_t> DATA, boost::system::error_code &ec, bool &completed) {
+void Serial::readExactAsync(const std::span<std::uint8_t> DATA, boost::system::error_code &ec, bool &completed) {
     boost::asio::async_read(port_, boost::asio::buffer(DATA.data(), DATA.size()),
                             [&ec, &completed](const boost::system::error_code &error, std::size_t) {
                                 ec = error;
@@ -221,7 +221,7 @@ void SerialMachine::readExactAsync(const std::span<std::uint8_t> DATA, boost::sy
 }
 
 
-void SerialMachine::armSIGINTShutdown() {
+void Serial::armSIGINTShutdown() {
     sigint_signals_.async_wait([this](const boost::system::error_code &ec, int) {
         if (ec) {
             return; // signal_set was cancelled/destroyed

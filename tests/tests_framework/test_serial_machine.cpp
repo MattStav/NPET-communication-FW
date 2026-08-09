@@ -5,33 +5,33 @@
 
 
 TEST(SerialMachineState, DefaultConstructedIsNotOpen) {
-    const SerialMachine MACHINE;
+    const Serial MACHINE;
     EXPECT_FALSE(MACHINE.isOpen());
 }
 
 TEST(SerialMachineState, GetIOReturnsSameInstanceOnRepeatedCalls) {
-    SerialMachine machine;
+    Serial machine;
     EXPECT_EQ(&machine.getIO(), &machine.getIO());
 }
 
 TEST(SerialMachineState, GetPortReturnsSameInstanceOnRepeatedCalls) {
-    SerialMachine machine;
+    Serial machine;
     EXPECT_EQ(&machine.getPort(), &machine.getPort());
 }
 
 TEST(SerialMachineState, GetPortReflectsIsOpen) {
-    SerialMachine machine;
+    Serial machine;
     EXPECT_EQ(machine.getPort().is_open(), machine.isOpen());
 }
 
 TEST(SerialMachineState, CloseCommunicationOnUnopenedMachineDoesNotThrow) {
-    SerialMachine machine;
+    Serial machine;
     EXPECT_NO_THROW(machine.closeCommunication());
     EXPECT_FALSE(machine.isOpen());
 }
 
 TEST(SerialMachineState, CloseCommunicationIsIdempotent) {
-    SerialMachine machine;
+    Serial machine;
     machine.closeCommunication();
     EXPECT_NO_THROW(machine.closeCommunication());
     EXPECT_NO_THROW(machine.closeCommunication());

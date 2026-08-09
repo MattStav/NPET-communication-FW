@@ -6,10 +6,10 @@
 
 // Exposes SerialMachine's protected read_with_timeout so the timeout behavior can be
 // exercised directly, without going through a higher-level command/response exchange.
-class TestableSerialMachine final : public SerialMachine {
+class TestableSerialMachine final : public Serial {
 public:
-    using SerialMachine::ReadMode;
-    using SerialMachine::readWithTimeout;
+    using Serial::ReadMode;
+    using Serial::readWithTimeout;
 };
 
 // Opens one end of the com0com virtual null-modem pair and leaves the other end untouched, so a

@@ -76,8 +76,8 @@ public:
     Serial ser{};
 
     explicit VirtualMachine(const VmConfig CONFIG) : ch1_frequency_(CONFIG.ch1_frequency),
-                                                     corrupt_every_(CONFIG.corrupt_every),
-                                                     ch1_delay_ns_(std::chrono::nanoseconds(CONFIG.ch1_delay_ns)) {
+                                                     ch1_delay_ns_(std::chrono::nanoseconds(CONFIG.ch1_delay_ns)),
+                                                     corrupt_every_(CONFIG.corrupt_every) {
     }
 
     ///

@@ -37,7 +37,7 @@ TEST_F(CloseResetsBaudRateTest, DestructorResetsBaudRateTo115200) {
 
     client.reset(); // Triggers ~NPETComm()
 
-    const int vm_baud_after = client->ser.getBaudRate();
+    const int vm_baud_after = vm->ser.getBaudRate();
     EXPECT_EQ(vm_baud_after, 115200);
 }
 

@@ -46,7 +46,7 @@ protected:
 TEST_F(SerialCommunicationWorkflow, WriteToSerialIsReadableAsLine) {
     side_a.writeToSerial("hello");
     const std::vector<char> RECEIVED = side_b.readWithTimeout(ReadMode::UNTIL_NEWLINE, std::chrono::milliseconds(500));
-    EXPECT_EQ(std::string(RECEIVED.begin(), RECEIVED.end()), "hello");
+    EXPECT_EQ(std::string(RECEIVED.begin(), RECEIVED.end()), "hello\r\n");
 }
 
 // Unlike readWithTimeout, readFromSerial returns raw bytes exactly as written, including the

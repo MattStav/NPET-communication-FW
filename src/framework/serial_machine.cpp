@@ -186,9 +186,9 @@ void SerialMachine::purgePort() {
 }
 
 
-int SerialMachine::getBaudRate() {
+int SerialMachine::getBaudRate() const {
     boost::asio::serial_port_base::baud_rate current_baud{};
-    getPort().get_option(current_baud);
+    port_.get_option(current_baud);
     return static_cast<int>(current_baud.value());
 }
 

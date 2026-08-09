@@ -56,18 +56,11 @@ class SerialMachine {
     /// serial port read. One-shot: call again after it fires if the port is reopened and the
     /// handler needs to be re-armed.
     void armSIGINTShutdown();
+
 public:
     // Constructor
     SerialMachine() = default;
 
-    // TODO: Phase out the use of these getters
-    [[nodiscard]] boost::asio::io_context &getIO() {
-        return io_;
-    }
-
-    [[nodiscard]] boost::asio::serial_port &getPort() {
-        return port_;
-    }
 
     // Poll the io_context one handler at a time until PRED returns true.
     // @param RESTART Whether to restart the io_context before polling. Only valid when the io_context is
@@ -125,7 +118,7 @@ public:
 
     ///
     /// @return Current baud rate of the serial port
-    int getBaudRate();
+    int getBaudRate() const;
 
     ///
     /// Arm a one-shot, non-blocking read of exactly DATA.size() bytes from the serial port.

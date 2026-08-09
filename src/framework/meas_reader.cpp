@@ -192,29 +192,40 @@ void MeasReader::main(const MeasContext &meas_set) {
     const Measurement TIME_CONST = npet_.importTimeConstant();
     assert(TIME_CONST.meas_num == -1);
     SPDLOG_DEBUG("Time constant imported from NPET: {}", TIME_CONST.toString());
-    auto receiver = std::jthread(&MeasReader::dataReceiver, this);
-    auto processor = std::jthread(&MeasReader::dataProcessor, this, meas_set, TIME_CONST);
+    // Counts still-running worker threads, so key_watcher can tell when every other worker has truly finished
+    std::atomic workers_remaining{0};
+    workers_remaining.fetch_add(1, std::memory_order_relaxed);
+    auto receiver = std::jthread([this, &workers_remaining] {
+        dataReceiver();
+        workers_remaining.fetch_sub(1, std::memory_order_relaxed);
+    });
+    workers_remaining.fetch_add(1, std::memory_order_relaxed);
+    auto processor = std::jthread([this, &workers_remaining, meas_set, TIME_CONST] {
+        dataProcessor(meas_set, TIME_CONST);
+        workers_remaining.fetch_sub(1, std::memory_order_relaxed);
+    });
     std::jthread saver;
     if (meas_set.save_path) {
-        saver = std::jthread(&MeasReader::dataSaver, this, *meas_set.save_path);
+        workers_remaining.fetch_add(1, std::memory_order_relaxed);
+        saver = std::jthread([this, &workers_remaining, path = *meas_set.save_path] {
+            dataSaver(path);
+            workers_remaining.fetch_sub(1, std::memory_order_relaxed);
+        });
     }
     std::jthread monitor;
     if (meas_set.monitor_fn) {
-        monitor = std::jthread(
-            meas_set.monitor_fn,
-            std::ref(*this),
-            std::cref(meas_set),
-            std::cref(TIME_CONST)
-        );
+        workers_remaining.fetch_add(1, std::memory_order_relaxed);
+        monitor = std::jthread([this, &workers_remaining, &meas_set, &TIME_CONST] {
+            meas_set.monitor_fn(*this, meas_set, TIME_CONST);
+            workers_remaining.fetch_sub(1, std::memory_order_relaxed);
+        });
     }
-    // Keyboard watcher: ESC => request stop + cancel any blocking read.
-    std::jthread key_watcher([this, &receiver, &processor, &saver, &monitor] {
+    // Keyboard watcher: ESC => request stop + cancel any blocking read. Guaranteed to outlast
+    // every other worker: it only exits once workers_remaining reaches zero, which by construction
+    // happens strictly after each worker's own thread function has returned.
+    std::jthread key_watcher([this, &workers_remaining] {
         SPDLOG_DEBUG("Keyboard watcher (Esc) thread started");
-        auto any_alive = [&] {
-            return receiver.joinable() || processor.joinable()
-                   || saver.joinable() || monitor.joinable();
-        };
-        while (any_alive()) {
+        while (workers_remaining.load(std::memory_order_relaxed) > 0) {
             if (_kbhit()) {
                 constexpr int ESCAPE_KEY = 27;
                 if (const int CH = _getch(); CH == ESCAPE_KEY) {

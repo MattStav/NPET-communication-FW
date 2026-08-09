@@ -98,19 +98,6 @@ void VirtualMachine::changeBaudRate(const int NEW_BAUD_RATE) {
 } // end of change_baud_rate function
 
 
-void VirtualMachine::listenForStopCommand(bool &stop_requested) {
-    const auto LINE = std::make_shared<boost::asio::streambuf>();
-    boost::asio::async_read_until(getPort(), *LINE, '\n',
-                                  [&stop_requested, LINE](const boost::system::error_code &ec, std::size_t) {
-                                      // ec set means the read was cancelled, e.g. once streaming ends; nothing to do
-                                      if (const auto *first_byte = static_cast<const char *>(LINE->data().data());
-                                          !ec && *first_byte == 'c') {
-                                          stop_requested = true;
-                                      }
-                                  });
-}
-
-
 void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chrono::microseconds PERIOD,
                                       const std::chrono::nanoseconds OFFSET) {
     if (!correct_meas_format_set_) {
@@ -128,7 +115,7 @@ void VirtualMachine::sendMeasurements(const std::string &num_str, const std::chr
     SPDLOG_INFO("Number of measurements: {}", number_of_measurements);
     // Start listening for an incoming stop command without blocking the measurement stream below
     bool stop_requested = false;
-    listenForStopCommand(stop_requested);
+    listenForCommand('c', stop_requested);
     // poll once to start the async read
     pollUntil([&] { return true; }, true);
     // Align to the next tick of the start_time grid, shifted by OFFSET.

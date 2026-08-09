@@ -195,3 +195,16 @@ void SerialMachine::setBaudRateSerial(const int NEW_BAUD_RATE) {
     port_.set_option(boost::asio::serial_port_base::baud_rate(NEW_BAUD_RATE));
     SPDLOG_INFO("Baud rate changed to {}", NEW_BAUD_RATE);
 }
+
+
+void SerialMachine::listenForCommand(const char EXPECTED_FIRST_BYTE, bool &matched) {
+    const auto LINE = std::make_shared<boost::asio::streambuf>();
+    boost::asio::async_read_until(port_, *LINE, '\n',
+                                  [&matched, LINE, EXPECTED_FIRST_BYTE](const boost::system::error_code &ec, std::size_t) {
+                                      // ec set means the read was cancelled, e.g. once streaming ends; nothing to do
+                                      if (const auto *first_byte = static_cast<const char *>(LINE->data().data());
+                                          !ec && *first_byte == EXPECTED_FIRST_BYTE) {
+                                          matched = true;
+                                      }
+                                  });
+}

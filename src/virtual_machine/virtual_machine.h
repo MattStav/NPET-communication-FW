@@ -65,15 +65,6 @@ class VirtualMachine : public SerialMachine {
     void sendMeasurements(const std::string &num_str, std::chrono::microseconds PERIOD,
                           std::chrono::nanoseconds OFFSET = std::chrono::nanoseconds(0));
 
-    ///
-    /// Arm a one-shot, non-blocking listen for a stop command ('c') on the serial port.
-    /// Returns immediately; the actual read completes later on the io_context (see get_io()), so the caller must
-    /// keep driving it (e.g. via poll_one()) for stop_requested to ever become true. Once a line has been read - or
-    /// the read is cancelled, e.g. via get_port().cancel() - the listen is over and does not re-arm itself.
-    /// @param stop_requested Set to true if the received line starts with 'c'; left untouched otherwise. Must
-    ///                        outlive the read, since it's captured by reference in the completion handler.
-    void listenForStopCommand(bool &stop_requested);
-
 protected:
     ///
     /// Get the current virtual machine run time

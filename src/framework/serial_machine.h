@@ -162,6 +162,18 @@ protected:
     /// Change the baud rate of the already-open serial port.
     /// @param NEW_BAUD_RATE Baud rate to switch to
     void setBaudRateSerial(int NEW_BAUD_RATE);
+
+    ///
+    /// Arm a one-shot, non-blocking listen for an incoming line starting with a specific byte.
+    /// Returns immediately; the actual read completes later on the io_context (see getIO()), so the
+    /// caller must keep driving it (e.g. via pollUntil()) for MATCHED to ever become true. Once a
+    /// line has been read - or the read is cancelled, e.g. via getPort().cancel() - the listen is
+    /// over and does not re-arm itself.
+    /// @param EXPECTED_FIRST_BYTE Byte the received line must start with for MATCHED to be set
+    /// @param matched Set to true if the received line starts with EXPECTED_FIRST_BYTE; left
+    /// untouched otherwise. Must outlive the read, since it's captured by reference in the
+    /// completion handler.
+    void listenForCommand(char EXPECTED_FIRST_BYTE, bool &matched);
 };
 
 

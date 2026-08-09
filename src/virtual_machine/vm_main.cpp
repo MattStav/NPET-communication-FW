@@ -2,8 +2,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "helper_func.h"
-
 
 int launchVm(const VmConfig CONFIG) {
     assert(CONFIG.com_port > 0);
@@ -14,7 +12,7 @@ int launchVm(const VmConfig CONFIG) {
     SPDLOG_INFO("Mock NPET device virtual machine starting ...");
     auto vm = VirtualMachine(CONFIG);
     SPDLOG_INFO("User specified COM{} ...", CONFIG.com_port);
-    vm.openCommunication(CONFIG.com_port, DEFAULT_BAUD_RATE);
+    vm.openCommunication(CONFIG.com_port, 115200);
     SPDLOG_INFO("Mock NPET device virtual machine COM port open");
     SPDLOG_INFO("User specified CH1 frequency: {} Hz", CONFIG.ch1_frequency);
     using period = std::chrono::high_resolution_clock::period;

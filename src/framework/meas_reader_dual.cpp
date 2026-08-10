@@ -40,7 +40,7 @@ void DualMeasReader::finishLeg() {
 
 void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const MeasContext & /*meas_set*/,
                              const Measurement & /*time_const*/) {
-    while (true) {
+    while (!reader.aborted.load(std::memory_order_relaxed)) {
         const std::optional<Measurement> MEAS = reader.grabMeasFromProcessor(reader.for_monitor_q);
         if (!MEAS) {
             break;

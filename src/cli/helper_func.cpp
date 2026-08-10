@@ -363,7 +363,7 @@ int promptTimeConstSeconds(const ConstIntSelectionLogic SEL) {
 }
 
 Measurement promptRawTimeConstant(const Measurement &OLD_CONST) {
-    assert(old_const.meas_num == -1);
+    assert(OLD_CONST.meas_num == -1);
     SPDLOG_DEBUG("Defining time correction constant in raw format ...");
     Measurement new_const{.meas_num = -1}; // Measurement num -1 marks the measurement as a time correction constant
 

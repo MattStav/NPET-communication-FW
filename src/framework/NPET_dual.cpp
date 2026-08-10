@@ -61,10 +61,13 @@ void NPETDual::readBatchMeasurements(const DualMeasContext &meas_set) {
     // If the caller supplied a combined monitor, run it on its own thread draining dual_reader
     // for as long as either leg is still producing measurements.
     std::jthread dual_monitor;
+    // Declared outside the if-block below: dual_monitor's thread holds cref's to these, and keeps
+    // running well past that block's scope (it isn't joined until after this function's main
+    // measurement loop), so they must outlive the block that starts the thread.
+    Measurement start_time_const{};
+    Measurement stop_time_const{};
     if (meas_set.monitor_fn) {
         SPDLOG_DEBUG("Starting dual monitoring thread ...");
-        Measurement stop_time_const{};
-        Measurement start_time_const{};
         executeBoth([&] { start_time_const = start().importTimeConstant(); },
                     [&] { stop_time_const = stop().importTimeConstant(); });
         dual_monitor = std::jthread(meas_set.monitor_fn, std::ref(*dual_reader), std::cref(meas_set),

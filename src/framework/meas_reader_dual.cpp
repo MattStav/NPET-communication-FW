@@ -41,6 +41,7 @@ void DualMeasReader::finishLeg() {
 void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const MeasContext & /*meas_set*/,
                              const Measurement & /*time_const*/) {
     (IS_START ? start_meas_reader_ : stop_meas_reader_).store(&reader, std::memory_order_relaxed);
+    SPDLOG_DEBUG("Starting dual measurement combine for leg {}", IS_START ? "START" : "STOP");
     while (!reader.aborted.load(std::memory_order_relaxed)) {
         const std::optional<Measurement> MEAS = reader.grabMeasFromProcessor(reader.for_monitor_q);
         if (!MEAS) {
@@ -49,6 +50,8 @@ void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const Meas
         matchMeasurement(IS_START, *MEAS);
     } // end of while loop
     if (reader.aborted.load(std::memory_order_relaxed)) {
+        SPDLOG_DEBUG("Aborted dual measurement combine for leg {}", IS_START ? "START" : "STOP");
+        SPDLOG_DEBUG("Now aborting other leg ...");
         // This leg's own key_watcher caught the Esc press; the other leg's key_watcher is racing
         // against it on the same keyboard input and may never see it, so stop that leg directly
         // rather than requiring a second Esc press.
@@ -57,6 +60,7 @@ void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const Meas
             other->stop_sign.store(true, std::memory_order_relaxed);
         }
     }
+    SPDLOG_DEBUG("Dual measurement combine for leg {} finished", IS_START ? "START" : "STOP");
     finishLeg();
 } // end of combine function
 
@@ -64,9 +68,9 @@ void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const Meas
 std::optional<DualMeasurement> DualMeasReader::grabMeasurement() {
     while (true) {
         if (stop_sign_.load(std::memory_order_relaxed)) {
+            SPDLOG_DEBUG("Stop signal received while waiting for data, exiting ...");
             return std::nullopt;
-        }
-        {
+        } {
             std::scoped_lock const LOCK(combine_mtx_);
             if (!for_monitor_q.empty()) {
                 DualMeasurement ret = for_monitor_q.front();
@@ -80,6 +84,7 @@ std::optional<DualMeasurement> DualMeasReader::grabMeasurement() {
 
 
 UnmatchedMeasurements DualMeasReader::unmatchedMeasurements() {
+    SPDLOG_DEBUG("Getting unmatched measurements ...");
     std::scoped_lock const LOCK(combine_mtx_);
     UnmatchedMeasurements result;
     result.start.reserve(pending_start_.size());
@@ -90,5 +95,7 @@ UnmatchedMeasurements DualMeasReader::unmatchedMeasurements() {
     for (const auto &meas: pending_stop_ | std::views::values) {
         result.stop.push_back(meas);
     }
+    SPDLOG_DEBUG("Got {} unmatched START measurement(s)", result.start.size());
+    SPDLOG_DEBUG("Got {} unmatched STOP measurement(s)", result.stop.size());
     return result;
 } // end of unmatchedMeasurements function

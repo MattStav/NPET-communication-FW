@@ -158,7 +158,7 @@ public:
         // Reset to default baud rate
         if (ser.isOpen()) {
             if (isResponsive()) {
-                (void) setBaudRate(115200); // Ignore return value
+                (void) setBaudRate(DEFAULT_BAUD_RATE); // Ignore return value
             }
             ser.closeCommunication();
         }

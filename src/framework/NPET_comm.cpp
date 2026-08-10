@@ -90,7 +90,6 @@ bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
     // Cancel any pending operations before changing the baud rate
     SPDLOG_DEBUG("Cancelling pending operations");
     ser.cancelPendingOperation(false);
-    // THIS FUNCTION CANNOT USE SEND_COMMAND FROM THIS MODULE!!!
     const std::string CMD = "w" + std::to_string(NEW_BAUD_RATE);
     ser.writeToSerial(CMD);
     // Read response to clear the buffer

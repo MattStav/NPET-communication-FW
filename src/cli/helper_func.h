@@ -7,7 +7,6 @@
 class NPETCommCLI;
 
 constexpr std::string_view APP_NAME = "NPET communication FW CLI";
-constexpr int DEFAULT_BAUD_RATE = 115200;
 constexpr int INVALID_NUM_SENTINEL = -2;
 constexpr std::string_view INVALID_COM_PORT = "Invalid COM port number";
 constexpr std::string_view FAILED_OPEN_COM_PORT = "Failed to open the COM port: {}";

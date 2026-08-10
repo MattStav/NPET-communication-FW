@@ -13,6 +13,7 @@
 
 static constexpr std::size_t MEASUREMENT_PACKET_SIZE = 13;
 static constexpr int INFINITE_OPERATION = 9999;
+constexpr int DEFAULT_BAUD_RATE = 115200;
 constexpr std::string_view DATA_FORMAT_ERR = "Failed to set proper measured data format before reading measurements";
 constexpr std::string_view SLEEP_DISABLE_ERR = "Failed to disable Windows sleep while measurements are active";
 constexpr std::string_view SLEEP_ENABLE_ERR = "Failed to re-enable windows sleep settings";

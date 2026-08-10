@@ -7,20 +7,20 @@
 
 #include "helper_func.h"
 
-// Path to output directory
+// Name of the directory where measurements are saved
 constexpr std::string OUTPUT_DIR_NAME = "FW_outputs";
 // The number defines decimal precision for meas fractional part
 constexpr auto FMT = "%.15Qf";
-
+// Measurement channel specification
 enum class Channel : std::uint8_t { CH1 = 1, CH2 = 2 };
 
 ///
-/// Generate a name for the output file.
-/// The name includes the NPET channel and a datetime stamp to ensure uniqueness.
+/// Generate a path to the output file.
+/// The filename includes the NPET channel and a datetime stamp to ensure uniqueness.
 /// @param CHANNEL NPET channel number (1 or 2)
 /// @param base_dir Base directory to save the output file, defaults to the current working directory
 /// @param FILE_PREFIX Optional prefix prepended to the filename (e.g. to distinguish NPETDual's two legs)
-/// @return Output file name
+/// @return Output file path
 std::string outputFilePath(Channel CHANNEL, const std::filesystem::path &base_dir = USER_FILES,
                            const std::string &FILE_PREFIX = "");
 
@@ -50,6 +50,9 @@ struct Measurement {
     int intp{0};
     __float128 fracp{0.0};
 
+    ///
+    /// Format the measurement to a string.
+    /// @return Measurement string representation
     [[nodiscard]] std::string toString() const {
         return std::to_string(intp) + " " + float128ToString(fracp);
     } // end of to_string function
@@ -61,6 +64,9 @@ struct Measurement {
         return meas_num != -2;
     } // end of is_valid function
 
+    ///
+    /// Check if Measurement has been assigned any value.
+    /// @return True if measurement value is 0.0
     [[nodiscard]] bool isEmpty() const {
         return intp == 0 && fracp == 0.0;
     } // end of is_empty function

@@ -23,10 +23,10 @@ TEST_F(DualFrameworkWorkflowFixture, BothConnectionsAreOpenAndResponsive) {
 // NPET_dual.h); both must still be the same open, responsive connections as one_/two_.
 TEST_F(DualFrameworkWorkflowFixture, SwitchStartStopStillResolvesToLiveConnections) {
     switchStartStop();
-    EXPECT_EQ(&startComm(), &two_);
-    EXPECT_EQ(&stopComm(), &one_);
-    EXPECT_TRUE(startComm().isResponsive());
-    EXPECT_TRUE(stopComm().isResponsive());
+    EXPECT_EQ(&start(), &two_);
+    EXPECT_EQ(&stop(), &one_);
+    EXPECT_TRUE(start().isResponsive());
+    EXPECT_TRUE(stop().isResponsive());
 }
 
 TEST_F(DualFrameworkWorkflowFixture, ReadBatchMeasurementsDefaultArgumentSucceeds) {

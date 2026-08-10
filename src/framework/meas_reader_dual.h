@@ -80,10 +80,6 @@ public:
     std::queue<DualMeasurement> for_monitor_q{};
 
     ///
-    /// Clear all combining state left over from a previous run.
-    void reset();
-
-    ///
     /// Monitoring function for a Single NPET MMeasurement Reader,
     /// which passes the measurements into matchmaking with another MeasurementReader.
     /// @param IS_START Measurement Reader designation (START/STOP)

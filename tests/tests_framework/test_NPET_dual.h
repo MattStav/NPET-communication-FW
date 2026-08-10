@@ -11,8 +11,8 @@ class NPETDualFixture : public ::testing::Test, public NPETDual {
 protected:
     using NPETDual::one_;
     using NPETDual::two_;
-    using NPETDual::startComm;
-    using NPETDual::stopComm;
+    using NPETDual::start;
+    using NPETDual::stop;
 };
 
 struct DualToStringParams {

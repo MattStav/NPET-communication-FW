@@ -93,10 +93,10 @@ bool NPETDualCLI::bothResponsiveCLI() {
     for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         SPDLOG_DEBUG("Responsiveness check attempt: {}", attempt + 1);
         if (!start_res) {
-            start_res = safeExec([&] { return startComm().isResponsive(); }, "is_start_responsive");
+            start_res = safeExec([&] { return start().isResponsive(); }, "is_start_responsive");
         }
         if (!stop_res) {
-            stop_res = safeExec([&] { return stopComm().isResponsive(); }, "is_stop_responsive");
+            stop_res = safeExec([&] { return stop().isResponsive(); }, "is_stop_responsive");
         }
         if (start_res && stop_res) {
             SPDLOG_DEBUG(NPET_DUAL_OK_RESPONDING);
@@ -108,16 +108,16 @@ bool NPETDualCLI::bothResponsiveCLI() {
         if (!start_res && !stop_res) {
             SPDLOG_ERROR(NPET_DUAL_NOT_RESPONDING);
             Cli::err(std::string(NPET_DUAL_NOT_RESPONDING));
-            startComm().ser.purgePort();
-            stopComm().ser.purgePort();
+            start().ser.purgePort();
+            stop().ser.purgePort();
         } else if (!start_res) {
             SPDLOG_ERROR(NPET_START_NOT_RESPONDING);
             Cli::err(std::string(NPET_START_NOT_RESPONDING));
-            startComm().ser.purgePort();
+            start().ser.purgePort();
         } else {
             SPDLOG_ERROR(NPET_STOP_NOT_RESPONDING);
             Cli::err(std::string(NPET_STOP_NOT_RESPONDING));
-            stopComm().ser.purgePort();
+            stop().ser.purgePort();
         }
         Sleep(RETRY_DELAY_MS);
     } // end of for loop
@@ -128,14 +128,14 @@ bool NPETDualCLI::bothResponsiveCLI() {
 
 void NPETDualCLI::setFwVerCLI() {
     Cli::echo("Select the START NPET firmware version");
-    const FWVersion NEW_FW = promptFWVersion(startComm().getFWVer());
+    const FWVersion NEW_FW = promptFWVersion(start().getFWVer());
     SPDLOG_DEBUG("Setting START NPET firmware version to: {}", NEW_FW.getDescription());
-    safeExec([&] { startComm().setFWVer(NEW_FW); }, "set_FW_ver");
+    safeExec([&] { start().setFWVer(NEW_FW); }, "set_FW_ver");
     Cli::echo("");
     Cli::echo("Select the STOP NPET firmware version");
-    const FWVersion NEW_FW_TWO = promptFWVersion(stopComm().getFWVer());
+    const FWVersion NEW_FW_TWO = promptFWVersion(stop().getFWVer());
     SPDLOG_DEBUG("Setting STOP NPET firmware version to: {}", NEW_FW_TWO.getDescription());
-    safeExec([&] { stopComm().setFWVer(NEW_FW_TWO); }, "set_FW_ver");
+    safeExec([&] { stop().setFWVer(NEW_FW_TWO); }, "set_FW_ver");
 }
 
 
@@ -228,10 +228,10 @@ void NPETDualCLI::setBaudRateCLI() {
     }
     SPDLOG_DEBUG(NPET_SETTING_BAUD_RATE, "START");
     Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "START"));
-    setBaudRateSafe(startComm(), NEW_BAUD_RATE);
+    setBaudRateSafe(start(), NEW_BAUD_RATE);
     SPDLOG_DEBUG(NPET_SETTING_BAUD_RATE, "STOP");
     Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "STOP"));
-    setBaudRateSafe(stopComm(), NEW_BAUD_RATE);
+    setBaudRateSafe(stop(), NEW_BAUD_RATE);
     SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE);
 }
 
@@ -283,23 +283,23 @@ void NPETDualCLI::syncNPETsCLI() {
             Cli::echo(std::string(TIME_CONST_FRAC_MEAS));
             // TODO: Add concurrency
             auto bar_start = ProgressBar({.total = AVER_NUM});
-            const std::optional<__float128> START_AVE_FRAC = startComm().getAverageFraction(
+            const std::optional<__float128> START_AVE_FRAC = start().getAverageFraction(
                 AVER_NUM, START_PPS_CHANNEL.value(), &bar_start);
             if (!START_AVE_FRAC.has_value()) {
                 SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_ERR);
                 Cli::err(std::string(TIME_CONST_FAILED_TO_SET));
                 SPDLOG_DEBUG("Breaking measurement stream ...");
-                (void) startComm().isResponsive(true); // Break measurement stream
+                (void) start().isResponsive(true); // Break measurement stream
                 return;
             }
             auto bar_stop = ProgressBar({.total = AVER_NUM});
-            const std::optional<__float128> STOP_AVE_FRAC = stopComm().getAverageFraction(
+            const std::optional<__float128> STOP_AVE_FRAC = stop().getAverageFraction(
                 AVER_NUM, STOP_PPS_CHANNEL.value(), &bar_stop);
             if (!STOP_AVE_FRAC.has_value()) {
                 SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_ERR);
                 Cli::err(std::string(TIME_CONST_FAILED_TO_SET));
                 SPDLOG_DEBUG("Breaking measurement stream ...");
-                (void) startComm().isResponsive(true); // Break measurement stream
+                (void) start().isResponsive(true); // Break measurement stream
                 return;
             }
             Cli::echo(""); // New line after progress bar
@@ -323,7 +323,7 @@ void NPETDualCLI::syncNPETsCLI() {
             SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
                          static_cast<int>(START_PPS_CHANNEL.value()));
             const Measurement CURRENT_START_MEASUREMENT = safeExec(
-                [&] { return startComm().readSingleMeasurement(START_PPS_CHANNEL.value()); },
+                [&] { return start().readSingleMeasurement(START_PPS_CHANNEL.value()); },
                 "read_single_measurement");
             SPDLOG_DEBUG("Current measurement read: {}", CURRENT_START_MEASUREMENT.toString());
             start_const.intp = CLOCK_TIME - CURRENT_START_MEASUREMENT.intp;
@@ -331,7 +331,7 @@ void NPETDualCLI::syncNPETsCLI() {
             SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
                          static_cast<int>(STOP_PPS_CHANNEL.value()));
             const Measurement CURRENT_STOP_MEASUREMENT = safeExec(
-                [&] { return stopComm().readSingleMeasurement(STOP_PPS_CHANNEL.value()); },
+                [&] { return stop().readSingleMeasurement(STOP_PPS_CHANNEL.value()); },
                 "read_single_measurement");
             SPDLOG_DEBUG("Current measurement read: {}", CURRENT_STOP_MEASUREMENT.toString());
             stop_const.intp = CLOCK_TIME - CURRENT_STOP_MEASUREMENT.intp;
@@ -360,12 +360,12 @@ void NPETDualCLI::syncNPETsCLI() {
         return;
     }
     // TODO: Implement concurrency
-    if (!safeExec([&] { return startComm().exportTimeConstant(start_const); }, "export_time_constant")) {
+    if (!safeExec([&] { return start().exportTimeConstant(start_const); }, "export_time_constant")) {
         SPDLOG_ERROR(TIME_CONST_FAILED_TO_EXPORT);
         Cli::err((std::string(TIME_CONST_FAILED_TO_EXPORT)));
         return;
     }
-    if (!safeExec([&] { return stopComm().exportTimeConstant(stop_const); }, "export_time_constant")) {
+    if (!safeExec([&] { return stop().exportTimeConstant(stop_const); }, "export_time_constant")) {
         SPDLOG_ERROR(TIME_CONST_FAILED_TO_EXPORT);
         Cli::err((std::string(TIME_CONST_FAILED_TO_EXPORT)));
         return;
@@ -389,8 +389,8 @@ void NPETDualCLI::syncNPETsCLI() {
 void NPETDualCLI::resetCLI() {
     SPDLOG_INFO(DUAL_RESET_INITIATED);
     Cli::echo(std::string(DUAL_RESET_INITIATED), fg::yellow);
-    executeBoth([&] { resetNPETSafe(startComm(), "START"); },
-                [&] { resetNPETSafe(stopComm(), "STOP"); });
+    executeBoth([&] { resetNPETSafe(start(), "START"); },
+                [&] { resetNPETSafe(stop(), "STOP"); });
     SPDLOG_INFO(DUAL_RESET_COMPLETE);
     Cli::echo(std::string(DUAL_RESET_COMPLETE), fg::green);
 } // end of reset_NPET function

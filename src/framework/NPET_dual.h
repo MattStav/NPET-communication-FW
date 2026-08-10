@@ -8,24 +8,26 @@
 
 
 class NPETDual {
-protected:
-    NPETComm one_;
-    NPETComm two_;
     // Whether the START/STOP designation has been swapped relative to the physical
     bool designation_swapped_{false};
 
-    // Currently designated START/STOP NPETComm, honoring switchStartStop().
-    [[nodiscard]] NPETComm &startComm() { return designation_swapped_ ? two_ : one_; }
+protected:
+    NPETComm one_;
+    NPETComm two_;
 
-    [[nodiscard]] NPETComm &stopComm() { return designation_swapped_ ? one_ : two_; }
+    ///
+    /// Get the START NPET reference.
+    /// @return The designated START NPET
+    [[nodiscard]] NPETComm &start() { return designation_swapped_ ? two_ : one_; }
 
-    // Combines the START/STOP legs' measurement streams into matched [meas_start, meas_stop]
-    // pairs during readBatchMeasurements(); see meas_reader_dual.h
-    DualMeasReader dual_reader_;
+    ///
+    /// Get the STOP NPET reference.
+    /// @return The designated STOP NPET
+    [[nodiscard]] NPETComm &stop() { return designation_swapped_ ? one_ : two_; }
 
-public:
-    // Swap which underlying NPET is currently treated as START and which as STOP.
-    // Does not touch the physical connections, only the logical designation.
+    ///
+    /// Swap which underlying NPET is currently treated as START and which as STOP.
+    /// Does not touch the physical connections, only the logical designation.
     void switchStartStop() {
         designation_swapped_ = !designation_swapped_;
         SPDLOG_INFO("Switched NPET START/STOP designation; currently swapped: {}", designation_swapped_);
@@ -48,7 +50,9 @@ public:
         start_signal.count_down();
     }
 
-    // Read measurements from NPET
+    ///
+    /// Start streaming measurements from the NPET.
+    /// @param meas_set The Dual Measurement context.
     void readBatchMeasurements(const DualMeasContext &meas_set = DualMeasContext{
         .num_of_meas = 5,
         .monitor_fn = nullptr,

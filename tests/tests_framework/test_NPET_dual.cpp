@@ -83,29 +83,29 @@ TEST_F(NPETDualFixture, ExecuteBothRunsCallablesConcurrently) {
 // --- switchStartStop(): logical START/STOP designation ---
 
 TEST_F(NPETDualFixture, DefaultDesignationMapsStartToOneAndStopToTwo) {
-    EXPECT_EQ(&startComm(), &one_);
-    EXPECT_EQ(&stopComm(), &two_);
+    EXPECT_EQ(&start(), &one_);
+    EXPECT_EQ(&stop(), &two_);
 }
 
 TEST_F(NPETDualFixture, SwitchStartStopSwapsDesignation) {
     switchStartStop();
-    EXPECT_EQ(&startComm(), &two_);
-    EXPECT_EQ(&stopComm(), &one_);
+    EXPECT_EQ(&start(), &two_);
+    EXPECT_EQ(&stop(), &one_);
 }
 
 TEST_F(NPETDualFixture, SwitchStartStopTwiceRestoresOriginalDesignation) {
     switchStartStop();
     switchStartStop();
-    EXPECT_EQ(&startComm(), &one_);
-    EXPECT_EQ(&stopComm(), &two_);
+    EXPECT_EQ(&start(), &one_);
+    EXPECT_EQ(&stop(), &two_);
 }
 
 TEST_F(NPETDualFixture, SwitchStartStopCalledOddNumberOfTimesLeavesDesignationSwapped) {
     for (int i = 0; i < 3; i++) {
         switchStartStop();
     }
-    EXPECT_EQ(&startComm(), &two_);
-    EXPECT_EQ(&stopComm(), &one_);
+    EXPECT_EQ(&start(), &two_);
+    EXPECT_EQ(&stop(), &one_);
 }
 
 // switchStartStop() only relabels which accessor resolves to which instance - it must not touch
@@ -117,7 +117,7 @@ TEST_F(NPETDualFixture, SwitchStartStopRelabelsRatherThanMovingState) {
     EXPECT_EQ(one_.getFWVer().getValue(), FWVersion::AD_REVISION)
         << "one_'s own state changed - switchStartStop() must not touch the underlying instances";
     EXPECT_EQ(two_.getFWVer().getValue(), 0);
-    EXPECT_EQ(stopComm().getFWVer().getValue(), FWVersion::AD_REVISION)
+    EXPECT_EQ(stop().getFWVer().getValue(), FWVersion::AD_REVISION)
         << "stopComm() should now resolve to one_, which carries the firmware version set above";
 }
 

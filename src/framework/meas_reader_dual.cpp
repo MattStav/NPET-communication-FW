@@ -6,23 +6,13 @@
 #include <spdlog/spdlog.h>
 
 
-void DualMeasReader::reset() {
-    std::scoped_lock const LOCK(combine_mtx_);
-    pending_start_.clear();
-    pending_stop_.clear();
-    for_monitor_q = {};
-    active_legs_.store(2, std::memory_order_relaxed);
-    stop_sign_.store(false, std::memory_order_relaxed);
-} // end of reset function
-
-
 void DualMeasReader::matchMeasurement(const bool IS_START, const Measurement &MEAS) {
     std::scoped_lock const LOCK(combine_mtx_);
     auto &other_pending = IS_START ? pending_stop_ : pending_start_;
     if (const auto IT = other_pending.find(MEAS.meas_num); IT != other_pending.end()) {
         for_monitor_q.push(IS_START
-            ? DualMeasurement{.meas_start = MEAS, .meas_stop = IT->second}
-            : DualMeasurement{.meas_start = IT->second, .meas_stop = MEAS});
+                               ? DualMeasurement{.meas_start = MEAS, .meas_stop = IT->second}
+                               : DualMeasurement{.meas_start = IT->second, .meas_stop = MEAS});
         other_pending.erase(IT);
     } else {
         auto &own_pending = IS_START ? pending_start_ : pending_stop_;

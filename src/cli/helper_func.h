@@ -59,6 +59,8 @@ int resetNpetStandalone();
 /// The data processor is a Python package that processes the raw measurement data and generates plots and reports.
 int launchDataProcessor();
 
+///
+/// Print the application introduction into the console.
 void printAppIntro();
 
 ///
@@ -70,7 +72,7 @@ void printAppIntro();
 /// @param EXCLUDED_PORTS COM port numbers to exclude from the selection (e.g. {5, 8}).
 /// @throws runtime_error if no COM ports are found.
 /// @returns Selected COM port number (e.g. 8 for COM8).
-int selectComPortCli(bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS = {});
+int selectComPortCLI(bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS = {});
 
 ///
 /// Open communication for the referenced NPET on the provided NPET.

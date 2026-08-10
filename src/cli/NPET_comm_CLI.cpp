@@ -30,7 +30,7 @@ void NPETCommCLI::openCommunicationCLI() {
             autoselect = false;
         }
         SPDLOG_DEBUG("Attempt {} to open NPET communication, autoselect: {}", i + 1, autoselect);
-        if (const int COM_PORT = selectComPortCli(autoselect); !openCommSafe(*this, COM_PORT, NPET_NOT_RESPONDING)) {
+        if (const int COM_PORT = selectComPortCLI(autoselect); !openCommSafe(*this, COM_PORT, NPET_NOT_RESPONDING)) {
             continue;
         }
         SPDLOG_INFO("NPET communication opened successfully");

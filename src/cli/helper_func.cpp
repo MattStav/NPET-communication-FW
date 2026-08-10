@@ -103,7 +103,7 @@ int launchDataProcessor() {
     return 1;
 } // end of launch_data_processor function
 
-int selectComPortCli(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS) {
+int selectComPortCLI(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_PORTS) {
     SPDLOG_DEBUG("Selecting COM port with autoselect: {}", AUTOSELECT);
     int selected_cp{};
     std::vector<std::string> com_ports{};

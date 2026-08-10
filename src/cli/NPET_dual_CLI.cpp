@@ -55,7 +55,7 @@ static int openCommLoop(NPETComm &npet, const std::string &designation, const st
         }
         SPDLOG_DEBUG("Attempt {} to open {} NPET communication", i + 1, designation);
         Cli::echo("Select the COM port number for the " + designation + " NPET", fg::gray, style::bold);
-        const int COM_PORT = selectComPortCli(autoselect, excluded_ports);
+        const int COM_PORT = selectComPortCLI(autoselect, excluded_ports);
         if (!openCommSafe(npet, COM_PORT, ERROR_MSG)) {
             continue;
         }

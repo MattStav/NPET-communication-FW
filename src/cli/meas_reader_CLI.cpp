@@ -12,6 +12,7 @@ constexpr std::string_view CORRUPTED_MEAS_NUM = "Number of corrupted measurement
 constexpr std::string_view SYNC_MONITOR = "Synchronization monitoring";
 constexpr std::string_view ADVANCED_MONITOR = "Advanced monitoring";
 constexpr std::string_view BASIC_MONITOR = "Basic monitoring";
+constexpr std::string_view DIFF_MONITOR = "Differential monitor";
 constexpr std::string_view ALL_SAVED = "All measurements saved";
 constexpr std::string_view DUAL_MEAS_START = "Starting dual measurement sequence...";
 constexpr std::string_view DUAL_MEAS_END = "Dual measurement sequence ended";
@@ -354,3 +355,24 @@ void dualReaderCliBasic(DualMeasReader &dual_reader, const DualMeasContext &meas
     }
     printDualOutro(dual_reader, meas_set);
 } // end of dual_reader_cli_basic function
+
+
+void dualReaderCliDiff(DualMeasReader &dual_reader, const DualMeasContext &meas_set,
+                       const Measurement &start_time_const, const Measurement &stop_time_const) {
+    printDualIntro(meas_set, start_time_const, stop_time_const);
+    SPDLOG_DEBUG(DIFF_MONITOR);
+    Cli::echo(std::string(DIFF_MONITOR));
+    while (true) {
+        const std::optional<DualMeasurement> MEAS = dual_reader.grabMeasurement();
+        if (!MEAS) {
+            break;
+        }
+        auto [start, stop] = MEAS.value();
+        Measurement diff = stop - start;
+        diff.resolve();
+        // Convert the rounded measurement into hours, minutes, and seconds
+        auto [hours, minutes, seconds] = toHms(diff.round());
+        Cli::echo(formatMeasurement(hours, minutes, seconds, float128ToString(diff.fracp)));
+    } // end of while loop
+    printDualOutro(dual_reader, meas_set);
+} // end of readerCliSync function

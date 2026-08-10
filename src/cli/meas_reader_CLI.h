@@ -4,7 +4,8 @@
 #include "meas_reader.h"
 #include "meas_reader_dual.h"
 
-struct MeasExtended : Measurement { // Inherits from measurement
+struct MeasExtended : Measurement {
+    // Inherits from measurement
     std::string processed_str; // Formatted string of the measurement for display
 
     [[nodiscard]] bool isProcessed() const { return !processed_str.empty(); }
@@ -58,6 +59,19 @@ void readerCliBasic(
 /// @param start_time_const Reference to the START leg's time correction constant
 /// @param stop_time_const Reference to the STOP leg's time correction constant
 void dualReaderCliBasic(
+    DualMeasReader &dual_reader,
+    const DualMeasContext &meas_set,
+    const Measurement &start_time_const,
+    const Measurement &stop_time_const);
+
+
+///
+/// Display the difference between the measurements from the two NPETs.
+/// @param dual_reader Reference to the dual measurement reader combining both legs
+/// @param meas_set Reference to the dual measurement context
+/// @param start_time_const Reference to the START leg's time correction constant
+/// @param stop_time_const Reference to the STOP leg's time correction constant
+void dualReaderCliDiff(
     DualMeasReader &dual_reader,
     const DualMeasContext &meas_set,
     const Measurement &start_time_const,

@@ -163,7 +163,7 @@ void NPETDualCLI::readBatchMeasurementsCLI() {
     }
     SPDLOG_DEBUG("User specified channel number: {}", static_cast<int>(STOP_CHANNEL.value()));
     // Prompt user for the display and save options
-    const std::string MONITOR_STR = Cli::prompt("Measurement monitoring (0 - None, 1 - Basic, 2 - Advanced, 3 - Sync)",
+    const std::string MONITOR_STR = Cli::prompt("Measurement monitoring (0 - None, 1 - Basic, 2 - Advanced, 3 - Diff)",
                                                 "1");
     int monitor{};
     try {
@@ -180,11 +180,12 @@ void NPETDualCLI::readBatchMeasurementsCLI() {
     switch (monitor) {
         case 1: monitor_fn = dualReaderCliBasic;
             break;
-        // TODO: Implement other monitors
-        // case 2: monitor_fn = readerCliAdvanced;
-        // break;
-        // case 3: monitor_fn = readerCliSync;
-        // break;
+        case 2: monitor_fn = dualReaderCliBasic;
+            // TODO: Implement other monitors
+            Cli::err("Not implemented yet, defaulting to basic monitoring");
+            break;
+        case 3: monitor_fn = dualReaderCliDiff;
+            break;
         default: monitor_fn = nullptr;
             break;
     }

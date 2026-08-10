@@ -28,10 +28,7 @@ protected:
     ///
     /// Swap which underlying NPET is currently treated as START and which as STOP.
     /// Does not touch the physical connections, only the logical designation.
-    void switchStartStop() {
-        designation_swapped_ = !designation_swapped_;
-        SPDLOG_INFO("Switched NPET START/STOP designation; currently swapped: {}", designation_swapped_);
-    }
+    void switchStartStop();
 
     /// Predeclare a thread per callable, then release both at once off a common signal so
     /// they start in lockstep rather than one running ahead while the other is still spinning up.

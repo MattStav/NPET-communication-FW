@@ -72,3 +72,10 @@ void NPETDual::readBatchMeasurements(const DualMeasContext &meas_set) {
     }
     SPDLOG_INFO("Batch measurements reading completed");
 }
+
+
+void NPETDual::switchStartStop() {
+    designation_swapped_ = !designation_swapped_;
+    SPDLOG_INFO("Switched NPET START/STOP designation; currently swapped: {}", designation_swapped_);
+}
+

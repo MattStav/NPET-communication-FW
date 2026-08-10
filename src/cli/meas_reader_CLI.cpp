@@ -16,6 +16,8 @@ constexpr std::string_view ALL_SAVED = "All measurements saved";
 constexpr std::string_view DUAL_MEAS_START = "Starting dual measurement sequence...";
 constexpr std::string_view DUAL_MEAS_END = "Dual measurement sequence ended";
 constexpr std::string_view DUAL_BASIC_MONITOR = "Basic dual monitoring";
+constexpr std::string_view UNMATCHED_MEAS_NUM =
+        "Number of unmatched measurements: {} (START: {}, STOP: {})";
 
 ///
 /// Print an introduction message to the console at the start of the measurement sequence
@@ -263,12 +265,16 @@ static void printDualIntro(const DualMeasContext &meas_set, const Measurement &s
 
 ///
 /// Print dual measurement end message.
-static void printDualOutro() {
+/// @param dual_reader Reference to the dual measurement reader combining both legs
+static void printDualOutro(DualMeasReader &dual_reader) {
     SPDLOG_DEBUG(DUAL_MEAS_END);
     Cli::echo(std::string(DUAL_MEAS_END), fg::green);
     // TODO: Add waiting for saver thread
     // TODO: Add information about corrupted measurements
-    // TODO: Add information about unmatched measurements
+    if (const UnmatchedMeasurements UNMATCHED = dual_reader.unmatchedMeasurements(); UNMATCHED.size() > 0) {
+        SPDLOG_ERROR(UNMATCHED_MEAS_NUM, UNMATCHED.size(), UNMATCHED.start.size(), UNMATCHED.stop.size());
+        Cli::err(std::format(UNMATCHED_MEAS_NUM, UNMATCHED.size(), UNMATCHED.start.size(), UNMATCHED.stop.size()));
+    }
 } // end of print_dual_outro function
 
 
@@ -309,5 +315,5 @@ void dualReaderCliBasic(DualMeasReader &dual_reader, const DualMeasContext &meas
     } else {
         dualReaderCliBasicNonInfMeas(dual_reader, meas_set.num_of_meas);
     }
-    printDualOutro();
+    printDualOutro(dual_reader);
 } // end of dual_reader_cli_basic function

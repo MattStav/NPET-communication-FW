@@ -77,3 +77,18 @@ std::optional<DualMeasurement> DualMeasReader::grabMeasurement() {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     } // end of while loop waiting for data
 } // end of grabMeasurement function
+
+
+UnmatchedMeasurements DualMeasReader::unmatchedMeasurements() {
+    std::scoped_lock const LOCK(combine_mtx_);
+    UnmatchedMeasurements result;
+    result.start.reserve(pending_start_.size());
+    for (const auto &meas: pending_start_ | std::views::values) {
+        result.start.push_back(meas);
+    }
+    result.stop.reserve(pending_stop_.size());
+    for (const auto &meas: pending_stop_ | std::views::values) {
+        result.stop.push_back(meas);
+    }
+    return result;
+} // end of unmatchedMeasurements function

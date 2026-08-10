@@ -6,6 +6,7 @@
 #include <queue>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "meas_reader.h"
 
@@ -44,6 +45,16 @@ struct DualMeasurement {
         return "dual_measurement{meas_start: " + meas_start.toString() +
                ", meas_stop: " + meas_stop.toString() + "}";
     }
+};
+
+// Leftover measurements from each leg that never found a match on the other leg by the time both
+// legs finished. Only meaningful once DualMeasReader::grabMeasurement() has returned nullopt -
+// see DualMeasReader::unmatchedMeasurements().
+struct UnmatchedMeasurements {
+    std::vector<Measurement> start;
+    std::vector<Measurement> stop;
+
+    [[nodiscard]] size_t size() const { return start.size() + stop.size(); }
 };
 
 
@@ -112,6 +123,13 @@ public:
     /// @return A dual measurement from the Dual Measurement Reader.
     /// Is nullopt if the Dual Measurement has stopped.
     std::optional<DualMeasurement> grabMeasurement();
+
+    ///
+    /// Leftover measurements from each leg that never found a match on the other leg. Only
+    /// meaningful once grabMeasurement() has returned nullopt (i.e. both legs have finished);
+    /// querying it earlier reports pairs that simply haven't matched yet, not real leftovers.
+    /// @return Leftover measurements from each leg
+    [[nodiscard]] UnmatchedMeasurements unmatchedMeasurements();
 };
 
 

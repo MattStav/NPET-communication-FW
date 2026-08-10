@@ -285,13 +285,29 @@ static void printDualIntro(const DualMeasContext &meas_set, const Measurement &s
 
 
 ///
-/// Print dual measurement end message.
+/// Print dual measurement end message, including the number of corrupt measurements across both legs.
 /// @param dual_reader Reference to the dual measurement reader combining both legs
-static void printDualOutro(DualMeasReader &dual_reader) {
+/// @param meas_set Reference to the dual measurement context
+static void printDualOutro(DualMeasReader &dual_reader, const DualMeasContext &meas_set) {
     SPDLOG_DEBUG(DUAL_MEAS_END);
     Cli::echo(std::string(DUAL_MEAS_END), fg::green);
-    // TODO: Add waiting for saver thread
-    // TODO: Add information about corrupted measurements
+    if (meas_set.save_dir) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if (MeasReader *start_reader = dual_reader.startReader()) {
+            waitForSaver(*start_reader);
+        }
+        if (MeasReader *stop_reader = dual_reader.stopReader()) {
+            waitForSaver(*stop_reader);
+        }
+    }
+    int corrupted = 0;
+    if (const MeasReader *start_reader = dual_reader.startReader()) {
+        corrupted += start_reader->corrupted.load(std::memory_order_relaxed);
+    }
+    if (const MeasReader *stop_reader = dual_reader.stopReader()) {
+        corrupted += stop_reader->corrupted.load(std::memory_order_relaxed);
+    }
+    printCorrupted(corrupted);
     if (const UnmatchedMeasurements UNMATCHED = dual_reader.unmatchedMeasurements(); UNMATCHED.size() > 0) {
         SPDLOG_ERROR(UNMATCHED_MEAS_NUM, UNMATCHED.size(), UNMATCHED.start.size(), UNMATCHED.stop.size());
         Cli::err(std::format(UNMATCHED_MEAS_NUM, UNMATCHED.size(), UNMATCHED.start.size(), UNMATCHED.stop.size()));
@@ -336,5 +352,5 @@ void dualReaderCliBasic(DualMeasReader &dual_reader, const DualMeasContext &meas
     } else {
         dualReaderCliBasicNonInfMeas(dual_reader, meas_set.num_of_meas);
     }
-    printDualOutro(dual_reader);
+    printDualOutro(dual_reader, meas_set);
 } // end of dual_reader_cli_basic function

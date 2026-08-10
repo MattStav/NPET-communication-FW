@@ -50,8 +50,6 @@ struct DualMeasurement {
 ///
 /// Combines two independent MeasReader measurement streams (a START leg and a STOP leg) into a
 /// single stream of matched [meas_start, meas_stop] pairs, keyed on Measurement::meas_num.
-/// One instance is meant to be reused across repeated start/stop measurement runs; reset() clears
-/// state left over from a previous run.
 class DualMeasReader {
 protected:
     // Guards pending_start_, pending_stop_, and for_monitor_q
@@ -80,7 +78,7 @@ public:
     std::queue<DualMeasurement> for_monitor_q{};
 
     ///
-    /// Monitoring function for a Single NPET MMeasurement Reader,
+    /// Monitoring function for a Single NPET Measurement Reader,
     /// which passes the measurements into matchmaking with another MeasurementReader.
     /// @param IS_START Measurement Reader designation (START/STOP)
     /// @param reader Measurement Reader reference
@@ -89,6 +87,7 @@ public:
     void combine(bool IS_START, MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const);
 
     ///
+    /// Method to grab measurement value for the monitoring function.
     /// @return A dual measurement from the Dual Measurement Reader.
     /// Is nullopt if the Dual Measurement has stopped.
     std::optional<DualMeasurement> grabMeasurement();

@@ -41,32 +41,53 @@ static void printIntro(const MeasContext &meas_set, const Measurement &time_cons
 
 
 ///
+/// Wait for a MeasReader's saver thread to finish flushing its queued measurements to disk,
+/// showing a progress bar while it drains. No-op if there is nothing left to save.
+/// @param reader Reference to the measurement_reader object whose saver queue to wait on
+static void waitForSaver(MeasReader &reader) {
+    const size_t SAVER_INITIAL = reader.saverQSize();
+    if (SAVER_INITIAL == 0) {
+        return;
+    }
+    SPDLOG_DEBUG("There are unsaved measurements left, saving them now");
+    Cli::echo("Saving data to file, do NOT close the application ...");
+    SPDLOG_INFO("Number of measurements left to save: {}", SAVER_INITIAL);
+    size_t saver_remaining = SAVER_INITIAL;
+    auto bar = ProgressBar({.total = static_cast<int>(SAVER_INITIAL)});
+    while (saver_remaining > 0) {
+        saver_remaining = reader.saverQSize();
+        bar.update(static_cast<int>(SAVER_INITIAL - saver_remaining));
+        std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    } // end of while loop to wait for saver thread
+    bar.update(static_cast<int>(SAVER_INITIAL));
+    SPDLOG_INFO(ALL_SAVED);
+    Cli::echo(std::string(ALL_SAVED), fg::green);
+} // end of waitForSaver function
+
+
+///
+/// Print a warning with the number of corrupted measurements encountered, if any.
+/// @param corrupted Number of corrupted measurements
+static void printCorrupted(const int corrupted) {
+    if (corrupted > 0) {
+        SPDLOG_ERROR(CORRUPTED_MEAS_NUM, corrupted);
+        Cli::err(std::format(CORRUPTED_MEAS_NUM, corrupted));
+    }
+} // end of printCorrupted function
+
+
+///
 /// Print measurement end message, including the number of corrupt measurements.
 /// @param reader Reference to the measurement_reader object that is reading measurements from the NPET device
 /// @param meas_set Reference to the measurement context
 static void printOutro(MeasReader &reader, const MeasContext &meas_set) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    if (const size_t SAVER_INITIAL = reader.saverQSize(); meas_set.save_path && SAVER_INITIAL > 0) {
-        SPDLOG_DEBUG("There are unsaved measurements left, saving them now");
-        Cli::echo("Saving data to file, do NOT close the application ...");
-        SPDLOG_INFO("Number of measurements left to save: {}", SAVER_INITIAL);
-        size_t saver_remaining = SAVER_INITIAL;
-        auto bar = ProgressBar({.total = static_cast<int>(SAVER_INITIAL)});
-        while (saver_remaining > 0) {
-            saver_remaining = reader.saverQSize();
-            bar.update(static_cast<int>(SAVER_INITIAL - saver_remaining));
-            std::this_thread::sleep_for(std::chrono::milliseconds(400));
-        } // end of while loop to wait for saver thread
-        bar.update(static_cast<int>(SAVER_INITIAL));
-        SPDLOG_INFO(ALL_SAVED);
-        Cli::echo(std::string(ALL_SAVED), fg::green);
+    if (meas_set.save_path) {
+        waitForSaver(reader);
     }
     SPDLOG_DEBUG(MEAS_END);
     Cli::echo(std::string(MEAS_END), fg::green);
-    if (const int CORRUPTED = reader.corrupted.load(std::memory_order_relaxed); CORRUPTED > 0) {
-        SPDLOG_ERROR(CORRUPTED_MEAS_NUM, CORRUPTED);
-        Cli::err(std::format(CORRUPTED_MEAS_NUM, CORRUPTED));
-    }
+    printCorrupted(reader.corrupted.load(std::memory_order_relaxed));
 } // end of print_outro
 
 

@@ -133,6 +133,19 @@ public:
     /// querying it earlier reports pairs that simply haven't matched yet, not real leftovers.
     /// @return Leftover measurements from each leg
     [[nodiscard]] UnmatchedMeasurements unmatchedMeasurements();
+
+    ///
+    /// The START leg's underlying MeasReader, recorded as soon as combine() starts running for it.
+    /// Still valid once grabMeasurement() has returned nullopt, since combine()'s caller (see
+    /// MeasReader::main()) only destroys the MeasReader after that leg's own saver thread has
+    /// joined, which happens after combine() has already returned.
+    /// @return Pointer to the START leg's MeasReader, or nullptr if combine() was never started for it
+    [[nodiscard]] MeasReader *startReader() const { return start_meas_reader_.load(std::memory_order_relaxed); }
+
+    ///
+    /// Same as startReader(), for the STOP leg.
+    /// @return Pointer to the STOP leg's MeasReader, or nullptr if combine() was never started for it
+    [[nodiscard]] MeasReader *stopReader() const { return stop_meas_reader_.load(std::memory_order_relaxed); }
 };
 
 

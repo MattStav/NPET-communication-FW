@@ -102,7 +102,7 @@ void readerCliSync(MeasReader &reader, const MeasContext &meas_set, const Measur
     printIntro(meas_set, time_const);
     SPDLOG_DEBUG(SYNC_MONITOR);
     Cli::echo(std::string(SYNC_MONITOR));
-    while (true) {
+    while (!reader.aborted.load(std::memory_order_relaxed)) {
         const std::optional<Measurement> MEAS = reader.grabMeasFromProcessor(reader.for_monitor_q);
         if (!MEAS) {
             break;

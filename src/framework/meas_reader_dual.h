@@ -61,9 +61,15 @@ protected:
     std::atomic<int> active_legs_{2};
     // Set once both legs have finished, so grabMeasurement() knows no further pairs are coming
     std::atomic<bool> stop_sign_{false};
+    // Each leg's meas_num just before matching begins, used in matchMeasurement() to normalize
+    // that leg's raw meas_num into a shared index space. The two physical NPETs run independent
+    // free-running counters, so they are not guaranteed to be on the same meas_num on start.
+    int start_baseline_{0};
+    int stop_baseline_{0};
 
     ///
-    /// Match a single measurement against the other leg's pending measurements by meas_num.
+    /// Match a single measurement against the other leg's pending measurements, keyed on meas_num
+    /// normalized against that leg's baseline (see start_baseline_/stop_baseline_).
     /// @param IS_START Whether MEAS came from the START leg (true) or the STOP leg (false)
     /// @param MEAS The measurement just read from the IS_START leg
     void matchMeasurement(bool IS_START, const Measurement &MEAS);
@@ -76,6 +82,15 @@ protected:
 public:
     // Combined START/STOP measurement pairs
     std::queue<DualMeasurement> for_monitor_q{};
+
+    DualMeasReader() = default;
+
+    ///
+    /// @param START_BASELINE meas_num of a measurement pulled from the START leg immediately
+    /// before the batch starts, used to align the two legs' independent meas_num counters.
+    /// @param STOP_BASELINE Same as START_BASELINE, for the STOP leg.
+    DualMeasReader(const int START_BASELINE, const int STOP_BASELINE)
+        : start_baseline_(START_BASELINE), stop_baseline_(STOP_BASELINE) {}
 
     ///
     /// Monitoring function for a Single NPET Measurement Reader,

@@ -28,8 +28,16 @@ void NPETDual::readBatchMeasurements(const DualMeasContext &meas_set) {
     std::function<void(MeasReader &, const MeasContext &, const Measurement &)> start_monitor_fn;
     std::function<void(MeasReader &, const MeasContext &, const Measurement &)> stop_monitor_fn;
     if (meas_set.monitor_fn) {
+        // The two physical NPETs run independent free-running meas_num counters, so pull a single
+        // measurement from each channel first to learn where each leg's counter currently stands;
+        // that becomes the baseline DualMeasReader normalizes against when matching pairs.
+        SPDLOG_DEBUG("Probing each leg's current meas_num before starting the batch ...");
+        Measurement start_probe{};
+        Measurement stop_probe{};
+        executeBoth([&] { start_probe = start().readSingleMeasurement(meas_set.start_channel); },
+                    [&] { stop_probe = stop().readSingleMeasurement(meas_set.stop_channel); });
         SPDLOG_DEBUG("Setting up dual monitoring functions ...");
-        dual_reader.emplace();
+        dual_reader.emplace(start_probe.meas_num, stop_probe.meas_num);
         start_monitor_fn = [&dual_reader](MeasReader &reader, const MeasContext &ctx, const Measurement &time_const) {
             dual_reader->combine(true, reader, ctx, time_const);
         };

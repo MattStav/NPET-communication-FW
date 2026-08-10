@@ -8,15 +8,19 @@
 
 void DualMeasReader::matchMeasurement(const bool IS_START, const Measurement &MEAS) {
     std::scoped_lock const LOCK(combine_mtx_);
+    // meas_num is a free-running byte counter on the device, so normalize against this leg's own
+    // baseline (wrapping via uint8_t) before using it as the shared matching key.
+    const int BASELINE = IS_START ? start_baseline_ : stop_baseline_;
+    const int KEY = static_cast<uint8_t>(MEAS.meas_num - BASELINE);
     auto &other_pending = IS_START ? pending_stop_ : pending_start_;
-    if (const auto IT = other_pending.find(MEAS.meas_num); IT != other_pending.end()) {
+    if (const auto IT = other_pending.find(KEY); IT != other_pending.end()) {
         for_monitor_q.push(IS_START
                                ? DualMeasurement{.meas_start = MEAS, .meas_stop = IT->second}
                                : DualMeasurement{.meas_start = IT->second, .meas_stop = MEAS});
         other_pending.erase(IT);
     } else {
         auto &own_pending = IS_START ? pending_start_ : pending_stop_;
-        own_pending.emplace(MEAS.meas_num, MEAS);
+        own_pending.emplace(KEY, MEAS);
     }
 } // end of matchMeasurement function
 

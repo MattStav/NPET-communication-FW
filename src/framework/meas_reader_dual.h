@@ -35,8 +35,9 @@ struct DualMeasContext {
     }
 };
 
-// A matched pair of measurements, one from the START leg and one from the STOP leg,
-// identified as belonging together by sharing the same meas_num.
+///
+/// A matched pair of measurements, one from the START leg and one from the STOP leg,
+/// identified as belonging together by sharing the same meas_num.
 struct DualMeasurement {
     Measurement meas_start;
     Measurement meas_stop;
@@ -47,9 +48,10 @@ struct DualMeasurement {
     }
 };
 
-// Leftover measurements from each leg that never found a match on the other leg by the time both
-// legs finished. Only meaningful once DualMeasReader::grabMeasurement() has returned nullopt -
-// see DualMeasReader::unmatchedMeasurements().
+///
+/// Leftover measurements from each leg that never found a match on the other leg by the time both
+/// legs finished. Only meaningful once DualMeasReader::grabMeasurement() has returned nullopt -
+/// see DualMeasReader::unmatchedMeasurements().
 struct UnmatchedMeasurements {
     std::vector<Measurement> start;
     std::vector<Measurement> stop;
@@ -103,6 +105,7 @@ public:
     DualMeasReader() = default;
 
     ///
+    /// DualMeasReader constructor for defining the meas number baselines.
     /// @param START_BASELINE meas_num of a measurement pulled from the START leg immediately
     /// before the batch starts, used to align the two legs' independent meas_num counters.
     /// @param STOP_BASELINE Same as START_BASELINE, for the STOP leg.

@@ -63,7 +63,7 @@ std::optional<std::array<uint8_t, 13> > MeasReader::grabMeasFromReceiver() {
         }
         // If there is no data, then continue back
         if (!has_data) {
-            // If there is no data, check for stop signal adn throw it to exit the processor thread immediately
+            // If there is no data, check for stop signal and throw it to exit the processor thread immediately
             if (stop_sign.load(std::memory_order_relaxed)) {
                 SPDLOG_DEBUG("Stop signal received while waiting for data, exiting ...");
                 return std::nullopt;

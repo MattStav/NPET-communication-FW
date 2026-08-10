@@ -123,4 +123,10 @@ FWVersion promptFWVersion(FWVersion CURRENT_FW_VERSION);
 /// @return Time correction constant in seconds
 int promptTimeConstSeconds(ConstIntSelectionLogic SEL);
 
+///
+/// Prompt the user to define a new time correction constat in raw format.
+/// @param OLD_CONST The existing time correction constant
+/// @return The new time correction constant
+Measurement promptRawTimeConstant(const Measurement &OLD_CONST);
+
 #endif //NPET_COMM_FW_HELPER_FUNC_H

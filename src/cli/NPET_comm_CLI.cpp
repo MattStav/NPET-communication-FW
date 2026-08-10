@@ -1,10 +1,10 @@
 #include "NPET_comm_CLI.h"
 
 #include <conio.h>
-#include <quadmath.h>
 #include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.
 
 #include "meas_reader_CLI.h"
+#include "helper_func.h"
 
 constexpr std::string_view NPET_OK_RESPONDING = "NPET communication is OK";
 constexpr std::string_view NPET_NOT_RESPONDING = "NPET not responding!";
@@ -14,9 +14,6 @@ constexpr std::string_view FREQ_SET = "Pulse generation frequency set to [Hz]";
 constexpr std::string_view PULSE_GEN_OK = "Pulse generation successful";
 constexpr std::string_view PULSE_GEN_ERR = "Pulse generation failed";
 constexpr std::string_view TIME_CONST_SET = "New time correction constant set to";
-constexpr std::string_view TIME_CONST_SET_FRAC_PART = "Invalid input - Fraction must be in the range (0, 1)";
-constexpr std::string_view TIME_CONST_CURRENT = "Current time constant value";
-constexpr std::string_view TIME_CONST_ADJUST = "Adjusting the time correction constant by [s]";
 constexpr std::string_view RESET_INITIATED = "Resetting NPET to default settings";
 constexpr std::string_view RESET_COMPLETE = "NPET reset sequence finished";
 
@@ -229,7 +226,8 @@ void NPETCommCLI::setTimeConstantCLI() {
         case 1:
             SPDLOG_DEBUG("User selected raw format definition for time correction constant");
             try {
-                new_const = rawTimeConstant();
+                const Measurement OLD_CONST = safeExec([&] { return importTimeConstant(); }, "import_time_constant");
+                new_const = promptRawTimeConstant(OLD_CONST);
             } catch (std::exception &e) {
                 SPDLOG_ERROR(TIME_CONST_FAILED_TO_SET, e.what());
                 Cli::err(std::format(TIME_CONST_FAILED_TO_SET.data(), e.what()));
@@ -323,58 +321,6 @@ void NPETCommCLI::setTimeConstantCLI() {
              },
              "read_batch_measurements");
 } // end of set_time_constant_handler function
-
-
-Measurement NPETCommCLI::rawTimeConstant() {
-    SPDLOG_DEBUG("Defining time correction constant in raw format ...");
-    Measurement new_const{.meas_num = -1}; // Measurement num -1 marks the measurement as a time correction constant
-    std::string input_string{};
-
-    SPDLOG_DEBUG("Importing existing time correction constant from NPET ...");
-    const Measurement OLD_CONST = safeExec([&] { return importTimeConstant(); }, "import_time_constant");
-    SPDLOG_INFO("{}: {}", TIME_CONST_CURRENT, OLD_CONST.toString());
-    Cli::showStr(std::string(TIME_CONST_CURRENT), OLD_CONST.toString());
-    Cli::echo("Insert new time correction constant (or adjust the existing value)");
-    // Either enter the new value of seconds or adjust the new one by +- value
-    SPDLOG_DEBUG("Prompting user for new time correction constant or adjustment ...");
-    input_string = Cli::prompt("Seconds (0 to cancel, +-value to adjust)", "0");
-    SPDLOG_DEBUG("User input for time correction constant: {}", input_string);
-    if (input_string == "0") {
-        // Return an invalid measurement to indicate cancellation
-        return Measurement{.meas_num = -2};
-    }
-    // Handle constant adjustment
-    if (const char SIGN = input_string.at(0); SIGN == '+' || SIGN == '-') {
-        SPDLOG_DEBUG("User input indicates an adjustment of the existing time correction constant");
-        // Extract the number of seconds to adjust
-        const int SECONDS_ADJUSTMENT = std::stoi(input_string.substr(1));
-        // Adjust the constant_secs value
-        SPDLOG_DEBUG("{}: {}{}", TIME_CONST_ADJUST, SIGN, SECONDS_ADJUSTMENT);
-        Cli::showStr(std::string(TIME_CONST_ADJUST), input_string);
-        new_const = OLD_CONST; // Copy the old constant
-        if (SIGN == '+') {
-            new_const.intp += SECONDS_ADJUSTMENT;
-        } else {
-            new_const.intp -= SECONDS_ADJUSTMENT;
-        }
-    } else {
-        SPDLOG_DEBUG("User input indicates new time correction constant definition");
-        // Handle new constant definition
-        new_const.intp = std::stoi(input_string);
-        SPDLOG_DEBUG("New constant int part: {}", new_const.intp);
-        input_string = Cli::prompt("Fraction of a second (0.xxx format)", "0.0");
-        const __float128 FRAC_PART = strtoflt128(input_string.c_str(), nullptr); // Convert input to float
-        if (0 >= FRAC_PART || FRAC_PART >= 1) {
-            SPDLOG_ERROR("{}: {}", TIME_CONST_SET_FRAC_PART, float128ToString(FRAC_PART));
-            Cli::err(std::string(TIME_CONST_SET_FRAC_PART));
-            return Measurement{.meas_num = -2};
-        }
-        new_const.fracp = FRAC_PART;
-        SPDLOG_DEBUG("New constant fractional part: {}", float128ToString(new_const.fracp));
-    } // end of if-else block
-    SPDLOG_INFO("New time correction constant: {}", new_const.toString());
-    return new_const;
-} // end of raw_time_constant_CLI function
 
 
 void NPETCommCLI::resetCLI() {

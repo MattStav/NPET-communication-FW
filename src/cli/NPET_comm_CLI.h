@@ -5,7 +5,6 @@
 
 #include "NPET_comm.h"
 #include "cli.h"
-#include "helper_func.h"
 #include "safe_exec.h"
 
 constexpr std::string_view COMM_INIT = "Initializing NPET communication framework";
@@ -13,12 +12,6 @@ constexpr std::string_view COMM_CLOSE = "Closing NPET communication framework";
 
 
 class NPETCommCLI : public NPETComm {
-    ///
-    /// Ask the user to provide the time correction constant in raw format [int, frac].
-    /// It is also possible to adjust the existing value by a specified number of seconds.
-    /// @return The new time correction constant in measurement format.
-    Measurement rawTimeConstant();
-
 public:
     ///
     /// Open serial communication with NPET

@@ -23,6 +23,9 @@ constexpr std::string_view BAUD_RATE_ERR = "Failed to set baud rate";
 constexpr std::string_view FW_CURRENT = "Current NPET firmware version";
 constexpr std::string_view FW_INVALID = "Invalid choice, firmware version not changed";
 constexpr std::string_view SYSTEM_TIME_CURRENT = "Current system time is";
+constexpr std::string_view TIME_CONST_CURRENT = "Current time constant value";
+constexpr std::string_view TIME_CONST_ADJUST = "Adjusting the time correction constant by [s]";
+constexpr std::string_view TIME_CONST_SET_FRAC_PART = "Invalid input - Fraction must be in the range (0, 1)";
 
 
 void printAppIntro() {
@@ -358,3 +361,53 @@ int promptTimeConstSeconds(const ConstIntSelectionLogic SEL) {
             return 0;
     } // end of switch
 }
+
+Measurement promptRawTimeConstant(const Measurement &OLD_CONST) {
+    assert(old_const.meas_num == -1);
+    SPDLOG_DEBUG("Defining time correction constant in raw format ...");
+    Measurement new_const{.meas_num = -1}; // Measurement num -1 marks the measurement as a time correction constant
+
+    SPDLOG_DEBUG("Importing existing time correction constant from NPET ...");
+    SPDLOG_INFO("{}: {}", TIME_CONST_CURRENT, OLD_CONST.toString());
+    Cli::showStr(std::string(TIME_CONST_CURRENT), OLD_CONST.toString());
+    Cli::echo("Insert new time correction constant (or adjust the existing value)");
+    // Either enter the new value of seconds or adjust the new one by +- value
+    SPDLOG_DEBUG("Prompting user for new time correction constant or adjustment ...");
+    std::string input_string = Cli::prompt("Seconds (0 to cancel, +-value to adjust)", "0");
+    SPDLOG_DEBUG("User input for time correction constant: {}", input_string);
+    if (input_string == "0") {
+        // Return an invalid measurement to indicate cancellation
+        return Measurement{.meas_num = -2};
+    }
+    // Handle constant adjustment
+    if (const char SIGN = input_string.at(0); SIGN == '+' || SIGN == '-') {
+        SPDLOG_DEBUG("User input indicates an adjustment of the existing time correction constant");
+        // Extract the number of seconds to adjust
+        const int SECONDS_ADJUSTMENT = std::stoi(input_string.substr(1));
+        // Adjust the constant_secs value
+        SPDLOG_DEBUG("{}: {}{}", TIME_CONST_ADJUST, SIGN, SECONDS_ADJUSTMENT);
+        Cli::showStr(std::string(TIME_CONST_ADJUST), input_string);
+        new_const = OLD_CONST; // Copy the old constant
+        if (SIGN == '+') {
+            new_const.intp += SECONDS_ADJUSTMENT;
+        } else {
+            new_const.intp -= SECONDS_ADJUSTMENT;
+        }
+    } else {
+        SPDLOG_DEBUG("User input indicates new time correction constant definition");
+        // Handle new constant definition
+        new_const.intp = std::stoi(input_string);
+        SPDLOG_DEBUG("New constant int part: {}", new_const.intp);
+        input_string = Cli::prompt("Fraction of a second (0.xxx format)", "0.0");
+        const __float128 FRAC_PART = strtoflt128(input_string.c_str(), nullptr); // Convert input to float
+        if (0 >= FRAC_PART || FRAC_PART >= 1) {
+            SPDLOG_ERROR("{}: {}", TIME_CONST_SET_FRAC_PART, float128ToString(FRAC_PART));
+            Cli::err(std::string(TIME_CONST_SET_FRAC_PART));
+            return Measurement{.meas_num = -2};
+        }
+        new_const.fracp = FRAC_PART;
+        SPDLOG_DEBUG("New constant fractional part: {}", float128ToString(new_const.fracp));
+    } // end of if-else block
+    SPDLOG_INFO("New time correction constant: {}", new_const.toString());
+    return new_const;
+} // end of raw_time_constant_CLI function

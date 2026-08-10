@@ -40,6 +40,7 @@ void DualMeasReader::finishLeg() {
 
 void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const MeasContext & /*meas_set*/,
                              const Measurement & /*time_const*/) {
+    (IS_START ? start_meas_reader_ : stop_meas_reader_).store(&reader, std::memory_order_relaxed);
     while (!reader.aborted.load(std::memory_order_relaxed)) {
         const std::optional<Measurement> MEAS = reader.grabMeasFromProcessor(reader.for_monitor_q);
         if (!MEAS) {
@@ -47,6 +48,15 @@ void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const Meas
         }
         matchMeasurement(IS_START, *MEAS);
     } // end of while loop
+    if (reader.aborted.load(std::memory_order_relaxed)) {
+        // This leg's own key_watcher caught the Esc press; the other leg's key_watcher is racing
+        // against it on the same keyboard input and may never see it, so stop that leg directly
+        // rather than requiring a second Esc press.
+        if (MeasReader *other = (IS_START ? stop_meas_reader_ : start_meas_reader_).load(std::memory_order_relaxed)) {
+            other->aborted.store(true, std::memory_order_relaxed);
+            other->stop_sign.store(true, std::memory_order_relaxed);
+        }
+    }
     finishLeg();
 } // end of combine function
 

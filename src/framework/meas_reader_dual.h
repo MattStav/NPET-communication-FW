@@ -61,6 +61,12 @@ protected:
     std::atomic<int> active_legs_{2};
     // Set once both legs have finished, so grabMeasurement() knows no further pairs are coming
     std::atomic<bool> stop_sign_{false};
+    // Each leg's MeasReader, recorded by combine() as soon as it starts running. Each leg has its
+    // own independent key_watcher thread polling the keyboard, so a single Esc press is only ever
+    // seen by whichever one wins the race to read it; combine() uses these to propagate that leg's
+    // abort to the other, so Esc only needs to be pressed once.
+    std::atomic<MeasReader *> start_meas_reader_{nullptr};
+    std::atomic<MeasReader *> stop_meas_reader_{nullptr};
     // Each leg's meas_num just before matching begins, used in matchMeasurement() to normalize
     // that leg's raw meas_num into a shared index space. The two physical NPETs run independent
     // free-running counters, so they are not guaranteed to be on the same meas_num on start.

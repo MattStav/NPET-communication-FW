@@ -86,8 +86,8 @@ TEST_F(DualFrameworkWorkflowFixture, MonitorFnReceivesAllCombinedMatchingMeasure
     };
     readBatchMeasurements(CTX);
     ASSERT_EQ(received.size(), 5U);
-    for (const auto &pair: received) {
-        EXPECT_EQ(pair.meas_start.meas_num, pair.meas_stop.meas_num)
+    for (const auto &[meas_start, meas_stop]: received) {
+        EXPECT_EQ(meas_start.meas_num, meas_stop.meas_num)
             << "combined pair does not share a meas_num - matching logic paired the wrong measurements";
     }
     // Both legs' time constants must be known before the monitor starts running (see NPET_dual.cpp)

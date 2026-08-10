@@ -67,16 +67,19 @@ void DualMeasReader::combine(const bool IS_START, MeasReader &reader, const Meas
 
 std::optional<DualMeasurement> DualMeasReader::grabMeasurement() {
     while (true) {
-        if (stop_sign_.load(std::memory_order_relaxed)) {
-            SPDLOG_DEBUG("Stop signal received while waiting for data, exiting ...");
-            return std::nullopt;
-        } {
+        {
             std::scoped_lock const LOCK(combine_mtx_);
             if (!for_monitor_q.empty()) {
                 DualMeasurement ret = for_monitor_q.front();
                 for_monitor_q.pop();
                 return ret;
             }
+        }
+        // The check needs to happen after the for_monitor_q is already empty,
+        // otherwise already matched measurements will be discarded
+        if (stop_sign_.load(std::memory_order_relaxed)) {
+            SPDLOG_DEBUG("Stop signal received while waiting for data, exiting ...");
+            return std::nullopt;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     } // end of while loop waiting for data

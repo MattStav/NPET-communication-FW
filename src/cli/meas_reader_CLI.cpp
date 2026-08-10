@@ -8,6 +8,7 @@
 constexpr std::string_view MEAS_START = "Starting measurement sequence...";
 constexpr std::string_view MEAS_END = "Measurement sequence ended";
 constexpr std::string_view MISSING_CONST = "Time correction in NPET is missing or invalid";
+constexpr std::string_view MISSING_CONST_LEG = "Time correction in NPET is missing or invalid ({} leg)";
 constexpr std::string_view CORRUPTED_MEAS_NUM = "Number of corrupted measurements: {}";
 constexpr std::string_view SYNC_MONITOR = "Synchronization monitoring";
 constexpr std::string_view ADVANCED_MONITOR = "Advanced monitoring";
@@ -21,16 +22,34 @@ constexpr std::string_view UNMATCHED_MEAS_NUM =
         "Number of unmatched measurements: {} (START: {}, STOP: {})";
 
 ///
+/// Warn if a time correction constant is missing or invalid. If LEG is given, it is named in the
+/// warning (e.g. for a dual measurement's START/STOP legs); otherwise a leg-agnostic message is
+/// used, for a single-channel monitor.
+/// @param time_const Reference to the time correction constant
+/// @param LEG Optional leg label to include in the warning message ("START" or "STOP")
+static void warnIfMissingConst(const Measurement &time_const,
+                               const std::optional<std::string_view> &LEG = std::nullopt) {
+    if (!time_const.isEmpty() && time_const.isValid()) {
+        return;
+    }
+    if (LEG) {
+        SPDLOG_ERROR(MISSING_CONST_LEG, *LEG);
+        Cli::err(std::format(MISSING_CONST_LEG, *LEG));
+    } else {
+        SPDLOG_ERROR(MISSING_CONST);
+        Cli::err(std::string(MISSING_CONST));
+    }
+} // end of warnIfMissingConst function
+
+
+///
 /// Print an introduction message to the console at the start of the measurement sequence
 /// @param meas_set Reference to the measurement context
 /// @param time_const Reference to the time correction constant imported from the NPET device
 static void printIntro(const MeasContext &meas_set, const Measurement &time_const) {
     SPDLOG_DEBUG(MEAS_START);
     Cli::echo(std::string(MEAS_START), fg::green);
-    if (time_const.isEmpty() || !time_const.isValid()) {
-        SPDLOG_ERROR(MISSING_CONST);
-        Cli::err(std::string(MISSING_CONST));
-    }
+    warnIfMissingConst(time_const);
     if (meas_set.num_of_meas == INFINITE_OPERATION) {
         Cli::echo("Reading infinite measurements...");
     } else {
@@ -268,12 +287,8 @@ static void printDualIntro(const DualMeasContext &meas_set, const Measurement &s
                            const Measurement &stop_time_const) {
     SPDLOG_DEBUG(DUAL_MEAS_START);
     Cli::echo(std::string(DUAL_MEAS_START), fg::green);
-    if (start_time_const.isEmpty() || !start_time_const.isValid() ||
-        stop_time_const.isEmpty() || !stop_time_const.isValid()) {
-        // TODO: Specify which const is missing
-        SPDLOG_ERROR(MISSING_CONST);
-        Cli::err(std::string(MISSING_CONST));
-    }
+    warnIfMissingConst(start_time_const, "START");
+    warnIfMissingConst(stop_time_const, "STOP");
     if (meas_set.num_of_meas == INFINITE_OPERATION) {
         Cli::echo("Reading infinite measurements...");
     } else {

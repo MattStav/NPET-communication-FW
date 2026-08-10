@@ -118,7 +118,7 @@ static void dualNPETSettingsMenu(NPETDualCLI &npet_dual) {
             npet_dual.switchStartStopCLI();
             return;
         case 4: // Reset NPET
-            SPDLOG_DEBUG("Settings menu choice: Reset NPET");
+            SPDLOG_DEBUG("Settings menu choice: Reset NPETs");
             npet_dual.resetCLI();
         default: ;
     } // end of switch

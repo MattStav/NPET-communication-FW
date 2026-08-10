@@ -100,6 +100,13 @@ struct Measurement {
         fracp += other.fracp;
         return *this;
     } // end of operator+= function
+
+    ///
+    /// Difference operation of 2 measurements.
+    /// The measurement_num of the resulting measurement is taken from the first operand.
+    Measurement operator-(const Measurement &other) const {
+        return {.meas_num = meas_num, .intp = intp - other.intp, .fracp = fracp - other.fracp};
+    } // end of operator- function
 }; // end of correction_holder struct
 
 ///

@@ -196,3 +196,49 @@ INSTANTIATE_TEST_SUITE_P(
         OperatorPlusParams{-3, static_cast<__float128>(-0.2), -2, static_cast<__float128>(-0.5), -5, -0.7}
     )
 );
+
+class MeasurementOperatorMinus : public testing::TestWithParam<OperatorMinusParams> {
+};
+
+TEST_P(MeasurementOperatorMinus, ReturnsExpectedResult) {
+    const auto &p = GetParam();
+    const Measurement A{.meas_num = 0, .intp = p.a_intp, .fracp = p.a_fracp};
+    const Measurement B{.meas_num = 0, .intp = p.b_intp, .fracp = p.b_fracp};
+    const Measurement C = A - B;
+    EXPECT_EQ(C.intp, p.expected_intp);
+    EXPECT_NEAR((double)C.fracp, p.expected_fracp, 1e-15);
+}
+
+TEST_P(MeasurementOperatorMinus, DoesNotModifyOperands) {
+    const auto &p = GetParam();
+    const Measurement A{.meas_num = 0, .intp = p.a_intp, .fracp = p.a_fracp};
+    const Measurement B{.meas_num = 0, .intp = p.b_intp, .fracp = p.b_fracp};
+    [[maybe_unused]] const Measurement C = A - B;
+    EXPECT_EQ(A.intp, p.a_intp);
+    EXPECT_EQ(B.intp, p.b_intp);
+}
+
+TEST(MeasurementOperatorMinusMeasNum, TakenFromFirstOperand) {
+    const Measurement A{.meas_num = 7, .intp = 5, .fracp = static_cast<__float128>(0.5)};
+    const Measurement B{.meas_num = 3, .intp = 2, .fracp = static_cast<__float128>(0.2)};
+    EXPECT_EQ((A - B).meas_num, 7);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    MeasurementStructTests,
+    MeasurementOperatorMinus,
+    testing::Values(
+        // Basic subtraction
+        OperatorMinusParams{3, static_cast<__float128>(0.7), 2, static_cast<__float128>(0.5), 1, 0.2},
+        // There is no inherent resolution, fracp can go negative
+        OperatorMinusParams{3, static_cast<__float128>(0.2), 2, static_cast<__float128>(0.5), 1, -0.3},
+        OperatorMinusParams{5, static_cast<__float128>(0.5), 2, static_cast<__float128>(0.5), 3, 0.0},
+        // Zero operands
+        OperatorMinusParams{0, static_cast<__float128>(0.0), 0, static_cast<__float128>(0.0), 0, 0.0},
+        OperatorMinusParams{3, static_cast<__float128>(0.0), 0, static_cast<__float128>(0.0), 3, 0.0},
+        // Result with negative intp
+        OperatorMinusParams{2, static_cast<__float128>(0.5), 3, static_cast<__float128>(0.2), -1, 0.3},
+        // Both negative
+        OperatorMinusParams{-3, static_cast<__float128>(-0.2), -2, static_cast<__float128>(-0.5), -1, 0.3}
+    )
+);

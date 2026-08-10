@@ -37,4 +37,13 @@ struct OperatorPlusParams {
     double     expected_fracp;
 };
 
+struct OperatorMinusParams {
+    int        a_intp;
+    __float128 a_fracp;
+    int        b_intp;
+    __float128 b_fracp;
+    int        expected_intp;
+    double     expected_fracp;
+};
+
 #endif //TEST_MEAS_STRUCT_H

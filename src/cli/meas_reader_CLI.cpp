@@ -370,9 +370,11 @@ void dualReaderCliDiff(DualMeasReader &dual_reader, const DualMeasContext &meas_
         auto [start, stop] = MEAS.value();
         Measurement diff = stop - start;
         diff.resolve();
-        // Convert the rounded measurement into hours, minutes, and seconds
+        // Convert the rounded measurement into hours, minutes, seconds and circular abs of fractional part
         auto [hours, minutes, seconds] = toHms(diff.round());
-        Cli::echo(formatMeasurement(hours, minutes, seconds, float128ToString(diff.fracp)));
+        const __float128 DIFF_ABS = fabsq(diff.fracp);
+        const __float128 CIRCULAR_DIFF = fminq(DIFF_ABS, static_cast<__float128>(1.0) - DIFF_ABS);
+        Cli::echo(formatMeasurement(hours, minutes, seconds, float128ToString(CIRCULAR_DIFF)));
     } // end of while loop
     printDualOutro(dual_reader, meas_set);
 } // end of readerCliSync function

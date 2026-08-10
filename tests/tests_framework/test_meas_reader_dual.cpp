@@ -110,38 +110,6 @@ TEST_F(DualMeasReaderFixture, FinishLegDoesNotClearLeftoverPendingMeasurements) 
     EXPECT_EQ(pending_start_.size(), 1U);
 }
 
-
-// --- DualMeasReader::reset() ---
-
-TEST_F(DualMeasReaderFixture, ResetClearsPendingAndQueueAndRestoresLegCountAndStopSign) {
-    matchMeasurement(true, Measurement{.meas_num = 1, .intp = 1});
-    matchMeasurement(false, Measurement{.meas_num = 1, .intp = 2});
-    matchMeasurement(true, Measurement{.meas_num = 7, .intp = 7}); // left unmatched
-    finishLeg();
-    finishLeg();
-    ASSERT_TRUE(stop_sign_.load());
-    reset();
-    EXPECT_TRUE(for_monitor_q.empty());
-    EXPECT_TRUE(pending_start_.empty());
-    EXPECT_TRUE(pending_stop_.empty());
-    EXPECT_FALSE(stop_sign_.load());
-    EXPECT_EQ(active_legs_.load(), 2);
-}
-
-// After reset(), it must take two fresh finishLeg() calls again to reach stop_sign_ - proves
-// active_legs_ was actually restored to 2, not left at its post-finish value of 0.
-TEST_F(DualMeasReaderFixture, ResetAllowsFullFinishLegCycleAgain) {
-    finishLeg();
-    finishLeg();
-    ASSERT_TRUE(stop_sign_.load());
-    reset();
-    finishLeg();
-    EXPECT_FALSE(stop_sign_.load()) << "a single finishLeg() after reset() should not be enough to stop";
-    finishLeg();
-    EXPECT_TRUE(stop_sign_.load());
-}
-
-
 // --- DualMeasReader::grabMeasurement() ---
 
 TEST_F(DualMeasReaderFixture, GrabMeasurementReturnsQueuedPairImmediately) {

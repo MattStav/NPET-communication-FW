@@ -164,6 +164,14 @@ public:
         }
     } // end of destructor
 
+    ///
+    /// Get the time difference between PPS channel and system clock.
+    /// The NPET should have synchronized fracp measurements before this is carried out.
+    /// @param PPS_CHANNEL The channel that PPS signal is connected to
+    /// @param clock_seconds Optional clock seconds, if not supplied then the system time is used
+    /// @return The time difference in seconds between the PPS channel and current system time
+    int getClockTimeDiff(Channel PPS_CHANNEL, std::optional<int> clock_seconds = std::nullopt);
+
 private:
     ///
     /// Get the average fractional part of the measurements.
@@ -173,14 +181,6 @@ private:
     /// @return The average fractional part of the measurements
     std::optional<__float128> getAverageFractionImpl(int AVER_NUM, Channel CHANNEL_NUM,
                                                      const std::function<void(int)> &PROGRESS_FN);
-
-    ///
-    /// Get the time difference between PPS channel and system clock.
-    /// The NPET should have synchronized fracp measurements before this is carried out.
-    /// @param PPS_CHANNEL The channel that PPS signal is connected to
-    /// @param clock_seconds Optional clock seconds, if not supplied then the system time is used
-    /// @return The time difference in seconds between the PPS channel and current system time
-    int getClockTimeDiff(Channel PPS_CHANNEL, std::optional<int> clock_seconds = std::nullopt);
 };
 
 

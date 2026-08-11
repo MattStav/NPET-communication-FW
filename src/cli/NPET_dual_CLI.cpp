@@ -247,20 +247,25 @@ void NPETDualCLI::syncNPETsCLI() {
         "Clear time constants",
         "Cancel",
     };
+    const std::vector<std::string> NPET_OPTIONS = {"START", "STOP"};
     SPDLOG_DEBUG("Possible new time correction constant definitions: {}", DEFINITION_OPTIONS);
     switch (Cli::menu("Time correction constant definition", DEFINITION_OPTIONS, false)) {
-        case 1:
+        case 1: {
             SPDLOG_DEBUG("User selected adjusting raw time correction constant for single NPET");
-            try {
-                // TODO: Add
-                Cli::err("Not implemented yet");
-                return;
-            } catch (std::exception &e) {
-                SPDLOG_ERROR(TIME_CONST_FAILED_TO_SET, e.what());
-                Cli::err(std::format(TIME_CONST_FAILED_TO_SET.data(), e.what()));
-                return;
-            }
+            const INT NPET_CHOICE = Cli::menu("Select the NPET to adjust the time correction constant for",
+                                              NPET_OPTIONS, false);
+            SPDLOG_DEBUG("User selected NPET: {}", NPET_CHOICE == 1 ? "START" : "STOP");
+            Measurement &const_to_adjust = NPET_CHOICE == 1 ? start_const : stop_const;
+            Measurement &const_to_leave = NPET_CHOICE == 1 ? stop_const : start_const;
+            NPETComm &npet_to_adjust = NPET_CHOICE == 1 ? start() : stop();
+            NPETComm &npet_to_leave = NPET_CHOICE == 1 ? stop() : start();
+            const Measurement OLD_CONST = safeExec([&] { return npet_to_adjust.importTimeConstant(); },
+                                                   "import_time_constant");
+            const_to_adjust = promptRawTimeConstant(OLD_CONST);
+            const_to_leave = safeExec([&] { return npet_to_leave.importTimeConstant(); }, "import_time_constant");
+            SPDLOG_DEBUG("User specified new time correction constant: {}", const_to_adjust.toString());
             break;
+        }
         case 2: {
             SPDLOG_DEBUG("User selected time correction constant synchronization");
             const int AVER_NUM = std::stoi(Cli::prompt("Number of averaging measurements (>=2)", "16"));

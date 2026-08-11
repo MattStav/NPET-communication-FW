@@ -181,7 +181,7 @@ void NPETDualCLI::readBatchMeasurementsCLI() {
         case 1: monitor_fn = dualReaderCliBasic;
             break;
         case 2: monitor_fn = dualReaderCliBasic;
-            // TODO: Implement other monitors
+            // TODO: Implement advanced monitor
             Cli::err("Not implemented yet, defaulting to basic monitoring");
             break;
         case 3: monitor_fn = dualReaderCliDiff;
@@ -228,11 +228,11 @@ void NPETDualCLI::setBaudRateCLI() {
         return;
     }
     SPDLOG_DEBUG(NPET_SETTING_BAUD_RATE, "START");
-    Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "START"));
-    setBaudRateSafe(start(), NEW_BAUD_RATE);
+    Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "START NPET"));
+    setBaudRateSafe(start(), NEW_BAUD_RATE, "START");
     SPDLOG_DEBUG(NPET_SETTING_BAUD_RATE, "STOP");
-    Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "STOP"));
-    setBaudRateSafe(stop(), NEW_BAUD_RATE);
+    Cli::echo(std::format(NPET_SETTING_BAUD_RATE, "STOP NPET"));
+    setBaudRateSafe(stop(), NEW_BAUD_RATE, "STOP");
     SPDLOG_INFO("Baud rate successfully set to {}", NEW_BAUD_RATE);
 }
 
@@ -319,7 +319,7 @@ void NPETDualCLI::syncNPETsCLI() {
                 return;
             }
             SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}", INT_CHOICE);
-            const int CLOCK_TIME = promptTimeConstSeconds(static_cast<ConstIntSelectionLogic>(INT_CHOICE));
+            const int CLOCK_TIME = promptTimeConstSeconds();
             // Get the current NPET time
             SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
                          static_cast<int>(START_PPS_CHANNEL.value()));

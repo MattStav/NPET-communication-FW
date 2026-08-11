@@ -112,7 +112,8 @@ int promptBaudRate(INT CURRENT_BAUD_RATE);
 /// Change communication baud rate for the referenced NPET.
 /// @param npet The NPETComm reference
 /// @param NEW_BAUD_RATE The new baud rate to set for the NPET communication
-void setBaudRateSafe(NPETComm &npet, int NEW_BAUD_RATE);
+/// @param DESIGNATION Optional designation for the NPET, used in error messages. If empty, a default message will be used.
+void setBaudRateSafe(NPETComm &npet, int NEW_BAUD_RATE, const std::string &DESIGNATION = "NPET");
 
 ///
 /// Prompt the user to define the NPET internal FW version.

@@ -93,7 +93,7 @@ bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
     const std::string CMD = "w" + std::to_string(NEW_BAUD_RATE);
     ser.writeToSerial(CMD);
     // Read response to clear the buffer
-    ser.readFromSerial();
+    ser.readWithTimeout(ReadMode::UNTIL_NEWLINE);
     ser.setBaudRate(NEW_BAUD_RATE);
     const bool SUCCESS = isResponsive();
     if (SUCCESS) {

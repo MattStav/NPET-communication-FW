@@ -294,5 +294,5 @@ int NPETComm::getClockTimeDiff(const Channel PPS_CHANNEL, std::optional<int> clo
         clock_seconds = (local_time.tm_hour * 3600) + (local_time.tm_min * 60) + local_time.tm_sec;
     }
     SPDLOG_DEBUG("Calculated seconds since midnight: {}", clock_seconds.value());
-    return MEAS.intp - clock_seconds.value();
+    return clock_seconds.value() - MEAS.intp;
 }

@@ -31,6 +31,7 @@ enum class ConstIntSelectionLogic : std::uint8_t {
     MANUAL = 1,
     SYSTEM_TIME = 2,
     NTP_SYNC = 3,
+    CANCEL = 4,
 };
 
 const std::vector<std::string> INT_OPTIONS = {

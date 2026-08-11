@@ -264,24 +264,22 @@ void NPETCommCLI::setTimeConstantCLI() {
             SPDLOG_DEBUG("Prompting user for integer part definition logic ...");
             SPDLOG_DEBUG("Possible integer part definition logic options: {}", INT_OPTIONS);
             const int INT_CHOICE = Cli::menu("Integer part setting logic", INT_OPTIONS, false);
-            SPDLOG_DEBUG("User selected integer part definition logic: {}", INT_CHOICE);
-            SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}", INT_CHOICE);
             std::optional<int> clock_seconds;
-            switch (INT_CHOICE) {
-                case 1:
+            switch (static_cast<ConstIntSelectionLogic>(INT_CHOICE)) {
+                case ConstIntSelectionLogic::MANUAL:
                     SPDLOG_DEBUG("Logic: Define manually, user will be prompted to enter the target time ...");
                     clock_seconds = promptTimeConstSeconds();
                     break;
-                case 2:
+                case ConstIntSelectionLogic::NTP_SYNC:
                     SPDLOG_DEBUG("Logic: Synchronize system time with NTP server ...");
                     if (!ensureAccurateSystemTime()) {
                         Cli::err("Failed to synchronize system time with NTP server");
                     }
                 // Intentional fallthrough to case IntLogic::SYSTEM_TIME
-                case 3:
+                case ConstIntSelectionLogic::SYSTEM_TIME:
                     SPDLOG_DEBUG("Logic: Use system time ...");
                     break;
-                case 4:
+                case ConstIntSelectionLogic::CANCEL:
                     // Deliberate fall through
                 default:
                     return;

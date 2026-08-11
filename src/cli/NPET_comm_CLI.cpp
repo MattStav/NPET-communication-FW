@@ -5,6 +5,7 @@
 
 #include "meas_reader_CLI.h"
 #include "helper_func.h"
+#include "ntp_sync.h"
 
 constexpr std::string_view NPET_OK_RESPONDING = "NPET communication is OK";
 constexpr std::string_view NPET_NOT_RESPONDING = "NPET not responding!";
@@ -264,19 +265,33 @@ void NPETCommCLI::setTimeConstantCLI() {
             SPDLOG_DEBUG("Possible integer part definition logic options: {}", INT_OPTIONS);
             const int INT_CHOICE = Cli::menu("Integer part setting logic", INT_OPTIONS, false);
             SPDLOG_DEBUG("User selected integer part definition logic: {}", INT_CHOICE);
-            if (INT_CHOICE == 4) {
-                return;
-            }
             SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}", INT_CHOICE);
-            const int CLOCK_TIME = promptTimeConstSeconds(static_cast<ConstIntSelectionLogic>(INT_CHOICE));
-            // Get the current NPET time
+            std::optional<int> clock_seconds;
+            switch (INT_CHOICE) {
+                case 1:
+                    SPDLOG_DEBUG("Logic: Define manually, user will be prompted to enter the target time ...");
+                    clock_seconds = promptTimeConstSeconds();
+                    break;
+                case 2:
+                    SPDLOG_DEBUG("Logic: Synchronize system time with NTP server ...");
+                    if (!ensureAccurateSystemTime()) {
+                        Cli::err("Failed to synchronize system time with NTP server");
+                    }
+                // Intentional fallthrough to case IntLogic::SYSTEM_TIME
+                case 3:
+                    SPDLOG_DEBUG("Logic: Use system time ...");
+                    break;
+                case 4:
+                    // Deliberate fall through
+                default:
+                    return;
+            }
+            // Get the difference between NPET measurements and clock seconds
             SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
                          static_cast<int>(PPS_CHANNEL.value()));
-            const Measurement CURRENT_MEASUREMENT = safeExec([&] { return readSingleMeasurement(PPS_CHANNEL.value()); },
-                                                             "read_single_measurement");
-            SPDLOG_DEBUG("Current measurement read: {}", CURRENT_MEASUREMENT.toString());
-            // Integer part of the time correction constant is the difference between the clock time and the measured time
-            new_const.intp = CLOCK_TIME - CURRENT_MEASUREMENT.intp;
+            const int DIFF = getClockTimeDiff(PPS_CHANNEL.value(), clock_seconds);
+            SPDLOG_DEBUG("Calculated difference: {}", DIFF);
+            new_const.intp = DIFF;
             SPDLOG_DEBUG("Calculated integer part of the time correction constant: {}", new_const.intp);
             break;
         }

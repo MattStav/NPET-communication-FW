@@ -280,3 +280,19 @@ std::optional<__float128> NPETComm::getAverageFractionImpl(const int AVER_NUM, C
     SPDLOG_INFO("Computed measurement fractional part: {}", float128ToString(AVG_FRAC));
     return AVG_FRAC;
 } // end of get_average_fraction_impl function
+
+
+int NPETComm::getClockTimeDiff(const Channel PPS_CHANNEL) {
+    SPDLOG_DEBUG("Getting time difference between system clock and NPET");
+    std::tm local_time{};
+    const Measurement MEAS = readSingleMeasurement(PPS_CHANNEL);
+    SPDLOG_DEBUG("Measurement received from NPET: {}", MEAS.toString());
+    // Get the local time immediately afterwards
+    const std::time_t NOW = std::time(nullptr);
+    localtime_s(&local_time, &NOW);
+    SPDLOG_DEBUG("Local time obtained: {}:{}:{}", local_time.tm_hour, local_time.tm_min, local_time.tm_sec);
+    // Calculate difference
+    const int CLOCK_SECONDS = (local_time.tm_hour * 3600) + (local_time.tm_min * 60) + local_time.tm_sec;
+    SPDLOG_DEBUG("Calculated seconds since midnight: {}", CLOCK_SECONDS);
+    return MEAS.intp - CLOCK_SECONDS;
+}

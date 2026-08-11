@@ -120,10 +120,9 @@ void setBaudRateSafe(NPETComm &npet, int NEW_BAUD_RATE);
 FWVersion promptFWVersion(FWVersion CURRENT_FW_VERSION);
 
 ///
-/// Prompt the user to define the integer part of the time correction constant
-/// @param SEL Time correction constant int part selection logic
-/// @return Time correction constant in seconds
-int promptTimeConstSeconds(ConstIntSelectionLogic SEL);
+/// Prompt the user to define when the next PPS measurement will happen
+/// @return Time of the next PPS measurement in seconds
+int promptTimeConstSeconds();
 
 ///
 /// Prompt the user to define a new time correction constat in raw format.

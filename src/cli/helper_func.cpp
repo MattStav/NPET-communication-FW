@@ -9,7 +9,6 @@
 #include "cli.h"
 #include "logging.h"
 #include "NPET_comm_CLI.h"
-#include "ntp_sync.h"
 
 constexpr std::string_view MANUAL_URL = "https://github.com/MattStav/NPET-communication-FW/blob/master/MANUAL.md";
 constexpr std::string_view NO_DATA_ERR = "No results to process yet";
@@ -301,66 +300,33 @@ FWVersion promptFWVersion(const FWVersion CURRENT_FW_VERSION) {
 }
 
 
-int promptTimeConstSeconds(const ConstIntSelectionLogic SEL) {
-    int user_choice{};
+int promptTimeConstSeconds() {
     int clock_seconds{};
-
-    switch (SEL) {
-        case ConstIntSelectionLogic::MANUAL:
-            SPDLOG_DEBUG("Logic: Define manually, user will be prompted to enter the target time ...");
-            // User defined integer part
-            Cli::echo("Enter time of the next 1 Hz measurement in hh:mm:ss format");
-            Cli::echo(
-                "You will be asked to confirm the values after inputting ss, the calibration will begin once you've confirmed.",
-                fg::yellow);
-            user_choice = std::stoi(Cli::prompt("Hours", "0"));
-            clock_seconds = 3600 * user_choice;
-            user_choice = std::stoi(Cli::prompt("Minutes", "0"));
-            clock_seconds += 60 * user_choice;
-            user_choice = std::stoi(Cli::prompt("Seconds", "0"));
-            clock_seconds += user_choice;
-            SPDLOG_DEBUG("User specified target time in seconds since midnight: {}", clock_seconds);
-            Cli::showInt("Defined clock seconds", clock_seconds);
-            SPDLOG_DEBUG("Awaiting final user confirmation for the calibration time");
-            if (const bool CONFIRM = Cli::confirm(
-                "Confirm by pressing `Enter` when the designated time is about to happen",
-                true
-            ); !CONFIRM) {
-                // Cancel the calibration
-                SPDLOG_ERROR("User cancelled the time correction constant integer part calibration");
-                return 0;
-            }
-            SPDLOG_DEBUG("Final confirmation received");
-            return clock_seconds;
-        case ConstIntSelectionLogic::NTP_SYNC:
-            SPDLOG_DEBUG("Logic: Synchronize system time with NTP server ...");
-            // Query an NTP server for the current time
-            if (!ensureAccurateSystemTime()) {
-                Cli::err("Failed to synchronize system time with NTP server");
-            }
-        // Intentional fallthrough to case IntLogic::SYSTEM_TIME
-        case ConstIntSelectionLogic::SYSTEM_TIME: {
-            SPDLOG_DEBUG("Logic: Use system time ...");
-            // Get the current system time
-            Cli::echo("Calculating time correction integer constant from system time");
-            const std::time_t NOW = std::time(nullptr);
-            std::tm local_time{};
-            localtime_s(&local_time, &NOW);
-            std::ostringstream oss;
-            oss << std::put_time(&local_time, "%H:%M:%S");
-            SPDLOG_DEBUG("{}: {}", SYSTEM_TIME_CURRENT, oss.str());
-            Cli::showStr(std::string(SYSTEM_TIME_CURRENT), oss.str());
-            // Calculate seconds since midnight
-            clock_seconds = (local_time.tm_hour * 3600) + (local_time.tm_min * 60) + local_time.tm_sec;
-            SPDLOG_DEBUG("Calculated seconds since midnight: {}", clock_seconds);
-            return clock_seconds;
-        }
-        default:
-            SPDLOG_ERROR(INVALID_NUM);
-            Cli::err(std::string(INVALID_NUM));
-            return 0;
-    } // end of switch
+    int user_choice{};
+    // User defined integer part
+    Cli::echo("Enter time of the next 1 Hz measurement in hh:mm:ss format");
+    Cli::echo("You will be asked to confirm the values after inputting ss", fg::yellow);
+    user_choice = std::stoi(Cli::prompt("Hours", "0"));
+    clock_seconds = 3600 * user_choice;
+    user_choice = std::stoi(Cli::prompt("Minutes", "0"));
+    clock_seconds += 60 * user_choice;
+    user_choice = std::stoi(Cli::prompt("Seconds", "0"));
+    clock_seconds += user_choice;
+    SPDLOG_DEBUG("User specified target time in seconds since midnight: {}", clock_seconds);
+    Cli::showInt("Defined clock seconds", clock_seconds);
+    SPDLOG_DEBUG("Awaiting final user confirmation for the calibration time");
+    if (const bool CONFIRM = Cli::confirm(
+        "Confirm by pressing `Enter` before the NPET measurement is supposed to happen at the specified time.",
+        true
+    ); !CONFIRM) {
+        // Cancel the calibration
+        SPDLOG_ERROR("User cancelled the time correction constant integer part calibration");
+        return 0;
+    }
+    SPDLOG_DEBUG("Final confirmation received");
+    return clock_seconds;
 }
+
 
 Measurement promptRawTimeConstant(const Measurement &OLD_CONST) {
     assert(OLD_CONST.meas_num == -1);

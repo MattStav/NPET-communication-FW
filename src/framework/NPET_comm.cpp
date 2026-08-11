@@ -164,7 +164,7 @@ std::string NPETComm::readSingleMeasurementRaw(const Channel CHANNEL) {
 
 bool NPETComm::exportTimeConstant(const Measurement &constant) {
     SPDLOG_DEBUG("Exporting time constant to NPET: '{}'", constant.toString());
-    assert(!constant.isEmpty());
+    assert(constant.meas_num == -1);
     const bool SUCCESS = exportTimeConstantRaw(constant.toString());
     if (SUCCESS) {
         SPDLOG_INFO("Time constant successfully exported to NPET: {}", constant.toString());

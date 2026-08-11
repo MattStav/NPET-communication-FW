@@ -192,7 +192,7 @@ void NPETCommCLI::readBatchMeasurementsCLI() {
     const bool SAVE_FLAG = Cli::confirm("Save the measurements?", true);
     SPDLOG_DEBUG("User specified save measurements flag: {}", SAVE_FLAG);
     std::optional<std::filesystem::path> save_path;
-    if(SAVE_FLAG){
+    if (SAVE_FLAG) {
         save_path = std::filesystem::path(outputFilePath(CHANNEL.value(), USER_FILES));
     } else {
         save_path = std::nullopt;
@@ -223,23 +223,17 @@ void NPETCommCLI::setTimeConstantCLI() {
 
     SPDLOG_DEBUG("Possible new time correction constant definitions: {}", DEFINITION_OPTIONS);
     switch (Cli::menu("Time correction constant definition", DEFINITION_OPTIONS, false)) {
-        case 1:
+        case 1: {
             SPDLOG_DEBUG("User selected raw format definition for time correction constant");
-            try {
-                const Measurement OLD_CONST = safeExec([&] { return importTimeConstant(); }, "import_time_constant");
-                new_const = promptRawTimeConstant(OLD_CONST);
-            } catch (std::exception &e) {
-                SPDLOG_ERROR(TIME_CONST_FAILED_TO_SET, e.what());
-                Cli::err(std::format(TIME_CONST_FAILED_TO_SET.data(), e.what()));
-                return;
-            }
+            const Measurement OLD_CONST = safeExec([&] { return importTimeConstant(); }, "import_time_constant");
+            new_const = promptRawTimeConstant(OLD_CONST);
             break;
+        }
         case 2: {
             SPDLOG_DEBUG("User selected time format definition for time correction constant");
-            const int AVER_NUM = std::stoi(Cli::prompt("Number of averaging measurements (>=2)", "16"));
-            if (AVER_NUM < 2) {
-                SPDLOG_ERROR(TIME_CONST_FRAC_INVALID_MEAS_NUM);
-                Cli::err(std::string(TIME_CONST_FRAC_INVALID_MEAS_NUM));
+            const std::string MEAS_NUM_STR = Cli::prompt("Number of averaging measurements", "16");
+            int AVER_NUM = numValidation(MEAS_NUM_STR, false);
+            if (AVER_NUM == INVALID_NUM_SENTINEL) {
                 return;
             }
             SPDLOG_DEBUG("User specified number of measurements for averaging: {}", AVER_NUM);
@@ -264,6 +258,8 @@ void NPETCommCLI::setTimeConstantCLI() {
             new_const.fracp = -AVE_FRAC.value();
             SPDLOG_DEBUG("Measured average fractional part of the time correction constant: {}",
                          float128ToString(new_const.fracp));
+            // Export the fractional part to the NPET
+            safeExec([&] { return exportTimeConstant(new_const); }, "export_time_constant");
             SPDLOG_DEBUG("Prompting user for integer part definition logic ...");
             SPDLOG_DEBUG("Possible integer part definition logic options: {}", INT_OPTIONS);
             const int INT_CHOICE = Cli::menu("Integer part setting logic", INT_OPTIONS, false);

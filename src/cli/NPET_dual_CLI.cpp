@@ -267,6 +267,7 @@ void NPETDualCLI::syncNPETsCLI() {
             break;
         }
         case 2: {
+            // TODO: Fix this up according to single NPET
             SPDLOG_DEBUG("User selected time correction constant synchronization");
             const int AVER_NUM = std::stoi(Cli::prompt("Number of averaging measurements (>=2)", "16"));
             if (AVER_NUM < 2) {
@@ -382,13 +383,16 @@ void NPETDualCLI::syncNPETsCLI() {
     Cli::showStr(std::string(STOP_TIME_CONST_SET), stop_const.toString());
     // Read sample measurements to see the results
     SPDLOG_DEBUG("Reading sample measurements to show the effect of the new time correction constant ...");
-    // TODO: Implement
-    // safeExec([&] {
-    //              readBatchMeasurements(MeasContext{
-    //                  .num_of_meas = 10, .monitor_fn = readerCliSync, .channel = Channel::CH2,
-    //              });
-    //          },
-    //          "read_batch_measurements");
+    safeExec([&] {
+                 readBatchMeasurements(DualMeasContext{
+                     .num_of_meas = 3,
+                     .monitor_fn = dualReaderCliDiff,
+                     .save_dir = std::nullopt,
+                     .start_channel = Channel::CH2,
+                     .stop_channel = Channel::CH2,
+                 });
+             },
+             "read_batch_measurements");
 }
 
 

@@ -30,6 +30,13 @@ protected:
     /// Does not touch the physical connections, only the logical designation.
     void switchStartStop();
 
+    ///
+    /// Synchronously export time correction constants to both NPETs.
+    /// The synchronicity is pointless to be honest, just saves time.
+    /// @param constants Time correction constants
+    /// @return Whether both exports were successful
+    [[nodiscard]] bool exportConstants(const DualMeasurement &constants);
+
     /// Predeclare a thread per callable, then release both at once off a common signal so
     /// they start in lockstep rather than one running ahead while the other is still spinning up.
     /// Blocks until both have finished.

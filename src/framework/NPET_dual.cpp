@@ -17,12 +17,22 @@ void NPETDual::readBatchMeasurements(const DualMeasContext &meas_set) {
 #endif
     // Build each leg's save path prefixed with START/STOP
     const std::optional<std::filesystem::path> START_SAVE_PATH = meas_set.save_dir
-        ? std::optional{std::filesystem::path(outputFilePath(meas_set.start_channel, *meas_set.save_dir, "START"))}
-        : std::nullopt;
+                                                                     ? std::optional{
+                                                                         std::filesystem::path(
+                                                                             outputFilePath(
+                                                                                 meas_set.start_channel,
+                                                                                 *meas_set.save_dir, "START"))
+                                                                     }
+                                                                     : std::nullopt;
     SPDLOG_DEBUG("Start save path: {}", START_SAVE_PATH ? START_SAVE_PATH->string() : "none");
     const std::optional<std::filesystem::path> STOP_SAVE_PATH = meas_set.save_dir
-        ? std::optional{std::filesystem::path(outputFilePath(meas_set.stop_channel, *meas_set.save_dir, "STOP"))}
-        : std::nullopt;
+                                                                    ? std::optional{
+                                                                        std::filesystem::path(
+                                                                            outputFilePath(
+                                                                                meas_set.stop_channel,
+                                                                                *meas_set.save_dir, "STOP"))
+                                                                    }
+                                                                    : std::nullopt;
     SPDLOG_DEBUG("Stop save path: {}", STOP_SAVE_PATH ? STOP_SAVE_PATH->string() : "none");
     // Prepare the combination of each leg's monitoring into the provided monitor_fn
     std::function<void(MeasReader &, const MeasContext &, const Measurement &)> start_monitor_fn;
@@ -90,3 +100,14 @@ void NPETDual::switchStartStop() {
     SPDLOG_INFO("Switched NPET START/STOP designation; currently swapped: {}", designation_swapped_);
 }
 
+
+bool NPETDual::exportConstants(const DualMeasurement &constants) {
+    assert(constants.meas_start.meas_num == -1 && constants.meas_stop.meas_num == -1);
+    SPDLOG_DEBUG("Exporting time constants to Dual NPETs: {}", constants.toString());
+    bool start_success = false;
+    bool stop_success = false;
+    executeBoth([&] { start_success = start().exportTimeConstant(constants.meas_start); },
+                [&] { stop_success = stop().exportTimeConstant(constants.meas_stop); });
+    SPDLOG_INFO("Time correction constant export finished");
+    return start_success && stop_success;
+}

@@ -366,13 +366,8 @@ void NPETDualCLI::syncNPETsCLI() {
         Cli::err((std::string(TIME_CONST_INVALID)));
         return;
     }
-    // TODO: Implement concurrency
-    if (!safeExec([&] { return start().exportTimeConstant(start_const); }, "export_time_constant")) {
-        SPDLOG_ERROR(TIME_CONST_FAILED_TO_EXPORT);
-        Cli::err((std::string(TIME_CONST_FAILED_TO_EXPORT)));
-        return;
-    }
-    if (!safeExec([&] { return stop().exportTimeConstant(stop_const); }, "export_time_constant")) {
+    if (!safeExec([&] { return exportConstants(DualMeasurement{.meas_start = start_const, .meas_stop = stop_const}); },
+                  "export_time_constants")) {
         SPDLOG_ERROR(TIME_CONST_FAILED_TO_EXPORT);
         Cli::err((std::string(TIME_CONST_FAILED_TO_EXPORT)));
         return;

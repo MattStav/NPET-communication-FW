@@ -3,6 +3,7 @@
 #include <spdlog/fmt/ranges.h>  // enables formatting of vectors, arrays, etc.
 
 #include "meas_reader_CLI.h"
+#include "ntp_sync.h"
 
 
 constexpr std::string_view NPET_DUAL_OK_RESPONDING = "NPETs communication is OK";
@@ -267,12 +268,10 @@ void NPETDualCLI::syncNPETsCLI() {
             break;
         }
         case 2: {
-            // TODO: Fix this up according to single NPET
             SPDLOG_DEBUG("User selected time correction constant synchronization");
-            const int AVER_NUM = std::stoi(Cli::prompt("Number of averaging measurements (>=2)", "16"));
-            if (AVER_NUM < 2) {
-                SPDLOG_ERROR(TIME_CONST_FRAC_INVALID_MEAS_NUM);
-                Cli::err(std::string(TIME_CONST_FRAC_INVALID_MEAS_NUM));
+            const std::string MEAS_NUM_STR = Cli::prompt("Number of averaging measurements", "16");
+            int AVER_NUM = numValidation(MEAS_NUM_STR, false);
+            if (AVER_NUM == INVALID_NUM_SENTINEL) {
                 return;
             }
             SPDLOG_DEBUG("User specified number of measurements for averaging: {}", AVER_NUM);
@@ -288,65 +287,74 @@ void NPETDualCLI::syncNPETsCLI() {
             SPDLOG_DEBUG("User specified STOP PPS channel: {}", static_cast<int>(STOP_PPS_CHANNEL.value()));
             SPDLOG_DEBUG(TIME_CONST_FRAC_MEAS);
             Cli::echo(std::string(TIME_CONST_FRAC_MEAS));
-            // TODO: Add concurrency
-            auto bar_start = ProgressBar({.total = AVER_NUM});
-            const std::optional<__float128> START_AVE_FRAC = start().getAverageFraction(
-                AVER_NUM, START_PPS_CHANNEL.value(), &bar_start);
-            if (!START_AVE_FRAC.has_value()) {
-                SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_ERR);
-                Cli::err(std::string(TIME_CONST_FAILED_TO_SET));
-                SPDLOG_DEBUG("Breaking measurement stream ...");
-                (void) start().isResponsive(true); // Break measurement stream
-                return;
-            }
-            auto bar_stop = ProgressBar({.total = AVER_NUM});
-            const std::optional<__float128> STOP_AVE_FRAC = stop().getAverageFraction(
-                AVER_NUM, STOP_PPS_CHANNEL.value(), &bar_stop);
-            if (!STOP_AVE_FRAC.has_value()) {
-                SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_ERR);
-                Cli::err(std::string(TIME_CONST_FAILED_TO_SET));
-                SPDLOG_DEBUG("Breaking measurement stream ...");
-                (void) start().isResponsive(true); // Break measurement stream
-                return;
-            }
+            auto bar = ProgressBar({.total = AVER_NUM});
+            std::optional<__float128> start_frac{};
+            std::optional<__float128> stop_frac{};
+            executeBoth([&] { start_frac = start().getAverageFraction(AVER_NUM, START_PPS_CHANNEL.value(), &bar); },
+                        [&] { stop_frac = stop().getAverageFraction(AVER_NUM, STOP_PPS_CHANNEL.value(), &bar); });
             Cli::echo(""); // New line after progress bar
+            if (!start_frac.has_value() || !stop_frac.has_value()) {
+                SPDLOG_ERROR(TIME_CONST_FRAC_MEAS_ERR);
+                Cli::err(std::string(TIME_CONST_FAILED_TO_SET));
+                SPDLOG_DEBUG("Breaking measurement stream ...");
+                // Break measurement stream
+                (void) start().isResponsive(true);
+                (void) stop().isResponsive(true);
+                return;
+            }
             // Use the negative average fractional part to compensate for the offset
-            start_const.fracp = -START_AVE_FRAC.value();
-            stop_const.fracp = -STOP_AVE_FRAC.value();
-            SPDLOG_DEBUG("Measured average fractional part of the START time correction constant: {}",
+            start_const.fracp = -start_frac.value();
+            stop_const.fracp = -stop_frac.value();
+            SPDLOG_DEBUG("Measured average fractional part of the start time correction constant: {}",
                          float128ToString(start_const.fracp));
-            SPDLOG_DEBUG("Measured average fractional part of the STOP time correction constant: {}",
+            SPDLOG_DEBUG("Measured average fractional part of the stop time correction constant: {}",
                          float128ToString(stop_const.fracp));
+            // Export the fractional part to the NPET
+            safeExec([&] {
+                return exportConstants(DualMeasurement{.meas_start = start_const, .meas_stop = stop_const});
+            }, "export_constants");
             SPDLOG_DEBUG("Prompting user for integer part definition logic ...");
             SPDLOG_DEBUG("Possible integer part definition logic options: {}", INT_OPTIONS);
             const int INT_CHOICE = Cli::menu("Integer part setting logic", INT_OPTIONS, false);
-            SPDLOG_DEBUG("User selected integer part definition logic: {}", INT_CHOICE);
-            if (INT_CHOICE == 4) {
-                return;
+            std::optional<int> clock_seconds;
+            switch (static_cast<ConstIntSelectionLogic>(INT_CHOICE)) {
+                case ConstIntSelectionLogic::MANUAL:
+                    SPDLOG_DEBUG("Logic: Define manually, user will be prompted to enter the target time ...");
+                    clock_seconds = promptTimeConstSeconds();
+                    break;
+                case ConstIntSelectionLogic::NTP_SYNC:
+                    SPDLOG_DEBUG("Logic: Synchronize system time with NTP server ...");
+                    if (!ensureAccurateSystemTime()) {
+                        Cli::err("Failed to synchronize system time with NTP server");
+                    }
+                // Intentional fallthrough to case IntLogic::SYSTEM_TIME
+                case ConstIntSelectionLogic::SYSTEM_TIME:
+                    SPDLOG_DEBUG("Logic: Use system time ...");
+                    break;
+                case ConstIntSelectionLogic::CANCEL:
+                    // Deliberate fall through
+                default:
+                    return;
             }
-            SPDLOG_DEBUG("Calculating integer part of the time correction constant with logic id: {}", INT_CHOICE);
-            const int CLOCK_TIME = promptTimeConstSeconds();
-            // Get the current NPET time
-            SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
-                         static_cast<int>(START_PPS_CHANNEL.value()));
-            const Measurement CURRENT_START_MEASUREMENT = safeExec(
-                [&] { return start().readSingleMeasurement(START_PPS_CHANNEL.value()); },
-                "read_single_measurement");
-            SPDLOG_DEBUG("Current measurement read: {}", CURRENT_START_MEASUREMENT.toString());
-            start_const.intp = CLOCK_TIME - CURRENT_START_MEASUREMENT.intp;
-            // Get the current NPET time
-            SPDLOG_DEBUG("Reading current measurement from channel {} to get the NPET time ...",
-                         static_cast<int>(STOP_PPS_CHANNEL.value()));
-            const Measurement CURRENT_STOP_MEASUREMENT = safeExec(
-                [&] { return stop().readSingleMeasurement(STOP_PPS_CHANNEL.value()); },
-                "read_single_measurement");
-            SPDLOG_DEBUG("Current measurement read: {}", CURRENT_STOP_MEASUREMENT.toString());
-            stop_const.intp = CLOCK_TIME - CURRENT_STOP_MEASUREMENT.intp;
+            // Get the difference between NPET measurements and clock seconds
+            SPDLOG_DEBUG("Reading current measurements to get the NPETs time ...");
+            executeBoth([&] {
+                            safeExec([&] {
+                                start_const.intp = start().getClockTimeDiff(START_PPS_CHANNEL.value(), clock_seconds);
+                            }, "start_const.intp");
+                        },
+                        [&] {
+                            safeExec([&] {
+                                stop_const.intp = stop().getClockTimeDiff(STOP_PPS_CHANNEL.value(), clock_seconds);
+                            }, "stop_const.intp");
+                        });
+            SPDLOG_DEBUG("Calculated integer part of the START time correction constant: {}", start_const.intp);
+            SPDLOG_DEBUG("Calculated integer part of the STOP time correction constant: {}", stop_const.intp);
             break;
         }
         case 3: {
             SPDLOG_DEBUG("User selected to clear both the time correction constant");
-            if (const bool cleared = safeExec([&] { return clearConstants(); }, "clear_time_constants"); !cleared) {
+            if (const bool CLEARED = safeExec([&] { return clearConstants(); }, "clear_time_constants"); !CLEARED) {
                 SPDLOG_ERROR(TIME_CONST_FAILED_TO_CLEAR);
                 Cli::err(std::string(TIME_CONST_FAILED_TO_CLEAR));
             } else {

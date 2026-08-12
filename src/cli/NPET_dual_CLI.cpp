@@ -270,7 +270,7 @@ void NPETDualCLI::syncNPETsCLI() {
         case 2: {
             SPDLOG_DEBUG("User selected time correction constant synchronization");
             const std::string MEAS_NUM_STR = Cli::prompt("Number of averaging measurements", "16");
-            int AVER_NUM = numValidation(MEAS_NUM_STR, false);
+            const int AVER_NUM = numValidation(MEAS_NUM_STR, false);
             if (AVER_NUM == INVALID_NUM_SENTINEL) {
                 return;
             }
@@ -371,13 +371,13 @@ void NPETDualCLI::syncNPETsCLI() {
     // If we don't have a valid time correction constant here, then exit
     if (start_const.meas_num != -1 || stop_const.meas_num != -1) {
         SPDLOG_ERROR(TIME_CONST_INVALID);
-        Cli::err((std::string(TIME_CONST_INVALID)));
+        Cli::err(std::string(TIME_CONST_INVALID));
         return;
     }
     if (!safeExec([&] { return exportConstants(DualMeasurement{.meas_start = start_const, .meas_stop = stop_const}); },
                   "export_time_constants")) {
         SPDLOG_ERROR(TIME_CONST_FAILED_TO_EXPORT);
-        Cli::err((std::string(TIME_CONST_FAILED_TO_EXPORT)));
+        Cli::err(std::string(TIME_CONST_FAILED_TO_EXPORT));
         return;
     }
     SPDLOG_INFO("{}: {}", START_TIME_CONST_SET, start_const.toString());

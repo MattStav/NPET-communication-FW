@@ -233,7 +233,7 @@ void NPETCommCLI::setTimeConstantCLI() {
         case 2: {
             SPDLOG_DEBUG("User selected time format definition for time correction constant");
             const std::string MEAS_NUM_STR = Cli::prompt("Number of averaging measurements", "16");
-            int AVER_NUM = numValidation(MEAS_NUM_STR, false);
+            const int AVER_NUM = numValidation(MEAS_NUM_STR, false);
             if (AVER_NUM == INVALID_NUM_SENTINEL) {
                 return;
             }

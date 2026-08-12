@@ -346,15 +346,7 @@ void NPETDualCLI::syncNPETsCLI() {
         }
         case 3: {
             SPDLOG_DEBUG("User selected to clear both the time correction constant");
-            bool start_cleared = false;
-            bool stop_cleared = false;
-            executeBoth([&] {
-                            start_cleared = safeExec([&] { return one_.clearTimeConstant(); }, "clear_time_constant");
-                        },
-                        [&] {
-                            stop_cleared = safeExec([&] { return two_.clearTimeConstant(); }, "clear_time_constant");
-                        });
-            if (!start_cleared || !stop_cleared) {
+            if (const bool cleared = safeExec([&] { return clearConstants(); }, "clear_time_constants"); !cleared) {
                 SPDLOG_ERROR(TIME_CONST_FAILED_TO_CLEAR);
                 Cli::err(std::string(TIME_CONST_FAILED_TO_CLEAR));
             } else {

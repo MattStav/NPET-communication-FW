@@ -37,6 +37,11 @@ protected:
     /// @return Whether both exports were successful
     [[nodiscard]] bool exportConstants(const DualMeasurement &constants);
 
+    ///
+    /// Clear the time correction constants saved in both NPETs.
+    /// @return True if both time correction constants were correctly cleared
+    bool clearConstants();
+
     /// Predeclare a thread per callable, then release both at once off a common signal so
     /// they start in lockstep rather than one running ahead while the other is still spinning up.
     /// Blocks until both have finished.

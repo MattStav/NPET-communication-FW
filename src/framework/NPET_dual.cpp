@@ -108,6 +108,18 @@ bool NPETDual::exportConstants(const DualMeasurement &constants) {
     bool stop_success = false;
     executeBoth([&] { start_success = start().exportTimeConstant(constants.meas_start); },
                 [&] { stop_success = stop().exportTimeConstant(constants.meas_stop); });
-    SPDLOG_INFO("Time correction constant export finished");
+    SPDLOG_INFO("Time correction constant export finished; start: {}, stop: {}", start_success, stop_success);
     return start_success && stop_success;
+}
+
+
+bool NPETDual::clearConstants() {
+    SPDLOG_DEBUG("Clearing time correction constants from Dual NPETs");
+    bool start_cleared = false;
+    bool stop_cleared = false;
+    executeBoth([&] { start_cleared = start().clearTimeConstant(); },
+                [&] { stop_cleared = stop().clearTimeConstant(); });
+    SPDLOG_INFO("Cleared time correction constants on both NPETs; start cleared: {}, stop cleared: {}",
+                start_cleared, stop_cleared);
+    return start_cleared && stop_cleared;
 }

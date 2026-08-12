@@ -344,10 +344,17 @@ void NPETDualCLI::syncNPETsCLI() {
             stop_const.intp = CLOCK_TIME - CURRENT_STOP_MEASUREMENT.intp;
             break;
         }
-        case 3:
+        case 3: {
             SPDLOG_DEBUG("User selected to clear both the time correction constant");
-            if (!safeExec([&] { return one_.clearTimeConstant(); }, "clear_time_constant") ||
-                !safeExec([&] { return two_.clearTimeConstant(); }, "clear_time_constant")) {
+            bool start_cleared = false;
+            bool stop_cleared = false;
+            executeBoth([&] {
+                            start_cleared = safeExec([&] { return one_.clearTimeConstant(); }, "clear_time_constant");
+                        },
+                        [&] {
+                            stop_cleared = safeExec([&] { return two_.clearTimeConstant(); }, "clear_time_constant");
+                        });
+            if (!start_cleared || !stop_cleared) {
                 SPDLOG_ERROR(TIME_CONST_FAILED_TO_CLEAR);
                 Cli::err(std::string(TIME_CONST_FAILED_TO_CLEAR));
             } else {
@@ -355,6 +362,7 @@ void NPETDualCLI::syncNPETsCLI() {
                 Cli::echo(std::string(TIME_CONST_CLEAR_OK), fg::green);
             }
             return;
+        }
         default:
             SPDLOG_DEBUG("User selected to cancel the time correction constant setting");
             return;

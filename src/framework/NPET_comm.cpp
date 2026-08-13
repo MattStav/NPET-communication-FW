@@ -92,8 +92,10 @@ bool NPETComm::setBaudRate(const int NEW_BAUD_RATE) {
     ser.cancelPendingOperation(false);
     const std::string CMD = "w" + std::to_string(NEW_BAUD_RATE);
     ser.writeToSerial(CMD);
-    // Read response to clear the buffer
-    ser.readWithTimeout(ReadMode::UNTIL_NEWLINE);
+    // Read response to clear the buffer.
+    // For some reason async doesnt work here.
+    // Be careful when adjusting this, tests can NOT fully emulate the NPET behaviour.
+    ser.readFromSerial();
     ser.setBaudRate(NEW_BAUD_RATE);
     const bool SUCCESS = isResponsive();
     if (SUCCESS) {

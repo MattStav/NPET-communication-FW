@@ -139,6 +139,7 @@ ProgressBar::ProgressBar(const ProgressBarConfig CONFIG)
 void ProgressBar::update(const int PROGRESS) {
     const float RATIO = static_cast<float>(PROGRESS) / static_cast<float>(total_);
     const int PERCENTAGE = static_cast<int>(RATIO * 100.0F);
+    const std::lock_guard LOCK(mutex_);
     if (PERCENTAGE != prev_bucket_ && PERCENTAGE / change_trigger_ != prev_bucket_) {
         drawProgressBar(PERCENTAGE, bar_width_);
     }

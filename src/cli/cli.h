@@ -1,5 +1,6 @@
 #ifndef CLI_H
 #define CLI_H
+#include <mutex>
 #include <rang.hpp>
 #include <string>
 #include <vector>
@@ -90,7 +91,8 @@ public:
     explicit ProgressBar(ProgressBarConfig CONFIG);
 
     ///
-    /// Update the progress bar.
+    /// Update the progress bar. Thread safe: may be called concurrently from multiple
+    /// threads, with updates serialized so the bar is only ever redrawn once at a time.
     /// Whether the bar is redraw in CLI depends on change_trigger_ parameter.
     /// @param PROGRESS Current progress value (0 to total_)
     void update(int PROGRESS);
@@ -100,6 +102,7 @@ private:
     int change_trigger_;
     int bar_width_;
     int prev_bucket_ = -1;
+    std::mutex mutex_;
 };
 
 #endif //CLI_H

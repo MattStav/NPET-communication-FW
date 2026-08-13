@@ -116,7 +116,7 @@ int selectComPortCLI(const bool AUTOSELECT, const std::vector<int> &EXCLUDED_POR
     // End the program if there are none
     if (com_ports.empty()) {
         SPDLOG_ERROR(NO_PORTS);
-        Cli::err(std::string(std::string(NO_PORTS)) + "Make sure the NPET is connected and reset the program.");
+        Cli::err(std::string(std::string(NO_PORTS)) + ". Make sure the NPET is connected and reset the program.");
         Cli::confirmExit();
         throw std::runtime_error("Error: No available COM ports found.");
     }

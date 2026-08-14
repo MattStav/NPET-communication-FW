@@ -4,6 +4,40 @@
 #include <future>
 #include <gtest/gtest.h>
 
+#include "vm_main.h"
+
+/// Exercises launchVm's full life-cycle (open port -> run deviceLoop -> close port -> return 0),
+/// which no other test reaches: the validation-only tests in test_vm_main.cpp always throw before
+/// the port ever opens, and DeviceLoopTerminatesOnSigint below exercises deviceLoop's own SIGINT
+/// shutdown directly on a VirtualMachine, bypassing launchVm entirely. launchVm bundles opening
+/// the port and entering deviceLoop into one call, so there's no way to confirm from outside it
+/// that the port opened (and the SIGINT handler armed) before raising SIGINT for real; probe-open
+/// the port first instead, mirroring DeviceLoopTerminatesOnSigint's own skip check, then close it
+/// so launchVm can reopen it cleanly.
+TEST(LaunchVmWorkflowTest, ReturnsZeroAfterSigintStopsDeviceLoop) {
+    {
+        Serial probe;
+        try {
+            probe.openCommunication(VM_COM_PORT, BAUD_RATE);
+        } catch (const std::exception &e) {
+            GTEST_SKIP() << "Could not open COM" << VM_COM_PORT << ": " << e.what()
+                    << ". This test requires a com0com virtual null-modem pair on COM"
+                    << VM_COM_PORT << "/COM" << CLIENT_COM_PORT << " - skipping.";
+        }
+        probe.closeCommunication();
+    }
+
+    const VmConfig CONFIG{.com_port = VM_COM_PORT, .ch1_frequency = 100};
+    std::future<int> launch_done = std::async(std::launch::async, [CONFIG] { return launchVm(CONFIG); });
+    // Give launchVm time to reopen the port and enter deviceLoop's blocking read before signaling.
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    std::raise(SIGINT);
+    const auto STATUS = launch_done.wait_for(std::chrono::seconds(5));
+    ASSERT_EQ(STATUS, std::future_status::ready) << "launchVm did not return within 5s of SIGINT";
+    EXPECT_EQ(launch_done.get(), 0);
+}
+
+
 /// Simulates Ctrl+C via std::raise(SIGINT): on Windows.
 TEST(VirtualMachineTest, DeviceLoopTerminatesOnSigint) {
     VirtualMachine vm{VmConfig{}};

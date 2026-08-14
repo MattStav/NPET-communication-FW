@@ -172,3 +172,58 @@ TEST_F(DualMeasReaderFixture, GrabMeasurementUnblocksWithNulloptWhenLegsFinishWh
     grabber.join();
     EXPECT_FALSE(result.has_value());
 }
+
+
+// --- DualMeasReader::unmatchedMeasurements() ---
+
+TEST_F(DualMeasReaderFixture, NoLeftoversReturnsEmptyResult) {
+    const UnmatchedMeasurements RESULT = unmatchedMeasurements();
+    EXPECT_TRUE(RESULT.start.empty());
+    EXPECT_TRUE(RESULT.stop.empty());
+    EXPECT_EQ(RESULT.size(), 0U);
+}
+
+TEST_F(DualMeasReaderFixture, ReturnsOnlyStartLegLeftovers) {
+    matchMeasurement(true, Measurement{.meas_num = 1, .intp = 11});
+    matchMeasurement(true, Measurement{.meas_num = 2, .intp = 12});
+    const UnmatchedMeasurements RESULT = unmatchedMeasurements();
+    EXPECT_EQ(RESULT.start.size(), 2U);
+    EXPECT_TRUE(RESULT.stop.empty());
+}
+
+TEST_F(DualMeasReaderFixture, ReturnsOnlyStopLegLeftovers) {
+    matchMeasurement(false, Measurement{.meas_num = 1, .intp = 21});
+    const UnmatchedMeasurements RESULT = unmatchedMeasurements();
+    EXPECT_TRUE(RESULT.start.empty());
+    ASSERT_EQ(RESULT.stop.size(), 1U);
+    EXPECT_EQ(RESULT.stop.front().intp, 21);
+}
+
+TEST_F(DualMeasReaderFixture, ReturnsLeftoversFromBothLegs) {
+    matchMeasurement(true, Measurement{.meas_num = 1, .intp = 31});
+    matchMeasurement(false, Measurement{.meas_num = 2, .intp = 32});
+    const UnmatchedMeasurements RESULT = unmatchedMeasurements();
+    ASSERT_EQ(RESULT.start.size(), 1U);
+    ASSERT_EQ(RESULT.stop.size(), 1U);
+    EXPECT_EQ(RESULT.start.front().intp, 31);
+    EXPECT_EQ(RESULT.stop.front().intp, 32);
+    EXPECT_EQ(RESULT.size(), 2U);
+}
+
+// Measurements that already found their match must not reappear as leftovers.
+TEST_F(DualMeasReaderFixture, MatchedPairsAreExcludedFromLeftovers) {
+    matchMeasurement(true, Measurement{.meas_num = 1, .intp = 41});
+    matchMeasurement(false, Measurement{.meas_num = 1, .intp = 42}); // matches and clears pending
+    matchMeasurement(true, Measurement{.meas_num = 2, .intp = 43}); // stays unmatched
+    const UnmatchedMeasurements RESULT = unmatchedMeasurements();
+    ASSERT_EQ(RESULT.start.size(), 1U);
+    EXPECT_EQ(RESULT.start.front().intp, 43);
+    EXPECT_TRUE(RESULT.stop.empty());
+}
+
+// Calling unmatchedMeasurements() must not itself mutate the pending maps.
+TEST_F(DualMeasReaderFixture, IsIdempotentAcrossRepeatedCalls) {
+    matchMeasurement(true, Measurement{.meas_num = 1, .intp = 51});
+    EXPECT_EQ(unmatchedMeasurements().start.size(), 1U);
+    EXPECT_EQ(unmatchedMeasurements().start.size(), 1U);
+}

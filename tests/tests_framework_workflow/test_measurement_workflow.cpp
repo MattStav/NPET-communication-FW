@@ -1,6 +1,7 @@
 #include "test_workflow_fixture.h"
 
 #include <atomic>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <future>
@@ -423,4 +424,57 @@ TEST_F(MeasurementWorkflowFixture, AverageFractionMatchesManuallyAveragedSingleM
     }
     const auto REFERENCE_AVG = static_cast<double>(reference_sum / AVER_NUM);
     EXPECT_NEAR(static_cast<double>(*AVG), REFERENCE_AVG, 0.2);
+}
+
+
+// --- Clock time diff: getClockTimeDiff() combines readSingleMeasurement()'s intp with a clock reading ---
+
+struct ClockTimeDiffParams {
+    std::string name;
+    int offset_from_measurement_intp;
+};
+
+class ClockTimeDiffExplicitSecondsTest : public MeasurementWorkflowFixture,
+                                         public ::testing::WithParamInterface<ClockTimeDiffParams> {
+};
+
+// Channel 2 ticks on a fixed 1s grid, so a read's intp is always exactly one more than the last
+// (see Channel2IntpIncrementsByOnePerMeasurement above). That lets BEFORE pin down exactly what
+// intp the getClockTimeDiff() call below will observe, without racing the VM's own clock.
+TEST_P(ClockTimeDiffExplicitSecondsTest, ReturnsClockSecondsMinusMeasurementIntp) {
+    const Measurement BEFORE = client->readSingleMeasurement(Channel::CH2);
+    const int EXPECTED_INTP = BEFORE.intp + 1;
+    const int CLOCK_SECONDS = EXPECTED_INTP + GetParam().offset_from_measurement_intp;
+
+    const int RESULT = client->getClockTimeDiff(Channel::CH2, CLOCK_SECONDS);
+    EXPECT_EQ(RESULT, GetParam().offset_from_measurement_intp);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Offsets,
+    ClockTimeDiffExplicitSecondsTest,
+    ::testing::Values(
+        ClockTimeDiffParams{"Zero", 0},
+        ClockTimeDiffParams{"MeasurementAheadOfClock", 45},
+        ClockTimeDiffParams{"MeasurementBehindClock", -45}
+    ),
+    [](const ::testing::TestParamInfo<ClockTimeDiffParams> &info) { return info.param.name; }
+);
+
+// Without an explicit clock_seconds, getClockTimeDiff() falls back to the system's local
+// wall-clock time. REFERENCE, read right after, pins down the intp the call itself observed
+// (again via channel 2's guaranteed +1-per-read grid), so RESULT can be checked against a
+// same-formula local time reading, with a small tolerance for the (up to ~1s) VM round trip
+// separating the two clock reads.
+TEST_F(MeasurementWorkflowFixture, ClockTimeDiffWithoutClockSecondsUsesSystemLocalTime) {
+    const int RESULT = client->getClockTimeDiff(Channel::CH2);
+    const Measurement REFERENCE = client->readSingleMeasurement(Channel::CH2);
+    const int MEAS_INTP_USED = REFERENCE.intp - 1;
+
+    const std::time_t NOW = std::time(nullptr);
+    std::tm local_time{};
+    localtime_s(&local_time, &NOW);
+    const int SECONDS_SINCE_MIDNIGHT = (local_time.tm_hour * 3600) + (local_time.tm_min * 60) + local_time.tm_sec;
+
+    EXPECT_NEAR(RESULT, SECONDS_SINCE_MIDNIGHT - MEAS_INTP_USED, 2);
 }

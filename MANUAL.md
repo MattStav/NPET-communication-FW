@@ -12,7 +12,7 @@ The NPET needs to be configured to 115_200 Baud and
 8N1 mode (eight databits, no parity, one stop bit) at the start of communication.
 This is the default configuration when NPET is powered ON.
 The program will fail when NPET isn't configured with these settings at the start of communication.
-The program will fail to reach the `Main menu` if not connected to a running NPET.
+The program will fail to reach the `Main Menu` if not connected to a running NPET.
 
 ## Table of contents:
 - [COM Port](#1-com-port)
@@ -22,7 +22,8 @@ The program will fail to reach the `Main menu` if not connected to a running NPE
 - [NPET Data processor](#5-npet-data-processor)
 - [Baud rate](#6-baud-rate)
 - [Calibration constant](#7-calibration-constant)
-- [Offline operation](#8-offline-operation)
+- [Dual operation](#8-dual-operation)
+- [Virtual machine](#9-virtual-machine)
 
 ## 1. COM port
 When launching the program, it will attempt to automatically detect the NPET and connect to it.
@@ -38,14 +39,8 @@ At the time of this writing, there are two versions of internal NPET firmware:
 - The original firmware - [documentation](docu/UARTCommunicationNPET.pdf)
 - The revised firmware, which accommodates a change in the NPET HW - [documentation](docu/UARTCommunicationNPET_ADI_FWver_03012019.pdf)
 - _(Offline NPET FW, which is used for mock NPET connection, i.e.,
-without an actual NPET device, more on this topic [here](#8-offline-operation))_
-
-When initializing, the program will read the internal NPET firmware version 
-and automatically select the correct measurement readout protocol,
-associated with that firmware version.
-In case of failure, the original NPET firmware is assumed. 
-The user is informed about this choice during the initialization.
-The user can also select the internal NPET firmware version manually in the settings.
+without an actual NPET device, more on this topic [here](#9-virtual-machine))_
+When initializing, the program will automatically read the internal NPET firmware version. 
 
 ## 3. Pulse generation
 The NPET can be used to generate pulses.
@@ -70,7 +65,8 @@ It is standard practice that PPS is connected to channel 2,
 and the signal to be measured is connected to channel 1.
 - Monitoring method in the console:
   - No monitoring: The measurements are not displayed in the console to achieve the best performance.
-  - Basic monitoring: Only a progress bar is displayed in the console.
+  - Basic monitoring: Only a progress bar is displayed in the console. 
+  Spinning wheel is displayed in case of infinite measurements.
   - Advanced monitoring: Measurements are displayed in a scrolling buffer in format `hh:mm:ss fs [progress]`.
   The measurement status, frequency, number of corrupted measurements and current size of all in-app buffers are also shown.
   - Synchronization monitoring: Measurements are displayed only with 1-second precision.
@@ -134,16 +130,25 @@ this operation requires that this FW is run with administrator privileges.
 3. Clear the constant \
 This clears the NPET constant saved in NPET.
 
+## 8. Dual operation
+This program can be used for dual NPET communication, i.e., having two NPETs connected.
+To use dual operation, launch this program with the `dual` command.
+The user is prompted to select a START and STOP NPET,
+which is confirmed by setting the designated NPET to channel 2.
+Afterward the program behaves in very much the same way as in a single NPET operation, 
+with the following exceptions:
+- In measurements, a different channel can be set for each NPET.
+- In measurements, the sync monitor is replaced with a diff monitor,
+which shows the difference between the two NPETs' measurements.
+- In synchronization, the two NPETs can be synchronized against each other.
 
-## 8. Offline operation
-It is possible to emulate the NPET in offline mode using the `virtual_machine` command.
+## 9. Virtual machine
+It is possible to virtually emulate the NPET using the `virtual` command.
 A virtual serial port driver, to virtually pair two COM ports,
 is needed to operate the virtual machine. 
 This one is free and works well: https://eterlogic.com/.
-To launch the virtual machine, 
-run this program from the command line with command `virtual_machine`.
-You will be prompted to enter the COM port to which the virtual machine will be connected
-and the frequency of the emulated measurement generation on channel 1.
-Channel 2 always generates measurements at 1 Hz.
+The virtual machine performance can be adjusted using arguments, 
+print the `--help` argument for more information.
+Virtual machine channel 2 always generates measurements at 1 Hz.
 
    

@@ -54,10 +54,17 @@ TEST(VirtualMachineGetRunTime, StartsNearZero) {
 
 // getRunTime() must reflect actual elapsed wall-clock time since construction, not a
 // value fixed once and never updated.
+// getRunTime() truncates to whole seconds, so a single fixed-length sleep can undershoot
+// the next second boundary (e.g. due to sleep_for waking up slightly early) and make this
+// test flaky. Instead, poll until the value actually changes, bounded by a generous timeout.
 TEST(VirtualMachineGetRunTime, IncreasesAfterDelay) {
     const TestableVirtualMachine VM{VmConfig{}};
     const std::string BEFORE = VM.getRunTime();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    const std::string AFTER = VM.getRunTime();
-    EXPECT_NE(BEFORE, AFTER);
+    const auto DEADLINE = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    std::string after = BEFORE;
+    while (after == BEFORE && std::chrono::steady_clock::now() < DEADLINE) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        after = VM.getRunTime();
+    }
+    EXPECT_NE(BEFORE, after);
 }

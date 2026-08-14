@@ -30,6 +30,8 @@ protected:
     using NPETDual::two_;
     using NPETDual::start;
     using NPETDual::stop;
+    using NPETDual::exportConstants;
+    using NPETDual::clearConstants;
 
     static std::unique_ptr<VirtualMachine> start_vm;
     static std::unique_ptr<VirtualMachine> stop_vm;

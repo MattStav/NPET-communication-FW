@@ -4,6 +4,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <quadmath.h>
 #include <string>
 #include <vector>
 
@@ -223,4 +224,70 @@ TEST_F(DualBatchMeasurementSaveTest, NoSaveDirWritesNoFile) {
     };
     readBatchMeasurements(CTX);
     EXPECT_EQ(savedFileCount(), 0U);
+}
+
+
+// --- exportConstants() / clearConstants() ---
+
+struct DualTimeConstantParams {
+    std::string name;
+    int start_intp;
+    __float128 start_fracp;
+    int stop_intp;
+    __float128 stop_fracp;
+};
+
+class ExportConstantsTest : public DualFrameworkWorkflowFixture,
+                             public ::testing::WithParamInterface<DualTimeConstantParams> {
+};
+
+// exportConstants() dispatches each leg's own constant to that leg's own exportTimeConstant() (see
+// NPET_dual.cpp) - each leg's imported constant afterward should reflect only what was sent to it,
+// not the other leg's value, proving the two constants weren't swapped or merged.
+TEST_P(ExportConstantsTest, RoundTripsThroughEachLegsOwnImport) {
+    const auto &p = GetParam();
+    const DualMeasurement CONSTANTS{
+        .meas_start = {.meas_num = -1, .intp = p.start_intp, .fracp = p.start_fracp},
+        .meas_stop = {.meas_num = -1, .intp = p.stop_intp, .fracp = p.stop_fracp},
+    };
+    EXPECT_TRUE(exportConstants(CONSTANTS));
+    EXPECT_EQ(start().importTimeConstantRaw(), CONSTANTS.meas_start.toString());
+    EXPECT_EQ(stop().importTimeConstantRaw(), CONSTANTS.meas_stop.toString());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    TimeConstants,
+    ExportConstantsTest,
+    ::testing::Values(
+        DualTimeConstantParams{"MatchingLegs", 5, 0.5, 5, 0.5},
+        DualTimeConstantParams{"DistinctLegs", 123456789, 0.125, 1, 0.0666}
+    ),
+    [](const ::testing::TestParamInfo<DualTimeConstantParams> &info) { return info.param.name; }
+);
+
+// exportConstants() always addresses whichever NPETComm start()/stop() currently resolve to, so
+// after switchStartStop() the "start" constant must land on two_ (now designated START) and the
+// "stop" constant on one_, not on the pre-swap instances.
+TEST_F(DualFrameworkWorkflowFixture, ExportConstantsAppliesToPhysicallyCorrectLegAfterSwitchStartStop) {
+    switchStartStop();
+    const DualMeasurement CONSTANTS{
+        .meas_start = {.meas_num = -1, .intp = 7, .fracp = 0.75},
+        .meas_stop = {.meas_num = -1, .intp = 2, .fracp = 0.125},
+    };
+    ASSERT_TRUE(exportConstants(CONSTANTS));
+    EXPECT_EQ(two_.importTimeConstantRaw(), CONSTANTS.meas_start.toString());
+    EXPECT_EQ(one_.importTimeConstantRaw(), CONSTANTS.meas_stop.toString());
+}
+
+// clearConstants() clears both legs independently via each NPETComm::clearTimeConstant() (see
+// NPET_dual.cpp) - both legs' previously-exported constants should come back empty afterward.
+TEST_F(DualFrameworkWorkflowFixture, ClearConstantsResultsInEmptyImportedConstantsOnBothLegs) {
+    const DualMeasurement CONSTANTS{
+        .meas_start = {.meas_num = -1, .intp = 5, .fracp = 0.5},
+        .meas_stop = {.meas_num = -1, .intp = 3, .fracp = 0.25},
+    };
+    ASSERT_TRUE(exportConstants(CONSTANTS));
+    EXPECT_TRUE(clearConstants());
+    EXPECT_TRUE(start().importTimeConstant().isEmpty());
+    EXPECT_TRUE(stop().importTimeConstant().isEmpty());
 }

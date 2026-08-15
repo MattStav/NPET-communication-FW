@@ -6,19 +6,21 @@
 #include "serial.h"
 #include "test_workflow_fixture.h"
 
-// Polls SERIAL until PRED is true or TIMEOUT elapses, whichever comes first. Serial::pollUntil()
-// alone has no timeout concept, so a predicate that's never satisfied (e.g. testing that
-// something correctly did NOT happen) would otherwise hang the test forever.
+///
+/// Polls SERIAL until PRED is true or TIMEOUT elapses, whichever comes first. Serial::pollUntil()
+/// alone has no timeout concept, so a predicate that's never satisfied (e.g. testing that
+/// something correctly did NOT happen) would otherwise hang the test forever.
 template<typename Predicate>
-void pollWithDeadline(Serial &serial, Predicate pred, const std::chrono::milliseconds TIMEOUT) {
+static void pollWithDeadline(Serial &serial, Predicate pred, const std::chrono::milliseconds TIMEOUT) {
     const auto DEADLINE = std::chrono::steady_clock::now() + TIMEOUT;
     serial.pollUntil([&] { return pred() || std::chrono::steady_clock::now() >= DEADLINE; },
                      true, std::chrono::milliseconds(1));
 }
 
-// Two Serial objects talking directly to each other over the com0com virtual null-modem pair,
-// with no VirtualMachine or NPETComm layered on top - just the raw Serial API (open/write/read/
-// cancel/listen) exercised end to end on both sides.
+///
+/// Two Serial objects talking directly to each other over the virtual null-modem pair,
+/// with no VirtualMachine or NPETComm layered on top - just the raw Serial API (open/write/read/
+/// cancel/listen) exercised end to end on both sides.
 class SerialCommunicationWorkflow : public ::testing::Test {
 protected:
     Serial side_a;
@@ -49,9 +51,6 @@ TEST_F(SerialCommunicationWorkflow, WriteToSerialIsReadableAsLine) {
     EXPECT_EQ(std::string(RECEIVED.begin(), RECEIVED.end()), "hello\r\n");
 }
 
-// Unlike readWithTimeout, readFromSerial returns raw bytes exactly as written, including the
-// trailing \r\n writeToSerial adds. Accumulates across calls since read_some() may return
-// whatever's currently available rather than the whole message in one call.
 TEST_F(SerialCommunicationWorkflow, ReadFromSerialSeesRawBytesAsWritten) {
     side_a.writeToSerial("ping");
     std::string response;
@@ -105,7 +104,7 @@ TEST_F(SerialCommunicationWorkflow, ListenForCommandIgnoresUnexpectedFirstByte) 
 // cancelPendingOperation must actually unblock a read that has nothing to receive, turning it
 // into an OperationCancelledError instead of leaving it to wait out the full timeout.
 TEST_F(SerialCommunicationWorkflow, CancelPendingOperationInterruptsBlockingRead) {
-    std::jthread canceller([this] {
+    std::jthread const canceller([this] {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         side_b.cancelPendingOperation(false);
     });

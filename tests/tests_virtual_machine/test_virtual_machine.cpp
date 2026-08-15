@@ -28,16 +28,14 @@ TEST_F(VirtualMachineFixture, CloseCommunicationOnUnopenedVmDoesNotThrow) {
 
 // getRunTime() must always report elapsed time as zero-padded hh:mm:ss, the format
 // deviceLoop() logs as the VM's runtime status line.
-// gtest's simple regex engine has no {n} repetition or [...] character classes (see
-// test_meas_func.cpp's make_pattern for the same workaround), so digits are spelled out.
+
 TEST(VirtualMachineGetRunTime, FormatIsHhMmSs) {
     const TestableVirtualMachine VM{VmConfig{}};
     EXPECT_THAT(VM.getRunTime(), MatchesRegex(R"(\d\d:\d\d:\d\d)"));
 }
 
 // Immediately after construction, almost no time has elapsed, so the runtime must still
-// read 00 hours and 00 minutes. Parsed and compared numerically (rather than matched with a
-// regex range, which gtest's simple regex engine can't express) with a few seconds of slack
+// read 00 hours and 00 minutes. Parsed and compared numerically with a few seconds of slack
 // on the seconds field to tolerate slow test machines without making the test flaky.
 TEST(VirtualMachineGetRunTime, StartsNearZero) {
     const TestableVirtualMachine VM{VmConfig{}};

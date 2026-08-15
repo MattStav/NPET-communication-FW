@@ -7,10 +7,7 @@
 #include "vm_main.h"
 
 /// Exercises launchVm's full life-cycle (open port -> run deviceLoop -> close port -> return 0),
-/// which no other test reaches: the validation-only tests in test_vm_main.cpp always throw before
-/// the port ever opens, and DeviceLoopTerminatesOnSigint below exercises deviceLoop's own SIGINT
-/// shutdown directly on a VirtualMachine, bypassing launchVm entirely. launchVm bundles opening
-/// the port and entering deviceLoop into one call, so there's no way to confirm from outside it
+/// launchVm bundles opening the port and entering deviceLoop into one call, so there's no way to confirm from outside it
 /// that the port opened (and the SIGINT handler armed) before raising SIGINT for real; probe-open
 /// the port first instead, mirroring DeviceLoopTerminatesOnSigint's own skip check, then close it
 /// so launchVm can reopen it cleanly.
@@ -21,13 +18,13 @@ TEST(LaunchVmWorkflowTest, ReturnsZeroAfterSigintStopsDeviceLoop) {
             probe.openCommunication(VM_COM_PORT, BAUD_RATE);
         } catch (const std::exception &e) {
             GTEST_SKIP() << "Could not open COM" << VM_COM_PORT << ": " << e.what()
-                    << ". This test requires a com0com virtual null-modem pair on COM"
+                    << ". This test requires a virtual null-modem pair on COM"
                     << VM_COM_PORT << "/COM" << CLIENT_COM_PORT << " - skipping.";
         }
         probe.closeCommunication();
     }
 
-    const VmConfig CONFIG{.com_port = VM_COM_PORT, .ch1_frequency = 100};
+    constexpr VmConfig CONFIG{.com_port = VM_COM_PORT, .ch1_frequency = 100};
     std::future<int> launch_done = std::async(std::launch::async, [CONFIG] { return launchVm(CONFIG); });
     // Give launchVm time to reopen the port and enter deviceLoop's blocking read before signaling.
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
@@ -45,7 +42,7 @@ TEST(VirtualMachineTest, DeviceLoopTerminatesOnSigint) {
         vm.ser.openCommunication(VM_COM_PORT, BAUD_RATE);
     } catch (const std::exception &e) {
         GTEST_SKIP() << "Could not open COM" << VM_COM_PORT << ": " << e.what()
-                << ". This test requires a com0com virtual null-modem pair on COM"
+                << ". This test requires a virtual null-modem pair on COM"
                 << VM_COM_PORT << "/COM" << CLIENT_COM_PORT << " - skipping.";
     }
     std::future<void> loop_done = std::async(std::launch::async, [&vm] { vm.deviceLoop(); });

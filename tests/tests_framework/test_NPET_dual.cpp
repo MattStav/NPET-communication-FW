@@ -13,19 +13,13 @@ TEST(NPETDualTest, ConstructsAndDestructsWithoutThrowing) {
         });
 }
 
-TEST_F(NPETDualFixture, DefaultConstructedStartIsNotOpen) {
+TEST_F(NPETDualFixture, DefaultConstructedIsNotOpen) {
     EXPECT_FALSE(one_.ser.isOpen());
-}
-
-TEST_F(NPETDualFixture, DefaultConstructedStopIsNotOpen) {
     EXPECT_FALSE(two_.ser.isOpen());
 }
 
-TEST_F(NPETDualFixture, DefaultConstructedStartFirmwareVersionIsZero) {
+TEST_F(NPETDualFixture, DefaultConstructedFirmwareVersionIsZero) {
     EXPECT_EQ(one_.getFWVer().getValue(), 0);
-}
-
-TEST_F(NPETDualFixture, DefaultConstructedStopFirmwareVersionIsZero) {
     EXPECT_EQ(two_.getFWVer().getValue(), 0);
 }
 

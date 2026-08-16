@@ -14,9 +14,6 @@ TEST_P(KnownVersionTest, GetValueReturnsConstructedVersion) {
     EXPECT_EQ(FWVersion(GetParam().version).getValue(), GetParam().version);
 }
 
-// Compares the raw __float128 value directly rather than casting to double first: a cast to
-// double rounds away everything past ~15-17 significant decimal digits, which would silently
-// hide a regression in the low-order bits of a 128-bit quad value.
 TEST_P(KnownVersionTest, GetMultiplierMatchesExpectedFloat128Value) {
     const __float128 ACTUAL = FWVersion(GetParam().version).getMultiplier();
     EXPECT_TRUE(ACTUAL == GetParam().expected_multiplier)
@@ -24,9 +21,6 @@ TEST_P(KnownVersionTest, GetMultiplierMatchesExpectedFloat128Value) {
         << ", Expected: " << float128ToString(GetParam().expected_multiplier);
 }
 
-// Cross-checks the same value through the quad-precision formatting path used elsewhere in the
-// codebase (decodeMeasurementSet/encodeMeasurementSet), so a formatting-level precision loss
-// would also be caught.
 TEST_P(KnownVersionTest, GetMultiplierFormatsToExpected15DigitString) {
     EXPECT_EQ(float128ToString(FWVersion(GetParam().version).getMultiplier()),
               float128ToString(GetParam().expected_multiplier));
@@ -62,8 +56,7 @@ TEST(FWVersion, DefaultConstructedThrowsOnGetDescription) {
     EXPECT_THROW((void) FWVersion().getDescription(), std::invalid_argument);
 }
 
-// FW2 and FW3 are documented as sharing a multiplier; EXPECT_DOUBLE_EQ would only prove that
-// down to double precision, so compare the full float128 values directly.
+// FW2 and FW3 are documented as sharing a multiplier
 TEST(FWVersionGetMultiplier, FW2AndFW3AreBitIdenticalAtFloat128Precision) {
     EXPECT_TRUE(FWVersion(FWVersion::AD_REVISION).getMultiplier() == FWVersion(FWVersion::VIRTUAL).getMultiplier());
 }
@@ -87,13 +80,13 @@ class EqualityTest : public testing::TestWithParam<EqualityParams> {
 };
 
 TEST_P(EqualityTest, OperatorEqualsMatchesExpected) {
-    const auto &p = GetParam();
-    EXPECT_EQ(FWVersion(p.a) == FWVersion(p.b), p.expected_equal);
+    const auto &[a, b, expected_equal] = GetParam();
+    EXPECT_EQ(FWVersion(a) == FWVersion(b), expected_equal);
 }
 
 TEST_P(EqualityTest, OperatorNotEqualsIsInverseOfEquals) {
-    const auto &p = GetParam();
-    EXPECT_EQ(FWVersion(p.a) != FWVersion(p.b), !p.expected_equal);
+    const auto &[a, b, expected_equal] = GetParam();
+    EXPECT_EQ(FWVersion(a) != FWVersion(b), !expected_equal);
 }
 
 INSTANTIATE_TEST_SUITE_P(

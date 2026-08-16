@@ -114,3 +114,10 @@ TEST_F(SerialCommunicationWorkflow, CancelPendingOperationInterruptsBlockingRead
         side_b.readWithTimeout(ReadMode::UNTIL_NEWLINE, std::chrono::seconds(5)),
         OperationCancelledError);
 }
+
+// A read that has nothing to receive fires timeout
+TEST_F(SerialCommunicationWorkflow, ReadWithTimeoutThrowsCommTimeoutErrorWhenNoDataArrives) {
+    EXPECT_THROW(
+        side_a.readWithTimeout(ReadMode::UNTIL_NEWLINE, std::chrono::milliseconds(50)),
+        CommTimeoutError);
+}

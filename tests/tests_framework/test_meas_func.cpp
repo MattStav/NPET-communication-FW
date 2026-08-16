@@ -223,7 +223,9 @@ TEST_P(EncodeDecodeRoundTripTest, DecodesBackToRequestedTime) {
     EXPECT_EQ(RESULT.meas_num, p.meas_num);
     const double EXPECTED_TOTAL = static_cast<double>(p.seconds) + static_cast<double>(p.fracp);
     const double ACTUAL_TOTAL = static_cast<double>(RESULT.intp) + static_cast<double>(RESULT.fracp);
-    // TODO: The roundtrip does not preserve e-15 precision
+    // The wire format's finest step is ~152.588 fs (1e-8 / 2^16 s); allow a bit of slack for rounding at both
+    // encode and decode. Comparing the combined total (rather than intp/fracp separately) sidesteps cases where
+    // the requested time sits within one tick of a whole-second boundary and legitimately rounds the other way.
     EXPECT_NEAR(ACTUAL_TOTAL, EXPECTED_TOTAL, 2e-13);
 }
 

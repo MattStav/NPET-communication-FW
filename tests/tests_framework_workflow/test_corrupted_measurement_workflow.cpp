@@ -80,9 +80,18 @@ TEST_F(CorruptedMeasurementWorkflowFixture, SurvivingMeasurementsSkipTheCorrupte
     };
     client->readBatchMeasurements(CTX);
     ASSERT_EQ(collected.size(), static_cast<size_t>(EXPECTED_VALID));
-    for (size_t i = 1; i < collected.size(); ++i) {
-        EXPECT_GT(collected.at(i).meas_num, collected.at(i - 1).meas_num)
-            << "meas_num must strictly increase across the surviving measurements";
+    std::vector<int> expected_ticks;
+    for (int i = 1; i <= NUM_OF_MEAS; ++i) {
+        if (i % CORRUPT_EVERY != 0) {
+            expected_ticks.push_back(i);
+        }
+    }
+    ASSERT_EQ(expected_ticks.size(), collected.size());
+    const int MEAS_NUM_BASE = collected.at(0).meas_num;
+    const int TICK_BASE = expected_ticks.at(0);
+    for (size_t i = 0; i < collected.size(); ++i) {
+        EXPECT_EQ(collected.at(i).meas_num - MEAS_NUM_BASE, expected_ticks.at(i) - TICK_BASE)
+            << "meas_num gaps must land exactly on the corrupted ticks, not merely increase";
     }
 }
 

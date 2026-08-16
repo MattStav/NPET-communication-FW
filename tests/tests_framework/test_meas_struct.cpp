@@ -45,23 +45,23 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 TEST(MeasurementStruct, IsValidFalseOnlyForNegTwo) {
-    EXPECT_FALSE((Measurement{-2, 0, {}}).isValid());
+    EXPECT_FALSE((Measurement{.meas_num = -2, .intp = 0, .fracp = {}}).isValid());
 }
 
 TEST(MeasurementStruct, IsValidTrueForAllOtherMeasNums) {
-    EXPECT_TRUE((Measurement{0, 0, {}}).isValid());
-    EXPECT_TRUE((Measurement{1, 0, {}}).isValid());
-    EXPECT_TRUE((Measurement{-1, 0, {}}).isValid());
-    EXPECT_TRUE((Measurement{255,0, {}}).isValid());
+    EXPECT_TRUE((Measurement{.meas_num = 0, .intp = 0, .fracp = {}}).isValid());
+    EXPECT_TRUE((Measurement{.meas_num = 1, .intp = 0, .fracp = {}}).isValid());
+    EXPECT_TRUE((Measurement{.meas_num = -1, .intp = 0, .fracp = {}}).isValid());
+    EXPECT_TRUE((Measurement{.meas_num = 255,.intp = 0, .fracp = {}}).isValid());
 }
 
 class MeasurementToString : public testing::TestWithParam<ToStringParams> {
 };
 
 TEST_P(MeasurementToString, ReturnsExpectedString) {
-    const auto &p = GetParam();
-    Measurement const M{.meas_num = 0, .intp = p.intp, .fracp = p.fracp};
-    EXPECT_EQ(M.toString(), p.expected);
+    const auto &[intp, fracp, expected] = GetParam();
+    Measurement const M{.meas_num = 0, .intp = intp, .fracp = fracp};
+    EXPECT_EQ(M.toString(), expected);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -80,11 +80,11 @@ class MeasurementResolve : public testing::TestWithParam<ResolveParams> {
 };
 
 TEST_P(MeasurementResolve, ReturnsExpectedResult) {
-    const auto &p = GetParam();
-    Measurement m{.meas_num = 0, .intp = p.intp, .fracp = p.fracp};
+    const auto &[intp, fracp, expected_intp, expected_fracp] = GetParam();
+    Measurement m{.meas_num = 0, .intp = intp, .fracp = fracp};
     m.resolve();
-    EXPECT_EQ(m.intp, p.expected_intp);
-    EXPECT_NEAR((double)m.fracp, p.expected_fracp, 1e-15);
+    EXPECT_EQ(m.intp, expected_intp);
+    EXPECT_NEAR(static_cast<double>(m.fracp), expected_fracp, 1e-15);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -116,9 +116,9 @@ class MeasurementRound : public testing::TestWithParam<RoundParams> {
 };
 
 TEST_P(MeasurementRound, ReturnsExpectedResult) {
-    const auto &p = GetParam();
-    const Measurement M{.meas_num = 0, .intp = p.intp, .fracp = p.fracp};
-    EXPECT_EQ(M.round(), p.expected);
+    const auto &[intp, fracp, expected] = GetParam();
+    const Measurement M{.meas_num = 0, .intp = intp, .fracp = fracp};
+    EXPECT_EQ(M.round(), expected);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -157,7 +157,7 @@ TEST_P(MeasurementOperatorPlus, ReturnsExpectedResult) {
     const Measurement B{.meas_num = 0, .intp = p.b_intp, .fracp = p.b_fracp};
     const Measurement C = A + B;
     EXPECT_EQ(C.intp, p.expected_intp);
-    EXPECT_NEAR((double)C.fracp, p.expected_fracp, 1e-15);
+    EXPECT_NEAR(static_cast<double>(C.fracp), p.expected_fracp, 1e-15);
 }
 
 TEST_P(MeasurementOperatorPlus, DoesNotModifyOperands) {
@@ -175,7 +175,7 @@ TEST_P(MeasurementOperatorPlus, ReturnsExpectedResultAssign) {
     const Measurement B{.meas_num = 0, .intp = p.b_intp, .fracp = p.b_fracp};
     a += B;
     EXPECT_EQ(a.intp, p.expected_intp);
-    EXPECT_NEAR((double)a.fracp, p.expected_fracp, 1e-15);
+    EXPECT_NEAR(static_cast<double>(a.fracp), p.expected_fracp, 1e-15);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -206,7 +206,7 @@ TEST_P(MeasurementOperatorMinus, ReturnsExpectedResult) {
     const Measurement B{.meas_num = 0, .intp = p.b_intp, .fracp = p.b_fracp};
     const Measurement C = A - B;
     EXPECT_EQ(C.intp, p.expected_intp);
-    EXPECT_NEAR((double)C.fracp, p.expected_fracp, 1e-15);
+    EXPECT_NEAR(static_cast<double>(C.fracp), p.expected_fracp, 1e-15);
 }
 
 TEST_P(MeasurementOperatorMinus, DoesNotModifyOperands) {
@@ -219,8 +219,8 @@ TEST_P(MeasurementOperatorMinus, DoesNotModifyOperands) {
 }
 
 TEST(MeasurementOperatorMinusMeasNum, TakenFromFirstOperand) {
-    const Measurement A{.meas_num = 7, .intp = 5, .fracp = static_cast<__float128>(0.5)};
-    const Measurement B{.meas_num = 3, .intp = 2, .fracp = static_cast<__float128>(0.2)};
+    constexpr Measurement A{.meas_num = 7, .intp = 5, .fracp = static_cast<__float128>(0.5)};
+    constexpr Measurement B{.meas_num = 3, .intp = 2, .fracp = static_cast<__float128>(0.2)};
     EXPECT_EQ((A - B).meas_num, 7);
 }
 

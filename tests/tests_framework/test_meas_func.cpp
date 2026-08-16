@@ -219,10 +219,10 @@ TEST_P(EncodeDecodeRoundTripTest, DecodesBackToRequestedTime) {
     const auto &p = GetParam();
     const Measurement INPUT{.meas_num = p.meas_num, .intp = p.seconds, .fracp = p.fracp};
     const auto bytes = encodeMeasurementSet(INPUT, p.multiplier);
-    const Measurement result = decodeMeasurementSet(bytes, p.multiplier);
-    EXPECT_EQ(result.meas_num, p.meas_num);
+    const Measurement RESULT = decodeMeasurementSet(bytes, p.multiplier);
+    EXPECT_EQ(RESULT.meas_num, p.meas_num);
     const double expected_total = static_cast<double>(p.seconds) + static_cast<double>(p.fracp);
-    const double actual_total = static_cast<double>(result.intp) + static_cast<double>(result.fracp);
+    const double actual_total = static_cast<double>(RESULT.intp) + static_cast<double>(RESULT.fracp);
     // The wire format's finest step is ~152.588 fs (1e-8 / 2^16 s); allow a bit of slack for rounding at both
     // encode and decode. Comparing the combined total (rather than intp/fracp separately) sidesteps cases where
     // the requested time sits within one tick of a whole-second boundary and legitimately rounds the other way.
@@ -256,13 +256,13 @@ INSTANTIATE_TEST_SUITE_P(
 TEST(EncodeMeasurementSet, ZeroTimeMatchesKnownZeroPacket) {
     // encodeMeasurementSet(_, 0, 0, _) should land exactly on the fine field's zero point (4194303 = 0x3FFFFF,
     // little-endian across bytes 9..11), which is the same magic packet makeZeroPacket() builds by hand above.
-    const Measurement INPUT{.meas_num = 1, .intp = 0, .fracp = static_cast<__float128>(0.0)};
+    constexpr Measurement INPUT{.meas_num = 1, .intp = 0, .fracp = static_cast<__float128>(0.0)};
     const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
     EXPECT_EQ(bytes, makeZeroPacket(1));
 }
 
 TEST(EncodeMeasurementSet, PreservesWholeSecondsAwayFromBoundary) {
-    const Measurement INPUT{.meas_num = 1, .intp = 5, .fracp = static_cast<__float128>(0.5)}; // 5.5 s
+    constexpr Measurement INPUT{.meas_num = 1, .intp = 5, .fracp = static_cast<__float128>(0.5)}; // 5.5 s
     const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
     const Measurement result = decodeMeasurementSet(bytes, static_cast<__float128>(1e-8));
     EXPECT_EQ(result.intp, 5);
@@ -270,14 +270,14 @@ TEST(EncodeMeasurementSet, PreservesWholeSecondsAwayFromBoundary) {
 }
 
 TEST(EncodeMeasurementSet, HeaderBytesAreFixed) {
-    const Measurement INPUT{.meas_num = 3, .intp = 42, .fracp = static_cast<__float128>(0.0)};
+    constexpr Measurement INPUT{.meas_num = 3, .intp = 42, .fracp = static_cast<__float128>(0.0)};
     const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
     EXPECT_EQ(bytes[0], 1);
     EXPECT_EQ(bytes[1], 11);
 }
 
 TEST(EncodeMeasurementSet, ChecksumIsValid) {
-    const Measurement INPUT{.meas_num = 7, .intp = 12345, .fracp = static_cast<__float128>(0.67890123456789)};
+    constexpr Measurement INPUT{.meas_num = 7, .intp = 12345, .fracp = static_cast<__float128>(0.67890123456789)};
     const auto bytes = encodeMeasurementSet(INPUT, static_cast<__float128>(1e-8));
     EXPECT_EQ(xorChecksum(bytes), bytes[12]);
 }

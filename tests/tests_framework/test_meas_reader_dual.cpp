@@ -20,7 +20,7 @@ TEST(DualMeasContext, DefaultValues) {
 // --- DualMeasurement::toString() ---
 
 TEST(DualMeasurementToString, ContainsBothMeasurementsToStrings) {
-    const DualMeasurement DM{
+    constexpr DualMeasurement DM{
         .meas_start = Measurement{.meas_num = 3, .intp = 10, .fracp = 0.5},
         .meas_stop = Measurement{.meas_num = 3, .intp = 11, .fracp = 0.25},
     };
@@ -33,8 +33,8 @@ TEST(DualMeasurementToString, ContainsBothMeasurementsToStrings) {
 // --- DualMeasReader::matchMeasurement(): pairing by meas_num ---
 
 TEST_F(DualMeasReaderFixture, StartThenStopSameMeasNumCombines) {
-    const Measurement START_MEAS{.meas_num = 1, .intp = 100, .fracp = 0.1};
-    const Measurement STOP_MEAS{.meas_num = 1, .intp = 200, .fracp = 0.2};
+    constexpr Measurement START_MEAS{.meas_num = 1, .intp = 100, .fracp = 0.1};
+    constexpr Measurement STOP_MEAS{.meas_num = 1, .intp = 200, .fracp = 0.2};
     matchMeasurement(true, START_MEAS);
     EXPECT_TRUE(for_monitor_q.empty()) << "should still be waiting for the matching stop measurement";
     matchMeasurement(false, STOP_MEAS);
@@ -45,8 +45,8 @@ TEST_F(DualMeasReaderFixture, StartThenStopSameMeasNumCombines) {
 
 // Matching must not depend on which leg's measurement arrives first.
 TEST_F(DualMeasReaderFixture, StopThenStartSameMeasNumCombines) {
-    const Measurement START_MEAS{.meas_num = 2, .intp = 300, .fracp = 0.3};
-    const Measurement STOP_MEAS{.meas_num = 2, .intp = 400, .fracp = 0.4};
+    constexpr Measurement START_MEAS{.meas_num = 2, .intp = 300, .fracp = 0.3};
+    constexpr Measurement STOP_MEAS{.meas_num = 2, .intp = 400, .fracp = 0.4};
     matchMeasurement(false, STOP_MEAS);
     EXPECT_TRUE(for_monitor_q.empty()) << "should still be waiting for the matching start measurement";
     matchMeasurement(true, START_MEAS);
@@ -186,17 +186,17 @@ TEST_F(DualMeasReaderFixture, NoLeftoversReturnsEmptyResult) {
 TEST_F(DualMeasReaderFixture, ReturnsOnlyStartLegLeftovers) {
     matchMeasurement(true, Measurement{.meas_num = 1, .intp = 11});
     matchMeasurement(true, Measurement{.meas_num = 2, .intp = 12});
-    const UnmatchedMeasurements RESULT = unmatchedMeasurements();
-    EXPECT_EQ(RESULT.start.size(), 2U);
-    EXPECT_TRUE(RESULT.stop.empty());
+    const auto [start, stop] = unmatchedMeasurements();
+    EXPECT_EQ(start.size(), 2U);
+    EXPECT_TRUE(stop.empty());
 }
 
 TEST_F(DualMeasReaderFixture, ReturnsOnlyStopLegLeftovers) {
     matchMeasurement(false, Measurement{.meas_num = 1, .intp = 21});
-    const UnmatchedMeasurements RESULT = unmatchedMeasurements();
-    EXPECT_TRUE(RESULT.start.empty());
-    ASSERT_EQ(RESULT.stop.size(), 1U);
-    EXPECT_EQ(RESULT.stop.front().intp, 21);
+    const auto [start, stop] = unmatchedMeasurements();
+    EXPECT_TRUE(start.empty());
+    ASSERT_EQ(stop.size(), 1U);
+    EXPECT_EQ(stop.front().intp, 21);
 }
 
 TEST_F(DualMeasReaderFixture, ReturnsLeftoversFromBothLegs) {
@@ -215,10 +215,10 @@ TEST_F(DualMeasReaderFixture, MatchedPairsAreExcludedFromLeftovers) {
     matchMeasurement(true, Measurement{.meas_num = 1, .intp = 41});
     matchMeasurement(false, Measurement{.meas_num = 1, .intp = 42}); // matches and clears pending
     matchMeasurement(true, Measurement{.meas_num = 2, .intp = 43}); // stays unmatched
-    const UnmatchedMeasurements RESULT = unmatchedMeasurements();
-    ASSERT_EQ(RESULT.start.size(), 1U);
-    EXPECT_EQ(RESULT.start.front().intp, 43);
-    EXPECT_TRUE(RESULT.stop.empty());
+    const auto [start, stop] = unmatchedMeasurements();
+    ASSERT_EQ(start.size(), 1U);
+    EXPECT_EQ(start.front().intp, 43);
+    EXPECT_TRUE(stop.empty());
 }
 
 // Calling unmatchedMeasurements() must not itself mutate the pending maps.

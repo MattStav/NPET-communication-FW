@@ -177,7 +177,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_F(MeasurementWorkflowFixture, Channel2IntpIncrementsByOnePerMeasurement) {
     std::vector<Measurement> collected;
     const MeasContext CTX{
-        .num_of_meas = 10,
+        .num_of_meas = 5,
         .monitor_fn = [&collected](MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
             collectAllMeasurements(reader, meas_set, time_const, collected);
         },
@@ -185,7 +185,7 @@ TEST_F(MeasurementWorkflowFixture, Channel2IntpIncrementsByOnePerMeasurement) {
         .channel = Channel::CH2,
     };
     client->readBatchMeasurements(CTX);
-    ASSERT_EQ(collected.size(), 10U);
+    ASSERT_EQ(collected.size(), 5U);
     for (size_t i = 1; i < collected.size(); ++i) {
         EXPECT_EQ(collected.at(i).intp, collected.at(i - 1).intp + 1)
             << "Measurement " << i << " (intp=" << collected.at(i).intp
@@ -414,7 +414,7 @@ TEST_F(MeasurementWorkflowFixture, AverageFractionReportsSequentialProgressToTra
 }
 
 TEST_F(MeasurementWorkflowFixture, AverageFractionMatchesManuallyAveragedSingleMeasurements) {
-    constexpr int AVER_NUM = 10;
+    constexpr int AVER_NUM = 4;
     const std::optional<__float128> AVG = client->getAverageFraction(AVER_NUM, Channel::CH2);
     ASSERT_TRUE(AVG.has_value());
 

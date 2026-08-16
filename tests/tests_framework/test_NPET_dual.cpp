@@ -23,7 +23,7 @@ TEST_F(NPETDualFixture, DefaultConstructedFirmwareVersionIsZero) {
     EXPECT_EQ(two_.getFWVer().getValue(), 0);
 }
 
-// start_/stop_ must be independent NPETComm instances, not aliases of the same underlying device.
+// Both NPETs must be independent NPETComm instances, not aliases of the same underlying device.
 TEST_F(NPETDualFixture, StartAndStopAreIndependentInstances) {
     one_.setFWVer(FWVersion(FWVersion::AD_REVISION));
     EXPECT_EQ(one_.getFWVer().getValue(), FWVersion::AD_REVISION);

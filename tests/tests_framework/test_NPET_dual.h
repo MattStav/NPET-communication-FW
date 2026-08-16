@@ -6,7 +6,7 @@
 #include <string>
 #include "NPET_dual.h"
 
-// one_/two_/startComm()/stopComm() are protected on NPETDual; expose them for inspection in tests.
+// one_/two_/start()/stop() are protected on NPETDual; expose them for inspection in tests.
 class NPETDualFixture : public ::testing::Test, public NPETDual {
 protected:
     using NPETDual::one_;

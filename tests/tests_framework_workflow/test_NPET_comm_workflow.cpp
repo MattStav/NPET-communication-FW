@@ -7,9 +7,9 @@
 // FrameworkWorkflowFixture::SetUpTestSuite() (see test_workflow_fixture.h/.cpp): within one
 // group, GoogleTest runs tests in source-declaration order, and TearDownTestSuite() re-checks
 // isResponsive() right before closing, so a test that silently breaks the connection shows up as
-// a teardown failure on its own group instead of quietly poisoning some later, unrelated test.
+// a teardown failure, rather then silently disappear.
 
-// Proves the setup itself: two virtual ports paired via com0com, a VirtualMachine listening on
+// Proves the setup itself: two virtual ports paired, a VirtualMachine listening on
 // one end, and a plain NPETComm client on the other, actually exchange bytes end to end.
 TEST_F(FrameworkWorkflowFixture, ClientIsResponsiveToVirtualMachine) {
     ASSERT_TRUE(client->ser.isOpen());
@@ -20,8 +20,8 @@ TEST_F(FrameworkWorkflowFixture, ClientIsResponsiveToVirtualMachine) {
 TEST_F(FrameworkWorkflowFixture, SetBaudRate) {
     ASSERT_TRUE(client->setBaudRate(230400));
     EXPECT_TRUE(client->isResponsive());
-    const int current_baud = client->ser.getBaudRate();
-    EXPECT_EQ(current_baud, 230400);
+    const int CURRENT_BAUD = client->ser.getBaudRate();
+    EXPECT_EQ(CURRENT_BAUD, 230400);
 }
 
 class CloseResetsBaudRateTest : public FrameworkWorkflowFixture {
@@ -32,13 +32,13 @@ class CloseResetsBaudRateTest : public FrameworkWorkflowFixture {
 // thing that opens the port at some other speed.
 TEST_F(CloseResetsBaudRateTest, DestructorResetsBaudRateTo115200) {
     ASSERT_TRUE(client->setBaudRate(230400));
-    const int vm_baud_before = client->ser.getBaudRate();
-    ASSERT_EQ(vm_baud_before, 230400);
+    const int VM_BAUD_BEFORE = client->ser.getBaudRate();
+    ASSERT_EQ(VM_BAUD_BEFORE, 230400);
 
     client.reset(); // Triggers ~NPETComm()
 
-    const int vm_baud_after = vm->ser.getBaudRate();
-    EXPECT_EQ(vm_baud_after, 115200);
+    const int VM_BAUD_AFTER = vm->ser.getBaudRate();
+    EXPECT_EQ(VM_BAUD_AFTER, 115200);
 }
 
 // The VM answers "?" with "Firmware none - offline", which detectFWVer() recognizes as the

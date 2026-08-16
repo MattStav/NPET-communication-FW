@@ -2,7 +2,6 @@
 #define TEST_FRAMEWORK_WORKFLOW_H
 
 #include <string>
-#include <quadmath.h>
 
 #include "test_workflow_fixture.h"
 

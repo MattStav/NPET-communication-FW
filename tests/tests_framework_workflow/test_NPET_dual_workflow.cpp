@@ -4,7 +4,6 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <quadmath.h>
 #include <string>
 #include <vector>
 
@@ -30,19 +29,18 @@ TEST_F(DualFrameworkWorkflowFixture, SwitchStartStopStillResolvesToLiveConnectio
     EXPECT_TRUE(stop().isResponsive());
 }
 
+// Exercises NPETDual::readBatchMeasurements()'s default DualMeasContext (5 measurements,
+// channel 1 on both legs, no save) - the possibility a caller passes nothing at all.
 TEST_F(DualFrameworkWorkflowFixture, ReadBatchMeasurementsDefaultArgumentSucceeds) {
-    // Exercises NPETDual::readBatchMeasurements()'s default DualMeasContext (5 measurements,
-    // channel 1 on both legs, no save) - the possibility a caller passes nothing at all.
     EXPECT_NO_THROW(readBatchMeasurements());
     EXPECT_TRUE(one_.isResponsive());
     EXPECT_TRUE(two_.isResponsive());
 }
 
-// executeBoth() (exercised here via readBatchMeasurements()) is documented to release both legs
+// executeBoth() (exercised here via readBatchMeasurements()) releases both legs
 // together off a shared latch rather than run them one after the other (see NPET_dual.h). Channel
-// 1 ticks every 10ms (100Hz), so 100 measurements take ~1s; channel 2 ticks on a fixed 1s grid, so
-// even a single measurement takes ~1s. Run sequentially that is >=2s; run concurrently, both legs
-// finish around the same ~1s mark. The threshold below sits comfortably between the two.
+// 1 ticks every 10ms (100Hz), so 100 measurements take ~1s. Both legs should
+// finish around the same ~1s mark. The tests allows for some deviation.
 TEST_F(DualFrameworkWorkflowFixture, ReadBatchMeasurementsRunsBothLegsConcurrently) {
     const DualMeasContext CTX{
         .num_of_meas = 100,
@@ -87,8 +85,8 @@ TEST_F(DualFrameworkWorkflowFixture, MonitorFnReceivesAllCombinedMatchingMeasure
     };
     readBatchMeasurements(CTX);
     ASSERT_EQ(received.size(), 5U);
-    for (const auto &[meas_start, meas_stop]: received) {
-        EXPECT_EQ(meas_start.meas_num, meas_stop.meas_num)
+    for (const auto &[MEAS_START, MEAS_STOP]: received) {
+        EXPECT_EQ(MEAS_START.meas_num, MEAS_STOP.meas_num)
             << "combined pair does not share a meas_num - matching logic paired the wrong measurements";
     }
     // Both legs' time constants must be known before the monitor starts running (see NPET_dual.cpp)
@@ -270,7 +268,7 @@ INSTANTIATE_TEST_SUITE_P(
 // "stop" constant on one_, not on the pre-swap instances.
 TEST_F(DualFrameworkWorkflowFixture, ExportConstantsAppliesToPhysicallyCorrectLegAfterSwitchStartStop) {
     switchStartStop();
-    const DualMeasurement CONSTANTS{
+    constexpr DualMeasurement CONSTANTS{
         .meas_start = {.meas_num = -1, .intp = 7, .fracp = 0.75},
         .meas_stop = {.meas_num = -1, .intp = 2, .fracp = 0.125},
     };
@@ -282,7 +280,7 @@ TEST_F(DualFrameworkWorkflowFixture, ExportConstantsAppliesToPhysicallyCorrectLe
 // clearConstants() clears both legs independently via each NPETComm::clearTimeConstant() (see
 // NPET_dual.cpp) - both legs' previously-exported constants should come back empty afterward.
 TEST_F(DualFrameworkWorkflowFixture, ClearConstantsResultsInEmptyImportedConstantsOnBothLegs) {
-    const DualMeasurement CONSTANTS{
+    constexpr DualMeasurement CONSTANTS{
         .meas_start = {.meas_num = -1, .intp = 5, .fracp = 0.5},
         .meas_stop = {.meas_num = -1, .intp = 3, .fracp = 0.25},
     };

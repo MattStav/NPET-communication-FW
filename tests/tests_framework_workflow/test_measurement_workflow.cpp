@@ -78,10 +78,10 @@ TEST_F(MeasurementWorkflowFixture, SubsequentSingleMeasurementsDiffer) {
 
 // --- Batch measurements: MeasContext options and their combinations ---
 
-// Drains every measurement the processor thread produces into COLLECTED, mirroring the
-// must-fully-drain pattern used by readerCliSync() in meas_reader_CLI.cpp.
-void collectAllMeasurements(MeasReader &reader, const MeasContext &/*meas_set*/, const Measurement &/*time_const*/,
-                            std::vector<Measurement> &collected) {
+// Drains every measurement the processor thread produces into COLLECTED
+static void collectAllMeasurements(MeasReader &reader, const MeasContext &/*meas_set*/,
+                                   const Measurement &/*time_const*/,
+                                   std::vector<Measurement> &collected) {
     while (const std::optional<Measurement> MEAS = reader.grabMeasFromProcessor(reader.for_monitor_q)) {
         collected.push_back(*MEAS);
     }
@@ -187,9 +187,9 @@ TEST_F(MeasurementWorkflowFixture, Channel2IntpIncrementsByOnePerMeasurement) {
     client->readBatchMeasurements(CTX);
     ASSERT_EQ(collected.size(), 10U);
     for (size_t i = 1; i < collected.size(); ++i) {
-        EXPECT_EQ(collected[i].intp, collected[i - 1].intp + 1)
-            << "Measurement " << i << " (intp=" << collected[i].intp
-            << ") did not follow measurement " << (i - 1) << " (intp=" << collected[i - 1].intp << ") by 1 second";
+        EXPECT_EQ(collected.at(i).intp, collected.at(i - 1).intp + 1)
+            << "Measurement " << i << " (intp=" << collected.at(i).intp
+            << ") did not follow measurement " << (i - 1) << " (intp=" << collected.at(i - 1).intp << ") by 1 second";
     }
 }
 

@@ -7,7 +7,7 @@ std::unique_ptr<std::jthread> CorruptedMeasurementWorkflowFixture::vm_thread;
 std::unique_ptr<NPETComm> CorruptedMeasurementWorkflowFixture::client;
 
 ///
-/// Opens both ends of the com0com virtual null-modem pair and starts the VM's deviceLoop() on a
+/// Opens both ends of the virtual null-modem pair and starts the VM's deviceLoop() on a
 /// background thread, once for the whole suite. Unlike FrameworkWorkflowFixture's VM, this one is
 /// configured with corrupt_every = CORRUPT_EVERY, so it deliberately flips the checksum byte on
 /// every CORRUPT_EVERY-th measurement it sends. Ports are opened before the device-loop thread is

@@ -1,5 +1,7 @@
 #include "test_corrupted_measurement_fixture.h"
 
+#include "test_workflow_fixture.h"
+
 std::unique_ptr<VirtualMachine> CorruptedMeasurementWorkflowFixture::vm;
 std::unique_ptr<std::jthread> CorruptedMeasurementWorkflowFixture::vm_thread;
 std::unique_ptr<NPETComm> CorruptedMeasurementWorkflowFixture::client;

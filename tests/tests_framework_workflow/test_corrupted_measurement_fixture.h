@@ -6,7 +6,6 @@
 #include <thread>
 
 #include "NPET_comm.h"
-#include "test_workflow_fixture.h"
 #include "virtual_machine.h"
 
 // How often the VM corrupts a measurement's checksum byte (every Nth packet sent within a single

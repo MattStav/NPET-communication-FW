@@ -8,8 +8,9 @@
 
 #include "meas_func.h"
 
-// Tests below exercise MeasReader's handling of a stream in which the VM deliberately corrupts
-// every CORRUPT_EVERY-th measurement's checksum byte. The point is not that corruption is impossible to hit in
+// Tests below exercise MeasReader's handling of a stream in which somme measurements get corrupted along the way.
+// For testing purposes, this is facilitated by the VM deliberately corrupting every CORRUPT_EVERY-th measurement's checksum byte.
+// The point is not that corruption is impossible to hit in
 // practice, but that MeasReader::dataProcessor() must not propagate the resulting
 // decodeMeasurementSet() exception - it should count the corrupted packet, discard it, and keep
 // processing the rest of the stream (see the catch block in meas_reader.cpp).

@@ -9,21 +9,23 @@
 #include "test_workflow_fixture.h"
 #include "virtual_machine.h"
 
-// Two independent com0com virtual null-modem pairs, provisioned ahead of time. The start leg
-// reuses VM_COM_PORT/CLIENT_COM_PORT (see test_workflow_fixture.h) - safe because each
-// gtest_discover_tests-discovered test runs in its own process, so only one fixture's
-// SetUpTestSuite() (and thus one open of COM8/COM9) is ever active at a time.
+///
+/// Two independent virtual null-modem pairs, provisioned ahead of time. The start leg
+/// reuses VM_COM_PORT/CLIENT_COM_PORT (see test_workflow_fixture.h) - safe because each
+/// gtest_discover_tests-discovered test runs in its own process, so only one fixture's
+/// SetUpTestSuite() (and thus one open of COM8/COM9) is ever active at a time.
 inline constexpr int START_VM_COM_PORT = VM_COM_PORT;
 inline constexpr int START_CLIENT_COM_PORT = CLIENT_COM_PORT;
 inline constexpr int STOP_VM_COM_PORT = 10;
 inline constexpr int STOP_CLIENT_COM_PORT = 11;
 
-// Brings up one VirtualMachine per NPETDual leg (start/stop) once per test suite, mirroring
-// FrameworkWorkflowFixture but doubled up for NPETDual. Unlike FrameworkWorkflowFixture, the
-// client side (NPETDual::start_/stop_) is not static: this fixture derives from NPETDual
-// directly, so every test gets its own fresh, unopened pair of NPETComm members (per
-// NPETDualFixture's pattern - see test_NPET_dual.h) which SetUp() opens onto the already-running
-// VMs' client-side ports, and ~NPETComm() closes again as the fixture is torn down.
+///
+/// Brings up one VirtualMachine per NPETDual leg (start/stop) once per test suite, mirroring
+/// FrameworkWorkflowFixture but doubled up for NPETDual. Unlike FrameworkWorkflowFixture, the
+/// client side (NPETDual::start_/stop_) is not static: this fixture derives from NPETDual
+/// directly, so every test gets its own fresh, unopened pair of NPETComm members (per
+/// NPETDualFixture's pattern - see test_NPET_dual.h) which SetUp() opens onto the already-running
+/// VMs' client-side ports, and ~NPETComm() closes again as the fixture is torn down.
 class DualFrameworkWorkflowFixture : public ::testing::Test, public NPETDual {
 protected:
     using NPETDual::one_;

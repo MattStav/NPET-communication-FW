@@ -409,7 +409,7 @@ TEST_F(MeasurementWorkflowFixture, AverageFractionReportsSequentialProgressToTra
     ASSERT_TRUE(AVG.has_value());
     ASSERT_EQ(tracker.calls.size(), static_cast<size_t>(AVER_NUM));
     for (int i = 0; i < AVER_NUM; ++i) {
-        EXPECT_EQ(tracker.calls[i], i + 1);
+        EXPECT_EQ(tracker.calls.at(i), i + 1);
     }
 }
 

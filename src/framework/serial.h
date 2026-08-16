@@ -110,7 +110,7 @@ public:
     /// cancellation has been processed by the io_context; otherwise only process
     /// whatever handlers are already ready without waiting.
     /// @param BLOCK Whether to block until the cancellation has been processed
-    void cancelPendingOperation(bool BLOCK = true);
+    void cancelPendingOperation(bool BLOCK);
 
     ///
     /// Purge the COM Port.

@@ -2,6 +2,7 @@
 #include "meas_reader_CLI.h"
 
 #include <cmath>
+#include <vector>
 
 #include "cli.h"
 
@@ -141,6 +142,19 @@ static std::string formatMeasurement(
 }
 
 
+///
+/// Print each line to the CLI in order, then move the cursor back up to the first printed line,
+/// so a subsequent call overwrites the same lines in place instead of scrolling the terminal.
+/// @param lines Lines to print, topmost first
+static void printAndRewind(const std::vector<std::string> &lines) {
+    for (const std::string &line: lines) {
+        std::cout << line << '\n';
+    }
+    std::cout << "\033[" << lines.size() << "A"; // move cursor back up to the start
+    std::cout.flush(); // important if no newline.
+} // end of printAndRewind function
+
+
 void readerCliSync(MeasReader &reader, const MeasContext &meas_set, const Measurement &time_const) {
     printIntro(meas_set, time_const);
     SPDLOG_DEBUG(SYNC_MONITOR);
@@ -167,8 +181,9 @@ void readerCliAdvanced(MeasReader &reader, const MeasContext &meas_set, const Me
     std::array<MeasExtended, 5> buffer5{};
     // Index to keep track of the current position in the buffer
     int index = 0;
-    // Number of lines printed in the last iteration, the cursor is moved up by this number
-    int total_lines = -1;
+    // Number of lines in the last printed status block, used to move the cursor back down to the
+    // end once the loop exits
+    size_t last_line_count = 0;
 
     printIntro(meas_set, time_const);
     SPDLOG_DEBUG(ADVANCED_MONITOR);
@@ -196,36 +211,34 @@ void readerCliAdvanced(MeasReader &reader, const MeasContext &meas_set, const Me
         // Store values in a scrolling buffer
         buffer5.at(index) = meas_ext;
         index = (index + 1) % 5; // wraps the index around at 5 to create a circular buffer
-        // Display the measurement information in CLI
-        // Move cursor up by total_lines at the start of the iteration
-        std::cout << "\033[" << total_lines << "A"; // move up N lines
-        std::cout << "Measurement status: " << (
-            reader.stop_sign.load(std::memory_order_relaxed) ? "Stopped" : "Running");
-        std::cout << '\n';
+        // Assemble the measurement status block to display in CLI
+        std::vector<std::string> lines;
+        lines.push_back(std::string("Measurement status: ") +
+                        (reader.stop_sign.load(std::memory_order_relaxed) ? "Stopped" : "Running"));
         // Calculate measurement frequency
         MeasExtended const &oldest = buffer5.at(index % 5);
         MeasExtended const &newest = buffer5.at((index + 4) % 5);
         const int FREQ = std::lround(4 / (newest.approxValue() - oldest.approxValue()));
-        std::cout << "Measurement frequency: " << FREQ << "  ";
-        std::cout << '\n';
-        std::cout << "Corrupted measurements: " << reader.corrupted.load(std::memory_order_relaxed);
-        std::cout << '\n';
-        std::cout << "Buffers ... Processor: " << reader.receiverQSize();
-        std::cout << " | Monitor: " << reader.monitorQSize();
-        std::cout << " | Saver: " << reader.saverQSize();
-        std::cout << "            " << '\n'; // Clear line from the previous iter
-        total_lines = 4; // the status + frequency + corrupted + buffers
+        lines.push_back("Measurement frequency: " + std::to_string(FREQ) + "  ");
+        lines.push_back("Corrupted measurements: " +
+                        std::to_string(reader.corrupted.load(std::memory_order_relaxed)));
+        lines.push_back("Buffers ... Processor: " + std::to_string(reader.receiverQSize()) +
+                        " | Monitor: " + std::to_string(reader.monitorQSize()) +
+                        " | Saver: " + std::to_string(reader.saverQSize()) +
+                        "            "); // Clear line from the previous iter
         // Read all values in order (oldest to newest)
         for (int i = 0; i < 5; i++) {
             const MeasExtended &m = buffer5.at((index + i) % 5);
             if (!m.isProcessed() || m.isEmpty()) {
                 continue; // Skip empty buffer slots
             }
-            std::cout << m.processed_str << '\n';
-            total_lines++;
+            lines.push_back(m.processed_str);
         } // end of for loop to display buffer values
-        std::cout.flush(); // important if no newline.
+        printAndRewind(lines); // Do not rewind on first print
+        last_line_count = lines.size();
     } // end of while loop
+    // Move the cursor back down past the last printed block, so printOutro's output lands below it
+    std::cout << "\033[" << last_line_count << "B" << std::flush;
     printOutro(reader, meas_set);
 } // end of reader_cli_advanced function
 

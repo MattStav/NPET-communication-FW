@@ -88,11 +88,11 @@ static void waitForSaver(MeasReader &reader) {
 
 ///
 /// Print a warning with the number of corrupted measurements encountered, if any.
-/// @param corrupted Number of corrupted measurements
-static void printCorrupted(const int corrupted) {
-    if (corrupted > 0) {
-        SPDLOG_ERROR(CORRUPTED_MEAS_NUM, corrupted);
-        Cli::err(std::format(CORRUPTED_MEAS_NUM, corrupted));
+/// @param CORRUPTED Number of corrupted measurements
+static void printCorrupted(const int CORRUPTED) {
+    if (CORRUPTED > 0) {
+        SPDLOG_ERROR(CORRUPTED_MEAS_NUM, CORRUPTED);
+        Cli::err(std::format(CORRUPTED_MEAS_NUM, CORRUPTED));
     }
 } // end of printCorrupted function
 
